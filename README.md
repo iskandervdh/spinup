@@ -1,7 +1,5 @@
 <img src="https://raw.githubusercontent.com/iskandervdh/spinup/refs/heads/main/logo.png" width="308" height="150">
 
-<br />
-
 # Spinup
 
 Quickly spin up your multi command projects.
