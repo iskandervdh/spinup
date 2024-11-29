@@ -1,4 +1,4 @@
-<img src="https://raw.githubusercontent.com/iskandervdh/spinup/main/logo.png" width="308" height="150">
+<img src="https://raw.githubusercontent.com/iskandervdh/spinup/refs/heads/main/logo.png" width="308" height="150">
 
 <br />
 
