@@ -68,6 +68,8 @@ func (s *Spinup) Handle() {
 	s.getProjectsConfig()
 
 	switch os.Args[1] {
+	case "-v", "--version":
+		fmt.Printf("%s %s\n", config.ProgramName, config.Version)
 	case "command", "c":
 		s.handleCommand()
 	case "project", "p":
