@@ -43,6 +43,11 @@ func (s *Spinup) run(project Project, projectName string) {
 	concurrent := exec.Command("concurrently", commands...)
 	concurrent.Stdout = os.Stdout
 
+	// Run the project in the project's directory if it's set
+	if project.Dir != nil {
+		concurrent.Dir = *project.Dir
+	}
+
 	concurrent.Run()
 }
 

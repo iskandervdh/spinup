@@ -15,6 +15,7 @@ type Project struct {
 	Domain    string    `json:"domain"`
 	Port      int       `json:"port"`
 	Commands  []string  `json:"commands"`
+	Dir       *string   `json:"dir"`
 	Variables Variables `json:"variables"`
 }
 
@@ -262,6 +263,69 @@ func (s *Spinup) removeCommandFromProject(projectName string, commandName string
 	}
 }
 
+func (s *Spinup) setProjectDir(projectName string, dir *string) {
+	exists, project := s.projectExists(projectName)
+
+	if !exists {
+		fmt.Printf("Project '%s' does not exist\n", projectName)
+		return
+	}
+
+	if dir == nil {
+		cwd, err := os.Getwd()
+
+		if err != nil {
+			fmt.Println("Error getting current working directory:", err)
+			return
+		}
+
+		project.Dir = &cwd
+	} else {
+		// Check if dir exists as a directory
+		info, err := os.Stat(*dir)
+
+		if err != nil {
+			fmt.Printf("Directory '%s' does not exist: %s\n", *dir, err)
+			return
+		}
+
+		if !info.IsDir() {
+			fmt.Printf("'%s' is not a directory\n", *dir)
+			return
+		}
+
+		project.Dir = dir
+	}
+
+	s.projects[projectName] = project
+
+	updatedProjectsConfig, err := json.MarshalIndent(s.projects, "", "  ")
+
+	if err != nil {
+		fmt.Println("Error encoding projects to json:", err)
+		return
+	}
+
+	os.WriteFile(s.getProjectsFilePath(), updatedProjectsConfig, 0644)
+	fmt.Printf("Set directory to '%s' for project '%s'\n", *project.Dir, projectName)
+}
+
+func (s *Spinup) getProjectDir(projectName string) {
+	exists, project := s.projectExists(projectName)
+
+	if !exists {
+		fmt.Printf("Project '%s' does not exist\n", projectName)
+		return
+	}
+
+	if project.Dir == nil {
+		fmt.Printf("Project '%s' does not have a directory set\n", projectName)
+		return
+	}
+
+	fmt.Println(*project.Dir)
+}
+
 func (s *Spinup) handleProject() {
 	if len(os.Args) < 3 {
 		fmt.Printf("Usage: %s project <add|remove|list> [args...]\n", config.ProgramName)
@@ -306,5 +370,24 @@ func (s *Spinup) handleProject() {
 		}
 
 		s.removeCommandFromProject(os.Args[3], os.Args[4])
+	case "set-dir", "sd":
+		if len(os.Args) < 4 {
+			fmt.Printf("Usage: %s project set-dir|sp <project> [dir]\n", config.ProgramName)
+			return
+		}
+
+		if len(os.Args) == 5 {
+			s.setProjectDir(os.Args[3], &os.Args[4])
+			return
+		}
+
+		s.setProjectDir(os.Args[3], nil)
+	case "get-dir", "gd":
+		if len(os.Args) != 4 {
+			fmt.Printf("Usage: %s project get-dir|gp <project>\n", config.ProgramName)
+			return
+		}
+
+		s.getProjectDir(os.Args[3])
 	}
 }
