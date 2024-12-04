@@ -10,14 +10,6 @@ Quickly spin up your multi command projects.
 
 To run spinup you need to have go installed on your system. You can download it from the [official website](https://golang.org/dl/).
 
-You also need to have `concurrently` installed on your system. You can install it using the following command:
-
-```bash
-sudo npm install -g concurrently
-```
-
-If you don't have nodejs/npm installed you can download it from the [official website](https://www.nodejs.org/).
-
 ### Installation
 
 To install spinup you can use the following command:
@@ -168,6 +160,7 @@ This will run the commands defined in the configuration for the project.
 
 - [x] Commands to add/remove commands from a project.
 - [x] Add option to set the path of the project to use so it can be run anywhere.
+- [x] Don't require `concurrently` to be installed.
 - [ ] Make adding subdomains possible.
 - [ ] Add tests.
 - [ ] Better solution for showing what commands are available.
