@@ -167,7 +167,7 @@ This will run the commands defined in the configuration for the project.
 ## Possible future features
 
 - [x] Commands to add/remove commands from a project.
-- [ ] Add option to set the path of the project to use so it can be run anywhere.
+- [x] Add option to set the path of the project to use so it can be run anywhere.
 - [ ] Make adding subdomains possible.
 - [ ] Adding certificates to enable https for the project.
 - [ ] Add option to set the path of the nginx folder to use.
