@@ -194,6 +194,74 @@ func (s *Spinup) listProjects() {
 	}
 }
 
+func (s *Spinup) addCommandToProject(projectName string, commandName string) {
+	exists, project := s.projectExists(projectName)
+
+	if !exists {
+		fmt.Printf("Project '%s' does not exist\n", projectName)
+		return
+	}
+
+	_, exists = s.commands[commandName]
+
+	if !exists {
+		fmt.Printf("Command '%s' does not exist\n", commandName)
+		return
+	}
+
+	for _, command := range project.Commands {
+		if command == commandName {
+			fmt.Printf("Command '%s' already exists in project '%s'\n", commandName, projectName)
+			return
+		}
+	}
+
+	project.Commands = append(project.Commands, commandName)
+
+	s.projects[projectName] = project
+
+	updatedProjectsConfig, err := json.MarshalIndent(s.projects, "", "  ")
+
+	if err != nil {
+		fmt.Println("Error encoding projects to json:", err)
+		return
+	}
+
+	os.WriteFile(s.getProjectsFilePath(), updatedProjectsConfig, 0644)
+
+	fmt.Printf("Added command '%s' to project '%s'\n", commandName, projectName)
+}
+
+func (s *Spinup) removeCommandFromProject(projectName string, commandName string) {
+	exists, project := s.projectExists(projectName)
+
+	if !exists {
+		fmt.Printf("Project '%s' does not exist\n", projectName)
+		return
+	}
+
+	for i, command := range project.Commands {
+		if command == commandName {
+			project.Commands = append(project.Commands[:i], project.Commands[i+1:]...)
+
+			s.projects[projectName] = project
+
+			updatedProjectsConfig, err := json.MarshalIndent(s.projects, "", "  ")
+
+			if err != nil {
+				fmt.Println("Error encoding projects to json:", err)
+				return
+			}
+
+			os.WriteFile(s.getProjectsFilePath(), updatedProjectsConfig, 0644)
+
+			fmt.Printf("Removed command '%s' from project '%s'\n", commandName, projectName)
+
+			return
+		}
+	}
+}
+
 func (s *Spinup) handleProject() {
 	if len(os.Args) < 3 {
 		fmt.Printf("Usage: %s project <add|remove|list> [args...]\n", config.ProgramName)
@@ -224,5 +292,19 @@ func (s *Spinup) handleProject() {
 		}
 
 		s.removeProject(os.Args[3])
+	case "add-command", "ac":
+		if len(os.Args) < 5 {
+			fmt.Printf("Usage: %s project add-command|ac <project> <command>\n", config.ProgramName)
+			return
+		}
+
+		s.addCommandToProject(os.Args[3], os.Args[4])
+	case "remove-command", "rc":
+		if len(os.Args) < 5 {
+			fmt.Printf("Usage: %s project remove-command|rc <project> <command>\n", config.ProgramName)
+			return
+		}
+
+		s.removeCommandFromProject(os.Args[3], os.Args[4])
 	}
 }
