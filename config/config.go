@@ -1,8 +1,11 @@
 package config
 
+import _ "embed"
+
 var ProgramName = "spinup"
 
-var Version = "0.3.0"
+//go:embed .version
+var Version string
 
 var CommandsFileName = "commands.json"
 
