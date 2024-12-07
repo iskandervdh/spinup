@@ -53,6 +53,26 @@ func (s *Spinup) getProjectsConfig() {
 	s.projects = projects
 }
 
+func (s *Spinup) getCommandNames() []string {
+	var commandNames []string
+
+	for commandName := range s.commands {
+		commandNames = append(commandNames, commandName)
+	}
+
+	return commandNames
+}
+
+func (s *Spinup) getProjectNames() []string {
+	var projectNames []string
+
+	for commandName := range s.projects {
+		projectNames = append(projectNames, commandName)
+	}
+
+	return projectNames
+}
+
 func (s *Spinup) Handle() {
 	if len(os.Args) < 2 {
 		fmt.Printf("Usage: %s <command|project|run|init> [args...]\n", config.ProgramName)
