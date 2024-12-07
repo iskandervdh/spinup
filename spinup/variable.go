@@ -42,7 +42,12 @@ func (s *Spinup) addVariable(name string, key string, value string) {
 		return
 	}
 
-	os.WriteFile(s.getProjectsFilePath(), updatedVariables, 0644)
+	err = os.WriteFile(s.getProjectsFilePath(), updatedVariables, 0644)
+
+	if err != nil {
+		fmt.Println("Error writing projects to file:", err)
+		return
+	}
 
 	fmt.Printf("Added variable '%s' to project '%s' with value '%s'\n", key, name, value)
 }
@@ -85,7 +90,12 @@ func (s *Spinup) removeVariable(name string, key string) {
 		return
 	}
 
-	os.WriteFile(s.getProjectsFilePath(), updatedProjectConfig, 0644)
+	err = os.WriteFile(s.getProjectsFilePath(), updatedProjectConfig, 0644)
+
+	if err != nil {
+		fmt.Println("Error writing projects to file:", err)
+		return
+	}
 
 	fmt.Printf("Removed variable '%s' from project '%s'\n", key, name)
 }

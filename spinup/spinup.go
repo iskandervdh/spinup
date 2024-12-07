@@ -3,9 +3,11 @@ package spinup
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path"
 	"strings"
 
+	"github.com/iskandervdh/spinup/cli"
 	"github.com/iskandervdh/spinup/config"
 )
 
@@ -29,6 +31,15 @@ func getConfigDirPath() string {
 func New() *Spinup {
 	return &Spinup{
 		configDirPath: getConfigDirPath(),
+	}
+}
+
+func (s *Spinup) requireSudo() {
+	err := exec.Command("sudo", "-v").Run()
+
+	if err != nil {
+		cli.ErrorText("This command requires sudo")
+		os.Exit(1)
 	}
 }
 

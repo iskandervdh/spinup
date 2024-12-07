@@ -123,6 +123,8 @@ func (s *Spinup) _addProject(name string, domain string, port int, commandNames 
 }
 
 func (s *Spinup) addProject(name string, domain string, port int, commandNames []string) {
+	s.requireSudo()
+
 	if s.projects == nil {
 		return
 	}
@@ -190,12 +192,18 @@ func (s *Spinup) _removeProject(name string) tea.Msg {
 		return cli.ErrMsg("Error encoding projects to json: " + err.Error())
 	}
 
-	os.WriteFile(s.getProjectsFilePath(), updatedProjectsConfig, 0644)
+	err = os.WriteFile(s.getProjectsFilePath(), updatedProjectsConfig, 0644)
+
+	if err != nil {
+		return cli.ErrMsg("Error writing projects to file: " + err.Error())
+	}
 
 	return cli.DoneMsg(fmt.Sprintf("Removed project '%s'", name))
 }
 
 func (s *Spinup) removeProject(name string) {
+	s.requireSudo()
+
 	if s.projects == nil {
 		return
 	}
@@ -272,7 +280,12 @@ func (s *Spinup) addCommandToProject(projectName string, commandName string) {
 		return
 	}
 
-	os.WriteFile(s.getProjectsFilePath(), updatedProjectsConfig, 0644)
+	err = os.WriteFile(s.getProjectsFilePath(), updatedProjectsConfig, 0644)
+
+	if err != nil {
+		fmt.Println("Error writing projects to file:", err)
+		return
+	}
 
 	fmt.Printf("Added command '%s' to project '%s'\n", commandName, projectName)
 }
@@ -298,7 +311,12 @@ func (s *Spinup) removeCommandFromProject(projectName string, commandName string
 				return
 			}
 
-			os.WriteFile(s.getProjectsFilePath(), updatedProjectsConfig, 0644)
+			err = os.WriteFile(s.getProjectsFilePath(), updatedProjectsConfig, 0644)
+
+			if err != nil {
+				fmt.Println("Error writing projects to file:", err)
+				return
+			}
 
 			fmt.Printf("Removed command '%s' from project '%s'\n", commandName, projectName)
 
@@ -350,7 +368,13 @@ func (s *Spinup) setProjectDir(projectName string, dir *string) {
 		return
 	}
 
-	os.WriteFile(s.getProjectsFilePath(), updatedProjectsConfig, 0644)
+	err = os.WriteFile(s.getProjectsFilePath(), updatedProjectsConfig, 0644)
+
+	if err != nil {
+		fmt.Println("Error writing projects to file:", err)
+		return
+	}
+
 	fmt.Printf("Set directory to '%s' for project '%s'\n", *project.Dir, projectName)
 }
 

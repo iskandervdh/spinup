@@ -63,7 +63,12 @@ func (s *Spinup) addCommand(name string, command string) {
 		return
 	}
 
-	os.WriteFile(s.getCommandsFilePath(), updatedCommands, 0644)
+	err = os.WriteFile(s.getCommandsFilePath(), updatedCommands, 0644)
+
+	if err != nil {
+		fmt.Println("Error writing commands to file:", err)
+		return
+	}
 
 	fmt.Printf("Added command '%s': %s\n", name, command)
 }
@@ -89,7 +94,12 @@ func (s *Spinup) removeCommand(name string) {
 		return
 	}
 
-	os.WriteFile(s.getCommandsFilePath(), updatedCommands, 0644)
+	err = os.WriteFile(s.getCommandsFilePath(), updatedCommands, 0644)
+
+	if err != nil {
+		fmt.Println("Error writing commands to file:", err)
+		return
+	}
 
 	fmt.Printf("Removed command '%s'\n", name)
 }

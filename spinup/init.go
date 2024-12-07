@@ -83,6 +83,7 @@ func (s *Spinup) init() {
 		os.Exit(1)
 	}
 
+	s.requireSudo()
 	err = config.InitHosts()
 
 	if err != nil {
