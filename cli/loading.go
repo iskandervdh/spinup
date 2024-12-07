@@ -11,8 +11,10 @@ import (
 type loading struct {
 	spinner     spinner.Model
 	loadingText string
-	doneText    string
 	done        bool
+
+	doneText  string
+	errorText string
 }
 
 func newLoadingSpinner() spinner.Model {
@@ -28,6 +30,11 @@ func (m loading) Init() tea.Cmd {
 
 func (m loading) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		if msg.String() == "ctrl+c" {
+			return m, tea.Quit
+		}
+
 	case spinner.TickMsg:
 		if m.done {
 			return m, tea.Quit
@@ -37,8 +44,14 @@ func (m loading) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.spinner, cmd = m.spinner.Update(msg)
 		return m, cmd
 
-	case DoneMsg:
+	case doneMsg:
 		m.done = true
+		m.doneText = msg.text
+		return m, tea.Quit
+
+	case errMsg:
+		m.done = true
+		m.errorText = msg.text
 		return m, tea.Quit
 	}
 
@@ -46,13 +59,12 @@ func (m loading) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m loading) View() string {
+	if m.errorText != "" {
+		return ErrorText(m.errorText)
+	}
+
 	if m.done {
-		return fmt.Sprintf(
-			"%s\n",
-			lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#a7e08f")).
-				Render(m.doneText),
-		)
+		return SuccessText(m.doneText)
 	}
 
 	return fmt.Sprintf("\n    %s %s\n", m.spinner.View(), m.loadingText)

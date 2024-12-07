@@ -5,9 +5,7 @@ import (
 	"os"
 	"path"
 	"strings"
-	"time"
 
-	"github.com/iskandervdh/spinup/cli"
 	"github.com/iskandervdh/spinup/config"
 )
 
@@ -99,12 +97,6 @@ func (s *Spinup) Handle() {
 		s.handleProject()
 	case "variable", "v":
 		s.handleVariable()
-	case "loading":
-		cli.Loading("Loading...", "Done!", func() cli.DoneMsg {
-			time.Sleep(5 * time.Second)
-
-			return cli.DoneMsg{}
-		})
 	case "run":
 		if !s.tryToRun(os.Args[2]) {
 			fmt.Printf("Unknown project '%s'\n", os.Args[2])

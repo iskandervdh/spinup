@@ -6,9 +6,40 @@ import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
-type DoneMsg struct{}
+type doneMsg struct {
+	text string
+}
+
+type errMsg struct {
+	text string
+}
+
+func DoneMsg(text string) doneMsg {
+	return doneMsg{text: text}
+}
+
+func ErrMsg(text string) errMsg {
+	return errMsg{text: text}
+}
+
+func SuccessText(text string) string {
+	return fmt.Sprintln(
+		lipgloss.NewStyle().
+			Foreground(lipgloss.Color("#A7E08F")).
+			Render(text),
+	)
+}
+
+func ErrorText(text string) string {
+	return fmt.Sprintln(
+		lipgloss.NewStyle().
+			Foreground(lipgloss.Color("#D90909")).
+			Render("Error: " + text),
+	)
+}
 
 func ClearTerminal() {
 	fmt.Print("\033[H\033[2J")
@@ -126,13 +157,12 @@ func Confirm(prompt string) bool {
 	return false
 }
 
-func Loading(loadingText string, doneText string, f func() DoneMsg) {
+func Loading(loadingText string, f func() tea.Msg) {
 	s := newLoadingSpinner()
 
 	m := loading{
 		spinner:     s,
 		loadingText: loadingText,
-		doneText:    doneText,
 	}
 
 	p := tea.NewProgram(m)

@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/iskandervdh/spinup/cli"
 	"github.com/iskandervdh/spinup/config"
 )
@@ -55,56 +56,46 @@ func (s *Spinup) projectExists(name string) (bool, Project) {
 	return exists, project
 }
 
-func (s *Spinup) addProject(name string, domain string, port int, commandNames []string) {
-	if s.projects == nil {
-		return
-	}
-
+func (s *Spinup) _addProject(name string, domain string, port int, commandNames []string) tea.Msg {
 	// Check if commands exist
 	for _, commandName := range commandNames {
 		_, exists := s.commands[commandName]
 
 		if !exists {
 			fmt.Println("Command", commandName, "does not exist")
-			return
+			return cli.ErrMsg("Command " + commandName + " does not exist")
 		}
 	}
 
 	// Check if project already exists or if domain or port is already in use
 	for projectName, project := range s.projects {
 		if projectName == name {
-			fmt.Printf("Project '%s' already exists.\n", name)
-			return
+			return cli.ErrMsg("Project '" + name + "' already exists")
 		}
 
 		if project.Domain == domain {
-			fmt.Printf("Project with domain '%s' already exists.\n", domain)
-			return
+			return cli.ErrMsg("Project with domain '" + domain + "' already exists: " + projectName)
 
 		}
 
 		if project.Port == port {
-			fmt.Printf("Project with port '%d' already exists.\n", port)
-			return
+			return cli.ErrMsg("Project with port " + strconv.Itoa(port) + " already exists: " + projectName)
 		}
 	}
 
 	err := config.AddNginxConfig(name, domain, port)
 
 	if err != nil {
-		fmt.Println("Error trying to create nginx config file", err)
-		return
+		return cli.ErrMsg(fmt.Sprintln("Error trying to create nginx config file", err))
 	}
 
 	err = config.AddHost(domain)
 
 	if err != nil {
-		fmt.Println("Error trying to add domain to hosts file", err)
-
 		// Remove nginx config file if adding domain to hosts file fails
 		config.RemoveNginxConfig(name)
 
-		return
+		return cli.ErrMsg(fmt.Sprintln("Error trying to add domain to hosts file", err))
 	}
 
 	newProject := Project{
@@ -119,13 +110,28 @@ func (s *Spinup) addProject(name string, domain string, port int, commandNames [
 	updatedProjectsConfig, err := json.MarshalIndent(s.projects, "", "  ")
 
 	if err != nil {
-		fmt.Println("Error encoding projects to json:", err)
+		return cli.ErrMsg(fmt.Sprintln("Error encoding projects to json:", err))
+	}
+
+	err = os.WriteFile(s.getProjectsFilePath(), updatedProjectsConfig, 0644)
+
+	if err != nil {
+		return cli.ErrMsg(fmt.Sprintln("Error writing projects to file:", err))
+	}
+
+	return cli.DoneMsg(fmt.Sprintf("Added project '%s' with domain '%s' and port %d", name, domain, port))
+}
+
+func (s *Spinup) addProject(name string, domain string, port int, commandNames []string) {
+	if s.projects == nil {
 		return
 	}
 
-	os.WriteFile(s.getProjectsFilePath(), updatedProjectsConfig, 0644)
-
-	fmt.Printf("Added project '%s' with domain '%s' and port %d\n", name, domain, port)
+	cli.Loading(fmt.Sprintf("Adding project %s...", name),
+		func() tea.Msg {
+			return s._addProject(name, domain, port, commandNames)
+		},
+	)
 }
 
 func (s *Spinup) addProjectInteractive() {
@@ -145,33 +151,27 @@ func (s *Spinup) addProjectInteractive() {
 	s.addProject(name, domain, portInt, selectedCommands)
 }
 
-func (s *Spinup) removeProject(name string) {
-	if s.projects == nil {
-		return
-	}
-
+func (s *Spinup) _removeProject(name string) tea.Msg {
 	exists, _ := s.projectExists(name)
 
 	if !exists {
-		fmt.Printf("Project '%s' does not exist, nothing to remove\n", name)
-		return
+		return cli.ErrMsg("Project '" + name + "' does not exist, nothing to remove")
 	}
 
 	err := config.RemoveNginxConfig(name)
 
 	if err != nil {
-		fmt.Println("Could not remove nginx config file:", err)
+		return cli.ErrMsg("Could not remove nginx config file: " + err.Error())
 	}
 
 	err = config.RemoveHost(s.projects[name].Domain)
 
 	if err != nil {
-		fmt.Println("Error trying to remove domain from hosts file:", err)
-
 		// Remove nginx config file if adding domain to hosts file fails
 		config.RemoveNginxConfig(name)
 
-		return
+		return cli.ErrMsg("Error trying to remove domain from hosts file: " + err.Error())
+
 	}
 
 	var updatedProjects Projects = make(map[string]Project)
@@ -187,13 +187,24 @@ func (s *Spinup) removeProject(name string) {
 	updatedProjectsConfig, err := json.MarshalIndent(updatedProjects, "", "  ")
 
 	if err != nil {
-		fmt.Println("Error encoding projects to json:", err)
-		return
+		return cli.ErrMsg("Error encoding projects to json: " + err.Error())
 	}
 
 	os.WriteFile(s.getProjectsFilePath(), updatedProjectsConfig, 0644)
 
-	fmt.Printf("Removed project '%s'\n", name)
+	return cli.DoneMsg(fmt.Sprintf("Removed project '%s'", name))
+}
+
+func (s *Spinup) removeProject(name string) {
+	if s.projects == nil {
+		return
+	}
+
+	cli.Loading("Adding project...",
+		func() tea.Msg {
+			return s._removeProject(name)
+		},
+	)
 }
 
 func (s *Spinup) removeProjectInteractive() {
