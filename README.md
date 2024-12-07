@@ -161,10 +161,9 @@ This will run the commands defined in the configuration for the project.
 - [x] Commands to add/remove commands from a project.
 - [x] Add option to set the path of the project to use so it can be run anywhere.
 - [x] Don't require `concurrently` to be installed.
-- [x] Use interactive CLI.
+- [ ] Use interactive CLI.
 - [ ] Make adding subdomains possible.
 - [ ] Add tests.
-- [ ] Interactive CLI v2.
 - [ ] Better solution for showing what commands are available.
 - [ ] Adding certificates to enable https for the project.
 - [ ] Add option to set the path of the nginx folder to use.
