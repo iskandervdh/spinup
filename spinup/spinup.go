@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/iskandervdh/spinup/config"
 )
@@ -89,7 +90,7 @@ func (s *Spinup) Handle() {
 
 	switch os.Args[1] {
 	case "-v", "--version":
-		fmt.Printf("%s %s\n", config.ProgramName, config.Version)
+		fmt.Printf("%s %s\n", config.ProgramName, strings.TrimSpace(config.Version))
 	case "command", "c":
 		s.handleCommand()
 	case "project", "p":
