@@ -8,6 +8,8 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
+type DoneMsg struct{}
+
 func ClearTerminal() {
 	fmt.Print("\033[H\033[2J")
 }
@@ -122,4 +124,25 @@ func Confirm(prompt string) bool {
 	}
 
 	return false
+}
+
+func Loading(loadingText string, doneText string, f func() DoneMsg) {
+	s := newLoadingSpinner()
+
+	m := loading{
+		spinner:     s,
+		loadingText: loadingText,
+		doneText:    doneText,
+	}
+
+	p := tea.NewProgram(m)
+
+	go func() {
+		msg := f()
+		p.Send(msg)
+	}()
+
+	if _, err := p.Run(); err != nil {
+		fmt.Printf("Error starting program: %v\n", err)
+	}
 }
