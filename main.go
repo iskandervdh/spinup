@@ -5,6 +5,6 @@ import (
 )
 
 func main() {
-	c := spinup.New()
-	c.Handle()
+	s := spinup.New()
+	s.Handle()
 }
