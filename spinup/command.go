@@ -6,6 +6,7 @@ import (
 	"os"
 	"path"
 
+	"github.com/iskandervdh/spinup/cli"
 	"github.com/iskandervdh/spinup/config"
 )
 
@@ -45,11 +46,6 @@ func (s *Spinup) getCommand(name string) (string, error) {
 }
 
 func (s *Spinup) addCommand(name string, command string) {
-	if len(os.Args) < 4 {
-		fmt.Println("Usage: spinup command add <name> <command>")
-		return
-	}
-
 	// Check if already exists
 	for commandName := range s.commands {
 		if commandName == name {
@@ -72,6 +68,13 @@ func (s *Spinup) addCommand(name string, command string) {
 	fmt.Printf("Added command '%s': %s\n", name, command)
 }
 
+func (s *Spinup) addCommandInteractive() {
+	name := cli.Input("Enter command name:")
+	command := cli.Input("Enter command:")
+
+	s.addCommand(name, command)
+}
+
 func (s *Spinup) removeCommand(name string) {
 	if s.commands == nil {
 		return
@@ -89,6 +92,21 @@ func (s *Spinup) removeCommand(name string) {
 	os.WriteFile(s.getCommandsFilePath(), updatedCommands, 0644)
 
 	fmt.Printf("Removed command '%s'\n", name)
+}
+
+func (s *Spinup) removeCommandInteractive() {
+	name := cli.Selection("Select command to remove", s.getCommandNames())
+
+	if name == "" {
+		fmt.Println("No command selected")
+		return
+	}
+
+	if !cli.Confirm("Are you sure you want to remove command " + name + "?") {
+		return
+	}
+
+	s.removeCommand(name)
 }
 
 func (s *Spinup) listCommands() {
@@ -115,8 +133,28 @@ func (s *Spinup) handleCommand() {
 	case "list", "ls":
 		s.listCommands()
 	case "add":
+		if len(os.Args) == 3 {
+			s.addCommandInteractive()
+			return
+		}
+
+		if len(os.Args) < 5 {
+			fmt.Printf("Usage: %s command add <name> <command>\n", config.ProgramName)
+			return
+		}
+
 		s.addCommand(os.Args[3], os.Args[4])
 	case "remove", "rm":
+		if len(os.Args) == 3 {
+			s.removeCommandInteractive()
+			return
+		}
+
+		if len(os.Args) < 4 {
+			fmt.Printf("Usage: %s command remove <name>\n", config.ProgramName)
+			return
+		}
+
 		s.removeCommand(os.Args[3])
 	default:
 		fmt.Printf("Unknown subcommand '%s'\n", commandName)

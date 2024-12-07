@@ -5,7 +5,6 @@ import (
 	"os"
 	"path"
 
-	"github.com/iskandervdh/spinup/cli"
 	"github.com/iskandervdh/spinup/config"
 )
 
@@ -54,6 +53,26 @@ func (s *Spinup) getProjectsConfig() {
 	s.projects = projects
 }
 
+func (s *Spinup) getCommandNames() []string {
+	var commandNames []string
+
+	for commandName := range s.commands {
+		commandNames = append(commandNames, commandName)
+	}
+
+	return commandNames
+}
+
+func (s *Spinup) getProjectNames() []string {
+	var projectNames []string
+
+	for commandName := range s.projects {
+		projectNames = append(projectNames, commandName)
+	}
+
+	return projectNames
+}
+
 func (s *Spinup) Handle() {
 	if len(os.Args) < 2 {
 		fmt.Printf("Usage: %s <command|project|run|init> [args...]\n", config.ProgramName)
@@ -81,17 +100,6 @@ func (s *Spinup) Handle() {
 		if !s.tryToRun(os.Args[2]) {
 			fmt.Printf("Unknown project '%s'\n", os.Args[2])
 		}
-	case "cli":
-		selectedOption := cli.Selection("Select option", []string{"Option 1", "Option 2", "Option 3"})
-		cli.ClearTerminal()
-		q := cli.Selection("Select option", []string{"Option 1", "Option 2", "Option 3"})
-		cli.ClearTerminal()
-		i := cli.Input("Wat wat wat?")
-
-		fmt.Println("You selected:")
-		fmt.Println(selectedOption)
-		fmt.Println(q)
-		fmt.Println(i)
 	default:
 		if !s.tryToRun(os.Args[1]) {
 			fmt.Printf("Unknown subcommand or project '%s'\n", os.Args[1])

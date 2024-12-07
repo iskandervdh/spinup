@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/iskandervdh/spinup/cli"
 	"github.com/iskandervdh/spinup/config"
 )
 
@@ -127,6 +128,23 @@ func (s *Spinup) addProject(name string, domain string, port int, commandNames [
 	fmt.Printf("Added project '%s' with domain '%s' and port %d\n", name, domain, port)
 }
 
+func (s *Spinup) addProjectInteractive() {
+	name := cli.Input("Project name:")
+	domain := cli.Input("Domain:")
+	port := cli.Input("Port:")
+
+	portInt, err := strconv.Atoi(port)
+
+	if err != nil {
+		fmt.Println("Port must be an integer")
+		return
+	}
+
+	selectedCommands := cli.Question("Commands", s.getCommandNames())
+
+	s.addProject(name, domain, portInt, selectedCommands)
+}
+
 func (s *Spinup) removeProject(name string) {
 	if s.projects == nil {
 		return
@@ -176,6 +194,21 @@ func (s *Spinup) removeProject(name string) {
 	os.WriteFile(s.getProjectsFilePath(), updatedProjectsConfig, 0644)
 
 	fmt.Printf("Removed project '%s'\n", name)
+}
+
+func (s *Spinup) removeProjectInteractive() {
+	name := cli.Selection("What project do you want to remove?", s.getProjectNames())
+
+	if name == "" {
+		fmt.Println("No project selected")
+		return
+	}
+
+	if !cli.Confirm("Are you sure you want to remove project " + name + "?") {
+		return
+	}
+
+	s.removeProject(name)
 }
 
 func (s *Spinup) listProjects() {
@@ -336,6 +369,11 @@ func (s *Spinup) handleProject() {
 	case "list", "ls":
 		s.listProjects()
 	case "add":
+		if len(os.Args) == 3 {
+			s.addProjectInteractive()
+			return
+		}
+
 		if len(os.Args) < 6 {
 			fmt.Printf("Usage: %s project add <name> <domain> <port>\n", config.ProgramName)
 			return
@@ -350,6 +388,11 @@ func (s *Spinup) handleProject() {
 
 		s.addProject(os.Args[3], os.Args[4], port, os.Args[6:])
 	case "remove", "rm":
+		if len(os.Args) == 3 {
+			s.removeProjectInteractive()
+			return
+		}
+
 		if len(os.Args) != 4 {
 			fmt.Printf("Usage: %s project remove|rm <name>\n", config.ProgramName)
 			return

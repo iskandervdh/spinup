@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -73,6 +74,7 @@ func Input(prompt string) string {
 		prompt: prompt,
 		value:  "",
 		exited: false,
+		cursor: newCursor(),
 	}
 
 	p := tea.NewProgram(i)
@@ -90,4 +92,34 @@ func Input(prompt string) string {
 	}
 
 	return r.value
+}
+
+func Confirm(prompt string) bool {
+	c := confirm{
+		prompt: prompt,
+		value:  "",
+		exited: false,
+		cursor: newCursor(),
+	}
+
+	p := tea.NewProgram(c)
+	m, err := p.Run()
+
+	if err != nil {
+		fmt.Printf("Error: %v", err)
+		os.Exit(1)
+	}
+
+	r := m.(confirm)
+
+	if r.exited {
+		os.Exit(0)
+	}
+
+	switch strings.ToLower(r.value) {
+	case "y", "yes":
+		return true
+	}
+
+	return false
 }

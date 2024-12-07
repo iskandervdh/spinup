@@ -8,10 +8,11 @@ type input struct {
 	prompt string
 	value  string
 	exited bool
+	cursor *cursor
 }
 
 func (i input) Init() tea.Cmd {
-	return nil
+	return i.cursor.init()
 }
 
 func (i input) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -34,11 +35,14 @@ func (i input) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		default:
 			i.value += msg.String()
 		}
+
+	case blinkMsg:
+		return i, i.cursor.toggle()
 	}
 
 	return i, nil
 }
 
 func (i input) View() string {
-	return i.prompt + " " + i.value
+	return i.prompt + " " + i.value + i.cursor.get()
 }
