@@ -38,7 +38,7 @@ func (s *Spinup) requireSudo() {
 	err := exec.Command("sudo", "-v").Run()
 
 	if err != nil {
-		cli.ErrorText("This command requires sudo")
+		cli.ErrorPrint("This command requires sudo")
 		os.Exit(1)
 	}
 }

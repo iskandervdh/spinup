@@ -6,8 +6,12 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"os/signal"
 	"strings"
 	"sync"
+	"syscall"
+
+	"github.com/iskandervdh/spinup/cli"
 )
 
 type commandWithName struct {
@@ -67,14 +71,21 @@ func (s *Spinup) runCommand(wg *sync.WaitGroup, project Project, command command
 	}
 
 	err = cmd.Start()
+
 	if err != nil {
-		fmt.Println("Error starting command:", err)
+		cli.ErrorPrint("Error starting command: ", err)
 		return
 	}
 
 	err = cmd.Wait()
+
 	if err != nil {
-		fmt.Println("Command finished with error:", err)
+		// Gracefully exit if the command was interrupted by the user
+		if exitError, ok := err.(*exec.ExitError); ok && exitError.ExitCode() == -1 {
+			return
+		}
+
+		cli.ErrorPrint("Command finished with error: ", err)
 		return
 	}
 }
@@ -83,7 +94,11 @@ func (s *Spinup) run(project Project, projectName string) {
 	var wg sync.WaitGroup
 	wg.Add(len(project.Commands))
 
-	fmt.Printf("Running project %s\n", projectName)
+	// Start a signal listener for Ctrl+C (SIGINT)
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+
+	cli.InfoPrintf("Running project '%s'...", projectName)
 
 	commands := []commandWithName{}
 
@@ -111,6 +126,11 @@ func (s *Spinup) run(project Project, projectName string) {
 	for _, command := range commands {
 		go s.runCommand(&wg, project, command)
 	}
+
+	go func() {
+		<-sigChan
+		cli.InfoPrintf("\nGracefully stopping project '%s'...", projectName)
+	}()
 
 	wg.Wait()
 }

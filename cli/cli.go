@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 )
 
 type doneMsg struct {
@@ -23,22 +22,6 @@ func DoneMsg(text string) doneMsg {
 
 func ErrMsg(text string) errMsg {
 	return errMsg{text: text}
-}
-
-func SuccessText(text string) string {
-	return fmt.Sprintln(
-		lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#A7E08F")).
-			Render(text),
-	)
-}
-
-func ErrorText(text string) string {
-	return fmt.Sprintln(
-		lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#D90909")).
-			Render("Error: " + text),
-	)
 }
 
 func ClearTerminal() {
