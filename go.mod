@@ -1,6 +1,6 @@
 module github.com/iskandervdh/spinup
 
-go 1.23.0
+go 1.20
 
 require (
 	github.com/charmbracelet/bubbles v0.20.0
