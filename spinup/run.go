@@ -100,7 +100,9 @@ func (s *Spinup) run(project Project, projectName string) {
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 
-	cli.InfoPrintf("Running project '%s'...", projectName)
+	if !s.config.IsTesting() {
+		cli.InfoPrintf("Running project '%s'...", projectName)
+	}
 
 	commands := []commandWithName{}
 
