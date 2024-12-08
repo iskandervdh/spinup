@@ -170,4 +170,6 @@ func TestRemoveProject(t *testing.T) {
 	}
 
 	defer hostsFile.Close()
+
+	t.Error("Bogus error")
 }
