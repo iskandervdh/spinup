@@ -8,6 +8,22 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
+type doneMsg struct {
+	text string
+}
+
+type errMsg struct {
+	text string
+}
+
+func DoneMsg(text string) doneMsg {
+	return doneMsg{text: text}
+}
+
+func ErrMsg(text string) errMsg {
+	return errMsg{text: text}
+}
+
 func ClearTerminal() {
 	fmt.Print("\033[H\033[2J")
 }
@@ -24,7 +40,7 @@ func Question(prompt string, options []string) []string {
 	m, err := p.Run()
 
 	if err != nil {
-		fmt.Printf("Error: %v", err)
+		ErrorPrint(err)
 		os.Exit(1)
 	}
 
@@ -56,7 +72,7 @@ func Selection(prompt string, options []string) string {
 	m, err := p.Run()
 
 	if err != nil {
-		fmt.Printf("Error: %v", err)
+		ErrorPrint(err)
 		os.Exit(1)
 	}
 
@@ -81,7 +97,7 @@ func Input(prompt string) string {
 	m, err := p.Run()
 
 	if err != nil {
-		fmt.Printf("Error: %v", err)
+		ErrorPrint(err)
 		os.Exit(1)
 	}
 
@@ -106,7 +122,7 @@ func Confirm(prompt string) bool {
 	m, err := p.Run()
 
 	if err != nil {
-		fmt.Printf("Error: %v", err)
+		ErrorPrint(err)
 		os.Exit(1)
 	}
 
@@ -122,4 +138,24 @@ func Confirm(prompt string) bool {
 	}
 
 	return false
+}
+
+func Loading(loadingText string, f func() tea.Msg) {
+	s := newLoadingSpinner()
+
+	m := loading{
+		spinner:     s,
+		loadingText: loadingText,
+	}
+
+	p := tea.NewProgram(m)
+
+	go func() {
+		msg := f()
+		p.Send(msg)
+	}()
+
+	if _, err := p.Run(); err != nil {
+		ErrorPrintf("Error starting program: %v", err)
+	}
 }

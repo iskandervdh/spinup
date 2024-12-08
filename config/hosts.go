@@ -6,6 +6,8 @@ import (
 	"os/exec"
 	"strings"
 	"time"
+
+	"github.com/iskandervdh/spinup/cli"
 )
 
 var beginMarker = fmt.Sprintf("### BEGIN_%s_HOSTS\n", strings.ToUpper(ProgramName))
@@ -103,7 +105,7 @@ func InitHosts() error {
 	hostsContent, beginIndex, endIndex, _ := getHostsContent()
 
 	if beginIndex != -1 && endIndex != -1 {
-		fmt.Println("Hosts file already initialized")
+		cli.WarningPrint("Hosts file already initialized\nSkipping initialization...")
 		return nil
 	}
 

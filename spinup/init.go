@@ -36,7 +36,7 @@ func (s *Spinup) createProjectsConfigFile() error {
 		return fmt.Errorf("error writing empty projects to file: %w", err)
 	}
 
-	fmt.Println("Initialized empty projects.json file at", projectFilePath)
+	cli.InfoPrint("Initialized empty projects.json file at ", projectFilePath)
 
 	return nil
 }
@@ -56,7 +56,7 @@ func (s *Spinup) createCommandsConfigFile() error {
 		return fmt.Errorf("error writing empty commands to file: %w", err)
 	}
 
-	fmt.Println("Initialized empty commands.json file at", commandsFilePath)
+	cli.InfoPrint("Initialized empty commands.json file at ", commandsFilePath)
 
 	return nil
 }
@@ -65,28 +65,29 @@ func (s *Spinup) init() {
 	err := s.createConfigDir()
 
 	if err != nil {
-		fmt.Println("Error creating config directory:", err)
+		cli.ErrorPrint("Error creating config directory: ", err)
 		os.Exit(1)
 	}
 
 	err = s.createProjectsConfigFile()
 
 	if err != nil {
-		fmt.Println("Error creating projects.json file:", err)
+		cli.ErrorPrint("Error creating projects.json file:", err)
 		os.Exit(1)
 	}
 
 	err = s.createCommandsConfigFile()
 
 	if err != nil {
-		fmt.Println("Error creating commands.json file:", err)
+		cli.ErrorPrint("Error creating commands.json file:", err)
 		os.Exit(1)
 	}
 
+	s.requireSudo()
 	err = config.InitHosts()
 
 	if err != nil {
-		fmt.Println("Error initializing hosts file:", err)
+		cli.ErrorPrint("Error initializing hosts file:", err)
 		os.Exit(1)
 	}
 }

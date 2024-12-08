@@ -6,8 +6,12 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"os/signal"
 	"strings"
 	"sync"
+	"syscall"
+
+	"github.com/iskandervdh/spinup/cli"
 )
 
 type commandWithName struct {
@@ -29,11 +33,13 @@ func (s *Spinup) commandTemplate(command string, project Project) string {
 
 func (s *Spinup) prefixOutput(prefix string, reader io.Reader, writer io.Writer) {
 	scanner := bufio.NewScanner(reader)
+
 	for scanner.Scan() {
 		fmt.Fprintf(writer, "%s %s\n", prefix, scanner.Text())
 	}
+
 	if err := scanner.Err(); err != nil {
-		fmt.Println("Error reading output:", err)
+		cli.ErrorPrint("Error reading output:", err)
 	}
 }
 
@@ -47,14 +53,14 @@ func (s *Spinup) runCommand(wg *sync.WaitGroup, project Project, command command
 	stdout, err := cmd.StdoutPipe()
 
 	if err != nil {
-		fmt.Println("Error creating StdoutPipe:", err)
+		cli.ErrorPrint("Error creating StdoutPipe:", err)
 		return
 	}
 
 	stderr, err := cmd.StderrPipe()
 
 	if err != nil {
-		fmt.Println("Error creating StderrPipe:", err)
+		cli.ErrorPrint("Error creating StderrPipe:", err)
 		return
 	}
 
@@ -67,14 +73,21 @@ func (s *Spinup) runCommand(wg *sync.WaitGroup, project Project, command command
 	}
 
 	err = cmd.Start()
+
 	if err != nil {
-		fmt.Println("Error starting command:", err)
+		cli.ErrorPrint("Error starting command: ", err)
 		return
 	}
 
 	err = cmd.Wait()
+
 	if err != nil {
-		fmt.Println("Command finished with error:", err)
+		// Gracefully exit if the command was interrupted by the user
+		if exitError, ok := err.(*exec.ExitError); ok && exitError.ExitCode() == -1 {
+			return
+		}
+
+		cli.ErrorPrint("Command finished with error: ", err)
 		return
 	}
 }
@@ -83,7 +96,11 @@ func (s *Spinup) run(project Project, projectName string) {
 	var wg sync.WaitGroup
 	wg.Add(len(project.Commands))
 
-	fmt.Printf("Running project %s\n", projectName)
+	// Start a signal listener for Ctrl+C (SIGINT)
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+
+	cli.InfoPrintf("Running project '%s'...", projectName)
 
 	commands := []commandWithName{}
 
@@ -91,7 +108,7 @@ func (s *Spinup) run(project Project, projectName string) {
 		command, err := s.getCommand(commandName)
 
 		if err != nil {
-			fmt.Printf("Error getting command '%s': %s\n", commandName, err)
+			cli.ErrorPrintf("Error getting command '%s': %s\n", commandName, err)
 			os.Exit(1)
 		}
 
@@ -104,7 +121,7 @@ func (s *Spinup) run(project Project, projectName string) {
 	}
 
 	if len(commands) == 0 {
-		fmt.Println("No commands found")
+		cli.ErrorPrint("No commands found")
 		os.Exit(1)
 	}
 
@@ -112,12 +129,17 @@ func (s *Spinup) run(project Project, projectName string) {
 		go s.runCommand(&wg, project, command)
 	}
 
+	go func() {
+		<-sigChan
+		cli.InfoPrintf("\nGracefully stopping project '%s'...", projectName)
+	}()
+
 	wg.Wait()
 }
 
 func (s *Spinup) tryToRun(name string) bool {
 	if name == "" {
-		fmt.Println("No name provided")
+		cli.ErrorPrint("No name provided")
 		os.Exit(1)
 	}
 

@@ -3,9 +3,11 @@ package spinup
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path"
 	"strings"
 
+	"github.com/iskandervdh/spinup/cli"
 	"github.com/iskandervdh/spinup/config"
 )
 
@@ -32,11 +34,20 @@ func New() *Spinup {
 	}
 }
 
+func (s *Spinup) requireSudo() {
+	err := exec.Command("sudo", "-v").Run()
+
+	if err != nil {
+		cli.ErrorPrint("This command requires sudo")
+		os.Exit(1)
+	}
+}
+
 func (s *Spinup) getCommandsConfig() {
 	commands, err := s.getCommands()
 
 	if err != nil {
-		fmt.Println("Error getting commands. Did you run init?")
+		cli.ErrorPrint("Error getting commands. Did you run init?")
 		os.Exit(1)
 	}
 
@@ -47,7 +58,7 @@ func (s *Spinup) getProjectsConfig() {
 	projects, err := s.getProjects()
 
 	if err != nil {
-		fmt.Println("Error getting projects. Did you run init?")
+		cli.ErrorPrint("Error getting projects. Did you run init?")
 		os.Exit(1)
 	}
 
