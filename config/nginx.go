@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-var nginxConfigPath = "/etc/nginx/conf.d"
+var nginxConfigDir = "/etc/nginx/conf.d"
 
 func restartNginx() {
 	exec.Command("sudo", "systemctl", "restart", "nginx").Run()
@@ -29,23 +29,23 @@ func AddNginxConfig(name string, domain string, port int) error {
 }
 `, domain, port)
 
-	configPath := fmt.Sprintf("%s/%s.conf", nginxConfigPath, name)
+	nginxConfigPath := fmt.Sprintf("%s/%s.conf", nginxConfigDir, name)
 
-	if _, err := os.Stat(configPath); err == nil {
-		return fmt.Errorf("config file %s already exists", configPath)
+	if _, err := os.Stat(nginxConfigPath); err == nil {
+		return fmt.Errorf("config file %s already exists", nginxConfigPath)
 	} else if !os.IsNotExist(err) {
 		return fmt.Errorf("failed to check if config file exists: %v", err)
 	}
 
 	// Create the file
-	err := exec.Command("sudo", "touch", configPath).Run()
+	err := exec.Command("sudo", "touch", nginxConfigPath).Run()
 
 	if err != nil {
 		return err
 	}
 
 	// Write the config to the file
-	createCommand := exec.Command("sudo", "tee", configPath)
+	createCommand := exec.Command("sudo", "tee", nginxConfigPath)
 	createCommand.Stdin = strings.NewReader(config)
 	err = createCommand.Run()
 
@@ -59,8 +59,8 @@ func AddNginxConfig(name string, domain string, port int) error {
 }
 
 func RemoveNginxConfig(name string) error {
-	configPath := fmt.Sprintf("%s/%s.conf", nginxConfigPath, name)
-	err := exec.Command("sudo", "rm", configPath).Run()
+	nginxConfigPath := fmt.Sprintf("%s/%s.conf", nginxConfigDir, name)
+	err := exec.Command("sudo", "rm", nginxConfigPath).Run()
 
 	if err != nil {
 		return err

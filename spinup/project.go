@@ -24,7 +24,7 @@ type Project struct {
 type Projects map[string]Project
 
 func (s *Spinup) getProjectsFilePath() string {
-	return path.Join(s.configDirPath, config.ProjectsFileName)
+	return path.Join(s.config.ConfigDir, s.config.ProjectsFileName)
 }
 
 func (s *Spinup) getProjects() (Projects, error) {
@@ -88,7 +88,7 @@ func (s *Spinup) _addProject(name string, domain string, port int, commandNames 
 		return cli.ErrMsg(fmt.Sprintln("Error trying to create nginx config file", err))
 	}
 
-	err = config.AddHost(domain)
+	err = s.config.AddHost(domain)
 
 	if err != nil {
 		// Remove nginx config file if adding domain to hosts file fails
@@ -165,7 +165,7 @@ func (s *Spinup) _removeProject(name string) tea.Msg {
 		return cli.ErrMsg("Could not remove nginx config file: " + err.Error())
 	}
 
-	err = config.RemoveHost(s.projects[name].Domain)
+	err = s.config.RemoveHost(s.projects[name].Domain)
 
 	if err != nil {
 		// Remove nginx config file if adding domain to hosts file fails

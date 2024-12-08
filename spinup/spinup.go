@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"path"
 	"strings"
 
 	"github.com/iskandervdh/spinup/cli"
@@ -12,25 +11,14 @@ import (
 )
 
 type Spinup struct {
-	configDirPath string
-	commands      Commands
-	projects      Projects
-}
-
-func getConfigDirPath() string {
-	home, err := os.UserHomeDir()
-
-	if err != nil {
-		fmt.Println("Cloud not get home directory of current user")
-		panic(err)
-	}
-
-	return path.Join(home, ".config", config.ProgramName)
+	config   config.Config
+	commands Commands
+	projects Projects
 }
 
 func New() *Spinup {
 	return &Spinup{
-		configDirPath: getConfigDirPath(),
+		config: *config.New(),
 	}
 }
 
