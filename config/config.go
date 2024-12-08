@@ -2,10 +2,9 @@ package config
 
 import (
 	_ "embed"
-	"fmt"
 	"os"
+	"os/exec"
 	"path"
-	"strings"
 
 	"github.com/iskandervdh/spinup/cli"
 )
@@ -15,23 +14,26 @@ var ProgramName = "spinup"
 //go:embed .version
 var Version string
 
-var commandsFileName = "commands.json"
+var CommandsFileName = "commands.json"
 
-var projectsFileName = "projects.json"
+var ProjectsFileName = "projects.json"
+
+var nginxConfigDir = "/etc/nginx/conf.d"
 
 var hostsFile = "/etc/hosts"
 
 var hostsBackupDir = "/etc/hosts_bak"
 
 type Config struct {
-	ConfigDir        string
-	CommandsFileName string
-	ProjectsFileName string
-	hostsBeginMarker string
-	hostsEndMarker   string
+	configDir      string
+	nginxConfigDir string
+	hostsFile      string
+	hostsBackupDir string
+
+	testing bool
 }
 
-func getConfigDirPath() string {
+func GetConfigDirPath() string {
 	home, err := os.UserHomeDir()
 
 	if err != nil {
@@ -42,31 +44,53 @@ func getConfigDirPath() string {
 	return path.Join(home, ".config", ProgramName)
 }
 
-func New(options ...func(*Config)) *Config {
-	config := &Config{
-		ConfigDir:        getConfigDirPath(),
-		CommandsFileName: commandsFileName,
-		ProjectsFileName: projectsFileName,
-	}
-
-	for _, option := range options {
-		option(config)
-	}
-
-	config.hostsBeginMarker = fmt.Sprintf("### BEGIN_%s_HOSTS\n", strings.ToUpper(ProgramName))
-	config.hostsEndMarker = fmt.Sprintf("\n### END_%s_HOSTS", strings.ToUpper(ProgramName))
-
-	return config
-}
-
-func WithCommandsFileName(commandsFileName string) func(*Config) {
-	return func(c *Config) {
-		c.CommandsFileName = commandsFileName
+func New() *Config {
+	return &Config{
+		configDir:      GetConfigDirPath(),
+		nginxConfigDir: nginxConfigDir,
+		hostsFile:      hostsFile,
+		hostsBackupDir: hostsBackupDir,
+		testing:        false,
 	}
 }
 
-func WithProjectsFileName(projectsFileName string) func(*Config) {
-	return func(c *Config) {
-		c.ProjectsFileName = projectsFileName
+func NewTesting(testingConfigDir string) *Config {
+	return &Config{
+		configDir:      testingConfigDir,
+		nginxConfigDir: path.Join(testingConfigDir, "/nginx/conf.d"),
+		hostsFile:      path.Join(testingConfigDir, "hosts"),
+		hostsBackupDir: path.Join(testingConfigDir, "hosts_bak"),
+		testing:        true,
 	}
+}
+
+func (c *Config) withSudo(name string, args ...string) *exec.Cmd {
+	if c.IsTesting() {
+		return exec.Command(name, args...)
+	}
+
+	return exec.Command("sudo", append([]string{name}, args...)...)
+}
+
+/**
+ * Getters
+ */
+func (c *Config) GetConfigDir() string {
+	return c.configDir
+}
+
+func (c *Config) GetNginxConfigDir() string {
+	return c.nginxConfigDir
+}
+
+func (c *Config) GetHostsFile() string {
+	return c.hostsFile
+}
+
+func (c *Config) GetHostsBackupDir() string {
+	return c.hostsBackupDir
+}
+
+func (c *Config) IsTesting() bool {
+	return c.testing
 }

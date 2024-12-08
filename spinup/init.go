@@ -4,15 +4,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"path"
 
 	"github.com/iskandervdh/spinup/cli"
+	"github.com/iskandervdh/spinup/config"
 )
 
 func (s *Spinup) createConfigDir() error {
 	// Create config directory if it doesn't exist
-	configDir := path.Dir(s.config.ConfigDir)
-	err := os.MkdirAll(configDir, 0755)
+	err := os.MkdirAll(s.config.GetConfigDir(), 0755)
 
 	if err != nil {
 		return err
@@ -27,12 +26,12 @@ func (s *Spinup) createProjectsConfigFile() error {
 	if _, err := os.Stat(projectFilePath); err == nil {
 		cli.WarningPrintf(
 			"%s file already exists at %s\nSkipping initialization...\n",
-			s.config.ProjectsFileName,
+			config.ProjectsFileName,
 			projectFilePath,
 		)
 		return nil
 	} else if !os.IsNotExist(err) {
-		return fmt.Errorf("error checking if %s file exists: %w", s.config.ProjectsFileName, err)
+		return fmt.Errorf("error checking if %s file exists: %w", config.ProjectsFileName, err)
 	}
 
 	emptyProjects := Projects{}
@@ -48,7 +47,9 @@ func (s *Spinup) createProjectsConfigFile() error {
 		return fmt.Errorf("error writing empty projects to file: %w", err)
 	}
 
-	cli.InfoPrint("Initialized empty projects.json file at ", projectFilePath)
+	if !s.config.IsTesting() {
+		cli.InfoPrint("Initialized empty projects.json file at ", projectFilePath)
+	}
 
 	return nil
 }
@@ -59,7 +60,7 @@ func (s *Spinup) createCommandsConfigFile() error {
 	if _, err := os.Stat(commandsFilePath); err == nil {
 		cli.WarningPrintf(
 			"%s file already exists at %s\nSkipping initialization...\n",
-			s.config.CommandsFileName,
+			config.CommandsFileName,
 			commandsFilePath,
 		)
 		return nil
@@ -80,7 +81,9 @@ func (s *Spinup) createCommandsConfigFile() error {
 		return fmt.Errorf("error writing empty commands to file: %w", err)
 	}
 
-	cli.InfoPrint("Initialized empty commands.json file at ", commandsFilePath)
+	if !s.config.IsTesting() {
+		cli.InfoPrint("Initialized empty commands.json file at ", commandsFilePath)
+	}
 
 	return nil
 }
@@ -113,5 +116,16 @@ func (s *Spinup) init() {
 	if err != nil {
 		cli.ErrorPrint("Error initializing hosts file:", err)
 		os.Exit(1)
+	}
+
+	err = s.config.InitNginx()
+
+	if err != nil {
+		cli.ErrorPrint("Error initializing nginx:", err)
+		os.Exit(1)
+	}
+
+	if !s.config.IsTesting() {
+		cli.InfoPrint("\nInitialization complete")
 	}
 }
