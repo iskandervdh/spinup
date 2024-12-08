@@ -50,7 +50,9 @@ func (s *Spinup) addVariable(name string, key string, value string) {
 		return
 	}
 
-	cli.InfoPrintf("Added variable '%s' to project '%s' with value '%s'\n", key, name, value)
+	if !s.config.IsTesting() {
+		cli.InfoPrintf("Added variable '%s' to project '%s' with value '%s'\n", key, name, value)
+	}
 }
 
 func (s *Spinup) removeVariable(name string, key string) {
@@ -98,7 +100,9 @@ func (s *Spinup) removeVariable(name string, key string) {
 		return
 	}
 
-	cli.InfoPrintf("Removed variable '%s' from project '%s'\n", key, name)
+	if !s.config.IsTesting() {
+		cli.InfoPrintf("Removed variable '%s' from project '%s'\n", key, name)
+	}
 }
 
 func (s *Spinup) listVariables(name string) {

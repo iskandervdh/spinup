@@ -24,7 +24,7 @@ type Project struct {
 type Projects map[string]Project
 
 func (s *Spinup) getProjectsFilePath() string {
-	return path.Join(s.configDirPath, config.ProjectsFileName)
+	return path.Join(s.config.GetConfigDir(), config.ProjectsFileName)
 }
 
 func (s *Spinup) getProjects() (Projects, error) {
@@ -82,17 +82,17 @@ func (s *Spinup) _addProject(name string, domain string, port int, commandNames 
 		}
 	}
 
-	err := config.AddNginxConfig(name, domain, port)
+	err := s.config.AddNginxConfig(name, domain, port)
 
 	if err != nil {
 		return cli.ErrMsg(fmt.Sprintln("Error trying to create nginx config file", err))
 	}
 
-	err = config.AddHost(domain)
+	err = s.config.AddHost(domain)
 
 	if err != nil {
 		// Remove nginx config file if adding domain to hosts file fails
-		config.RemoveNginxConfig(name)
+		s.config.RemoveNginxConfig(name)
 
 		return cli.ErrMsg(fmt.Sprintln("Error trying to add domain to hosts file", err))
 	}
@@ -159,17 +159,17 @@ func (s *Spinup) _removeProject(name string) tea.Msg {
 		return cli.ErrMsg("Project '" + name + "' does not exist, nothing to remove")
 	}
 
-	err := config.RemoveNginxConfig(name)
+	err := s.config.RemoveNginxConfig(name)
 
 	if err != nil {
 		return cli.ErrMsg("Could not remove nginx config file: " + err.Error())
 	}
 
-	err = config.RemoveHost(s.projects[name].Domain)
+	err = s.config.RemoveHost(s.projects[name].Domain)
 
 	if err != nil {
 		// Remove nginx config file if adding domain to hosts file fails
-		config.RemoveNginxConfig(name)
+		s.config.RemoveNginxConfig(name)
 
 		return cli.ErrMsg("Error trying to remove domain from hosts file: " + err.Error())
 	}
@@ -285,7 +285,9 @@ func (s *Spinup) addCommandToProject(projectName string, commandName string) {
 		return
 	}
 
-	cli.InfoPrintf("Added command '%s' to project '%s'", commandName, projectName)
+	if !s.config.IsTesting() {
+		cli.InfoPrintf("Added command '%s' to project '%s'", commandName, projectName)
+	}
 }
 
 func (s *Spinup) removeCommandFromProject(projectName string, commandName string) {
@@ -316,7 +318,9 @@ func (s *Spinup) removeCommandFromProject(projectName string, commandName string
 				return
 			}
 
-			cli.InfoPrintf("Removed command '%s' from project '%s'", commandName, projectName)
+			if !s.config.IsTesting() {
+				cli.InfoPrintf("Removed command '%s' from project '%s'", commandName, projectName)
+			}
 
 			return
 		}
@@ -373,7 +377,9 @@ func (s *Spinup) setProjectDir(projectName string, dir *string) {
 		return
 	}
 
-	cli.InfoPrintf("Set directory to '%s' for project '%s'", *project.Dir, projectName)
+	if !s.config.IsTesting() {
+		cli.InfoPrintf("Set directory to '%s' for project '%s'", *project.Dir, projectName)
+	}
 }
 
 func (s *Spinup) getProjectDir(projectName string) {

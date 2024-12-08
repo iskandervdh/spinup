@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"path"
 	"strings"
 
 	"github.com/iskandervdh/spinup/cli"
@@ -12,29 +11,32 @@ import (
 )
 
 type Spinup struct {
-	configDirPath string
-	commands      Commands
-	projects      Projects
-}
-
-func getConfigDirPath() string {
-	home, err := os.UserHomeDir()
-
-	if err != nil {
-		fmt.Println("Cloud not get home directory of current user")
-		panic(err)
-	}
-
-	return path.Join(home, ".config", config.ProgramName)
+	config   *config.Config
+	commands Commands
+	projects Projects
 }
 
 func New() *Spinup {
 	return &Spinup{
-		configDirPath: getConfigDirPath(),
+		config: config.New(),
 	}
 }
 
+func NewWithConfig(config *config.Config) *Spinup {
+	return &Spinup{
+		config: config,
+	}
+}
+
+func (s *Spinup) getConfig() *config.Config {
+	return s.config
+}
+
 func (s *Spinup) requireSudo() {
+	if s.config.IsTesting() {
+		return
+	}
+
 	err := exec.Command("sudo", "-v").Run()
 
 	if err != nil {
@@ -66,6 +68,10 @@ func (s *Spinup) getProjectsConfig() {
 }
 
 func (s *Spinup) getCommandNames() []string {
+	if s.commands == nil {
+		s.getCommandsConfig()
+	}
+
 	var commandNames []string
 
 	for commandName := range s.commands {
@@ -76,6 +82,10 @@ func (s *Spinup) getCommandNames() []string {
 }
 
 func (s *Spinup) getProjectNames() []string {
+	if s.projects == nil {
+		s.getProjectsConfig()
+	}
+
 	var projectNames []string
 
 	for commandName := range s.projects {
@@ -83,6 +93,20 @@ func (s *Spinup) getProjectNames() []string {
 	}
 
 	return projectNames
+}
+
+func (s *Spinup) getCommandsForProject(projectName string) []string {
+	if s.projects == nil {
+		s.getProjectsConfig()
+	}
+
+	project, ok := s.projects[projectName]
+
+	if !ok {
+		return nil
+	}
+
+	return project.Commands
 }
 
 func (s *Spinup) Handle() {

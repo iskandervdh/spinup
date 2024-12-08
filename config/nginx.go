@@ -7,13 +7,11 @@ import (
 	"strings"
 )
 
-var nginxConfigPath = "/etc/nginx/conf.d"
-
-func restartNginx() {
+func (c *Config) restartNginx() {
 	exec.Command("sudo", "systemctl", "restart", "nginx").Run()
 }
 
-func AddNginxConfig(name string, domain string, port int) error {
+func (c *Config) AddNginxConfig(name string, domain string, port int) error {
 	config := fmt.Sprintf(`server {
 	listen 80;
 
@@ -29,23 +27,23 @@ func AddNginxConfig(name string, domain string, port int) error {
 }
 `, domain, port)
 
-	configPath := fmt.Sprintf("%s/%s.conf", nginxConfigPath, name)
+	nginxConfigFilePath := fmt.Sprintf("%s/%s.conf", c.nginxConfigDir, name)
 
-	if _, err := os.Stat(configPath); err == nil {
-		return fmt.Errorf("config file %s already exists", configPath)
+	if _, err := os.Stat(nginxConfigFilePath); err == nil {
+		return fmt.Errorf("config file %s already exists", nginxConfigFilePath)
 	} else if !os.IsNotExist(err) {
 		return fmt.Errorf("failed to check if config file exists: %v", err)
 	}
 
 	// Create the file
-	err := exec.Command("sudo", "touch", configPath).Run()
+	err := c.withSudo("touch", nginxConfigFilePath).Run()
 
 	if err != nil {
 		return err
 	}
 
 	// Write the config to the file
-	createCommand := exec.Command("sudo", "tee", configPath)
+	createCommand := c.withSudo("tee", nginxConfigFilePath)
 	createCommand.Stdin = strings.NewReader(config)
 	err = createCommand.Run()
 
@@ -53,20 +51,36 @@ func AddNginxConfig(name string, domain string, port int) error {
 		return err
 	}
 
-	restartNginx()
+	if !c.IsTesting() {
+		c.restartNginx()
+	}
 
 	return nil
 }
 
-func RemoveNginxConfig(name string) error {
-	configPath := fmt.Sprintf("%s/%s.conf", nginxConfigPath, name)
-	err := exec.Command("sudo", "rm", configPath).Run()
+func (c *Config) RemoveNginxConfig(name string) error {
+	nginxConfigFilePath := fmt.Sprintf("%s/%s.conf", c.nginxConfigDir, name)
+	err := c.withSudo("rm", nginxConfigFilePath).Run()
 
 	if err != nil {
 		return err
 	}
 
-	restartNginx()
+	if !c.IsTesting() {
+		c.restartNginx()
+	}
+
+	return nil
+}
+
+func (c *Config) InitNginx() error {
+	if _, err := os.Stat(c.nginxConfigDir); os.IsNotExist(err) {
+		err := os.MkdirAll(c.nginxConfigDir, 0755)
+
+		if err != nil {
+			return err
+		}
+	}
 
 	return nil
 }

@@ -13,7 +13,7 @@ import (
 type Commands map[string]string
 
 func (s *Spinup) getCommandsFilePath() string {
-	return path.Join(s.configDirPath, config.CommandsFileName)
+	return path.Join(s.config.GetConfigDir(), config.CommandsFileName)
 }
 
 func (s *Spinup) getCommands() (Commands, error) {
@@ -70,7 +70,9 @@ func (s *Spinup) addCommand(name string, command string) {
 		return
 	}
 
-	cli.InfoPrintf("Added command '%s': %s", name, command)
+	if !s.config.IsTesting() {
+		cli.InfoPrintf("Added command '%s': %s", name, command)
+	}
 }
 
 func (s *Spinup) addCommandInteractive() {
@@ -101,7 +103,9 @@ func (s *Spinup) removeCommand(name string) {
 		return
 	}
 
-	cli.InfoPrintf("Removed command '%s'", name)
+	if !s.config.IsTesting() {
+		cli.InfoPrintf("Removed command '%s'", name)
+	}
 }
 
 func (s *Spinup) removeCommandInteractive() {
