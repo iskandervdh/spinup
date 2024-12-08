@@ -20,7 +20,7 @@ func (s *Spinup) getCommands() (Commands, error) {
 	commandsFileContent, err := os.ReadFile(s.getCommandsFilePath())
 
 	if err != nil {
-		fmt.Println("Error reading commands.json file:", err)
+		cli.ErrorPrint("Error reading commands.json file:", err)
 		return nil, err
 	}
 
@@ -28,7 +28,7 @@ func (s *Spinup) getCommands() (Commands, error) {
 	err = json.Unmarshal(commandsFileContent, &commands)
 
 	if err != nil {
-		fmt.Println("Error parsing commands.json file:", err)
+		cli.ErrorPrint("Error parsing commands.json file:", err)
 		return nil, err
 	}
 
@@ -49,7 +49,7 @@ func (s *Spinup) addCommand(name string, command string) {
 	// Check if already exists
 	for commandName := range s.commands {
 		if commandName == name {
-			fmt.Printf("Command '%s' already exists\n", name)
+			cli.ErrorPrintf("Command '%s' already exists", name)
 			return
 		}
 	}
@@ -59,18 +59,18 @@ func (s *Spinup) addCommand(name string, command string) {
 	updatedCommands, err := json.MarshalIndent(s.commands, "", "  ")
 
 	if err != nil {
-		fmt.Println("Error encoding projects to json:", err)
+		cli.ErrorPrint("Error encoding projects to json:", err)
 		return
 	}
 
 	err = os.WriteFile(s.getCommandsFilePath(), updatedCommands, 0644)
 
 	if err != nil {
-		fmt.Println("Error writing commands to file:", err)
+		cli.ErrorPrint("Error writing commands to file:", err)
 		return
 	}
 
-	fmt.Printf("Added command '%s': %s\n", name, command)
+	cli.InfoPrintf("Added command '%s': %s", name, command)
 }
 
 func (s *Spinup) addCommandInteractive() {
@@ -90,25 +90,25 @@ func (s *Spinup) removeCommand(name string) {
 	updatedCommands, err := json.MarshalIndent(s.commands, "", "  ")
 
 	if err != nil {
-		fmt.Println("Error encoding commands to json:", err)
+		cli.ErrorPrint("Error encoding commands to json:", err)
 		return
 	}
 
 	err = os.WriteFile(s.getCommandsFilePath(), updatedCommands, 0644)
 
 	if err != nil {
-		fmt.Println("Error writing commands to file:", err)
+		cli.ErrorPrint("Error writing commands to file:", err)
 		return
 	}
 
-	fmt.Printf("Removed command '%s'\n", name)
+	cli.InfoPrintf("Removed command '%s'", name)
 }
 
 func (s *Spinup) removeCommandInteractive() {
 	name := cli.Selection("Select command to remove", s.getCommandNames())
 
 	if name == "" {
-		fmt.Println("No command selected")
+		cli.ErrorPrint("No command selected")
 		return
 	}
 

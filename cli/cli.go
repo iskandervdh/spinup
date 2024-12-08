@@ -40,7 +40,7 @@ func Question(prompt string, options []string) []string {
 	m, err := p.Run()
 
 	if err != nil {
-		fmt.Printf("Error: %v", err)
+		ErrorPrint(err)
 		os.Exit(1)
 	}
 
@@ -72,7 +72,7 @@ func Selection(prompt string, options []string) string {
 	m, err := p.Run()
 
 	if err != nil {
-		fmt.Printf("Error: %v", err)
+		ErrorPrint(err)
 		os.Exit(1)
 	}
 
@@ -97,7 +97,7 @@ func Input(prompt string) string {
 	m, err := p.Run()
 
 	if err != nil {
-		fmt.Printf("Error: %v", err)
+		ErrorPrint(err)
 		os.Exit(1)
 	}
 
@@ -122,7 +122,7 @@ func Confirm(prompt string) bool {
 	m, err := p.Run()
 
 	if err != nil {
-		fmt.Printf("Error: %v", err)
+		ErrorPrint(err)
 		os.Exit(1)
 	}
 
@@ -156,6 +156,6 @@ func Loading(loadingText string, f func() tea.Msg) {
 	}()
 
 	if _, err := p.Run(); err != nil {
-		fmt.Printf("Error starting program: %v\n", err)
+		ErrorPrintf("Error starting program: %v", err)
 	}
 }

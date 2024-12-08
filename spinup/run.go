@@ -33,11 +33,13 @@ func (s *Spinup) commandTemplate(command string, project Project) string {
 
 func (s *Spinup) prefixOutput(prefix string, reader io.Reader, writer io.Writer) {
 	scanner := bufio.NewScanner(reader)
+
 	for scanner.Scan() {
 		fmt.Fprintf(writer, "%s %s\n", prefix, scanner.Text())
 	}
+
 	if err := scanner.Err(); err != nil {
-		fmt.Println("Error reading output:", err)
+		cli.ErrorPrint("Error reading output:", err)
 	}
 }
 
@@ -51,14 +53,14 @@ func (s *Spinup) runCommand(wg *sync.WaitGroup, project Project, command command
 	stdout, err := cmd.StdoutPipe()
 
 	if err != nil {
-		fmt.Println("Error creating StdoutPipe:", err)
+		cli.ErrorPrint("Error creating StdoutPipe:", err)
 		return
 	}
 
 	stderr, err := cmd.StderrPipe()
 
 	if err != nil {
-		fmt.Println("Error creating StderrPipe:", err)
+		cli.ErrorPrint("Error creating StderrPipe:", err)
 		return
 	}
 
@@ -106,7 +108,7 @@ func (s *Spinup) run(project Project, projectName string) {
 		command, err := s.getCommand(commandName)
 
 		if err != nil {
-			fmt.Printf("Error getting command '%s': %s\n", commandName, err)
+			cli.ErrorPrintf("Error getting command '%s': %s\n", commandName, err)
 			os.Exit(1)
 		}
 
@@ -119,7 +121,7 @@ func (s *Spinup) run(project Project, projectName string) {
 	}
 
 	if len(commands) == 0 {
-		fmt.Println("No commands found")
+		cli.ErrorPrint("No commands found")
 		os.Exit(1)
 	}
 
@@ -137,7 +139,7 @@ func (s *Spinup) run(project Project, projectName string) {
 
 func (s *Spinup) tryToRun(name string) bool {
 	if name == "" {
-		fmt.Println("No name provided")
+		cli.ErrorPrint("No name provided")
 		os.Exit(1)
 	}
 

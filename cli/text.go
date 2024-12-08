@@ -6,7 +6,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-func InfoText(text string) string {
+func infoText(text string) string {
 	return fmt.Sprintln(
 		lipgloss.NewStyle().
 			Foreground(lipgloss.Color("#5DADE2")).
@@ -14,7 +14,7 @@ func InfoText(text string) string {
 	)
 }
 
-func SuccessText(text string) string {
+func successText(text string) string {
 	return fmt.Sprintln(
 		lipgloss.NewStyle().
 			Foreground(lipgloss.Color("#A7E08F")).
@@ -22,7 +22,15 @@ func SuccessText(text string) string {
 	)
 }
 
-func ErrorText(text string) string {
+func warningText(text string) string {
+	return fmt.Sprintln(
+		lipgloss.NewStyle().
+			Foreground(lipgloss.Color("#FFD700")).
+			Render(text),
+	)
+}
+
+func errorText(text string) string {
 	return fmt.Sprintln(
 		lipgloss.NewStyle().
 			Foreground(lipgloss.Color("#D90909")).
@@ -31,25 +39,33 @@ func ErrorText(text string) string {
 }
 
 func InfoPrint(a ...any) {
-	fmt.Print(InfoText(fmt.Sprint(a...)))
+	fmt.Print(infoText(fmt.Sprint(a...)))
 }
 
 func InfoPrintf(format string, a ...any) {
-	fmt.Print(InfoText(fmt.Sprintf(format, a...)))
+	fmt.Print(infoText(fmt.Sprintf(format, a...)))
 }
 
 func SuccessPrint(a ...any) {
-	fmt.Print(SuccessText(fmt.Sprint(a...)))
+	fmt.Print(successText(fmt.Sprint(a...)))
 }
 
 func SuccessPrintf(format string, a ...any) {
-	fmt.Print(SuccessText(fmt.Sprintf(format, a...)))
+	fmt.Print(successText(fmt.Sprintf(format, a...)))
+}
+
+func WarningPrint(a ...any) {
+	fmt.Print(warningText(fmt.Sprint(a...)))
+}
+
+func WarningPrintf(format string, a ...any) {
+	fmt.Print(warningText(fmt.Sprintf(format, a...)))
 }
 
 func ErrorPrint(a ...any) {
-	fmt.Print(ErrorText(fmt.Sprint(a...)))
+	fmt.Print(errorText(fmt.Sprint(a...)))
 }
 
 func ErrorPrintf(format string, a ...any) {
-	fmt.Print(ErrorText(fmt.Sprintf(format, a...)))
+	fmt.Print(errorText(fmt.Sprintf(format, a...)))
 }

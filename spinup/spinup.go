@@ -47,7 +47,7 @@ func (s *Spinup) getCommandsConfig() {
 	commands, err := s.getCommands()
 
 	if err != nil {
-		fmt.Println("Error getting commands. Did you run init?")
+		cli.ErrorPrint("Error getting commands. Did you run init?")
 		os.Exit(1)
 	}
 
@@ -58,7 +58,7 @@ func (s *Spinup) getProjectsConfig() {
 	projects, err := s.getProjects()
 
 	if err != nil {
-		fmt.Println("Error getting projects. Did you run init?")
+		cli.ErrorPrint("Error getting projects. Did you run init?")
 		os.Exit(1)
 	}
 

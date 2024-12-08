@@ -1,6 +1,10 @@
 package config
 
-import _ "embed"
+import (
+	_ "embed"
+
+	"github.com/iskandervdh/spinup/cli"
+)
 
 var ProgramName = "spinup"
 

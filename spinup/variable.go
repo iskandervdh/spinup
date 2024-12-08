@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/iskandervdh/spinup/cli"
 	"github.com/iskandervdh/spinup/config"
 )
 
@@ -18,14 +19,14 @@ func (s *Spinup) addVariable(name string, key string, value string) {
 	exists, project := s.projectExists(name)
 
 	if !exists {
-		fmt.Printf("Project '%s' does not exist\n", name)
+		cli.ErrorPrintf("Project '%s' does not exist\n", name)
 		return
 	}
 
 	// Check if the variable is already defined
 	for variableKey := range project.Variables {
 		if variableKey == key {
-			fmt.Printf("Variable with name '%s' already exists.\n", name)
+			cli.ErrorPrintf("Variable with name '%s' already exists.\n", name)
 			return
 		}
 	}
@@ -38,18 +39,18 @@ func (s *Spinup) addVariable(name string, key string, value string) {
 	updatedVariables, err := json.MarshalIndent(updatedProjects, "", "  ")
 
 	if err != nil {
-		fmt.Println("Error encoding projects to json:", err)
+		cli.ErrorPrint("Error encoding projects to json:", err)
 		return
 	}
 
 	err = os.WriteFile(s.getProjectsFilePath(), updatedVariables, 0644)
 
 	if err != nil {
-		fmt.Println("Error writing projects to file:", err)
+		cli.ErrorPrint("Error writing projects to file:", err)
 		return
 	}
 
-	fmt.Printf("Added variable '%s' to project '%s' with value '%s'\n", key, name, value)
+	cli.InfoPrintf("Added variable '%s' to project '%s' with value '%s'\n", key, name, value)
 }
 
 func (s *Spinup) removeVariable(name string, key string) {
@@ -60,12 +61,12 @@ func (s *Spinup) removeVariable(name string, key string) {
 	exists, project := s.projectExists(name)
 
 	if !exists {
-		fmt.Printf("Project '%s' does not exist, nothing to remove\n", name)
+		cli.ErrorPrintf("Project '%s' does not exist, nothing to remove\n", name)
 		return
 	}
 
 	if project.Variables[key] == "" {
-		fmt.Printf("Variable '%s' does not exist\n", key)
+		cli.ErrorPrintf("Variable '%s' does not exist\n", key)
 		return
 	}
 
@@ -86,18 +87,18 @@ func (s *Spinup) removeVariable(name string, key string) {
 	updatedProjectConfig, err := json.MarshalIndent(updatedProjects, "", "  ")
 
 	if err != nil {
-		fmt.Println("Error encoding projects to json:", err)
+		cli.ErrorPrint("Error encoding projects to json:", err)
 		return
 	}
 
 	err = os.WriteFile(s.getProjectsFilePath(), updatedProjectConfig, 0644)
 
 	if err != nil {
-		fmt.Println("Error writing projects to file:", err)
+		cli.ErrorPrint("Error writing projects to file:", err)
 		return
 	}
 
-	fmt.Printf("Removed variable '%s' from project '%s'\n", key, name)
+	cli.InfoPrintf("Removed variable '%s' from project '%s'\n", key, name)
 }
 
 func (s *Spinup) listVariables(name string) {
@@ -108,7 +109,7 @@ func (s *Spinup) listVariables(name string) {
 	exists, project := s.projectExists(name)
 
 	if !exists {
-		fmt.Printf("Project '%s' does not exist\n", name)
+		cli.ErrorPrintf("Project '%s' does not exist\n", name)
 		return
 	}
 

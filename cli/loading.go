@@ -60,11 +60,11 @@ func (m loading) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m loading) View() string {
 	if m.errorText != "" {
-		return ErrorText(m.errorText)
+		return errorText(m.errorText)
 	}
 
 	if m.done {
-		return SuccessText(m.doneText)
+		return successText(m.doneText)
 	}
 
 	return fmt.Sprintf("\n    %s %s\n", m.spinner.View(), m.loadingText)
