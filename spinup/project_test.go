@@ -1,7 +1,6 @@
 package spinup
 
 import (
-	"fmt"
 	"os"
 	"testing"
 
@@ -171,6 +170,4 @@ func TestRemoveProject(t *testing.T) {
 	}
 
 	defer hostsFile.Close()
-
-	fmt.Println("qweqwe", hostsFilePath)
 }

@@ -19,4 +19,5 @@ jobs:
       run: go build -o build -v
 
     - name: Test
-      run: go test -v ./...
+      # Run tests in a pseudo-terminal to prevent bubbletea from panicking
+      run: script -q -c "go test -v ./..." /dev/null
