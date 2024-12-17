@@ -1,4 +1,4 @@
-package spinup
+package core
 
 import (
 	"bufio"
@@ -17,7 +17,7 @@ type commandWithName struct {
 	name    string
 }
 
-func (s *Spinup) commandTemplate(command string, project Project) string {
+func (s *Core) commandTemplate(command string, project Project) string {
 	// Replace placeholders in command with project values
 	command = strings.ReplaceAll(command, "{{port}}", fmt.Sprintf("%d", project.Port))
 	command = strings.ReplaceAll(command, "{{domain}}", project.Domain)
@@ -29,7 +29,7 @@ func (s *Spinup) commandTemplate(command string, project Project) string {
 	return command
 }
 
-func (s *Spinup) prefixOutput(prefix string, reader io.Reader, writer io.Writer) {
+func (s *Core) prefixOutput(prefix string, reader io.Reader, writer io.Writer) {
 	scanner := bufio.NewScanner(reader)
 
 	for scanner.Scan() {
@@ -41,7 +41,7 @@ func (s *Spinup) prefixOutput(prefix string, reader io.Reader, writer io.Writer)
 	}
 }
 
-func (s *Spinup) runCommand(wg *sync.WaitGroup, project Project, command commandWithName) {
+func (s *Core) runCommand(wg *sync.WaitGroup, project Project, command commandWithName) {
 	defer wg.Done()
 
 	cmd := exec.Command(strings.Split(command.command, " ")[0], strings.Split(command.command, " ")[1:]...)
@@ -90,7 +90,7 @@ func (s *Spinup) runCommand(wg *sync.WaitGroup, project Project, command command
 	}
 }
 
-func (s *Spinup) run(project Project, projectName string) {
+func (s *Core) run(project Project, projectName string) {
 	var wg sync.WaitGroup
 	wg.Add(len(project.Commands))
 
@@ -137,7 +137,7 @@ func (s *Spinup) run(project Project, projectName string) {
 	wg.Wait()
 }
 
-func (s *Spinup) tryToRun(name string) bool {
+func (s *Core) tryToRun(name string) bool {
 	if name == "" {
 		s.cli.ErrorPrint("No name provided")
 		os.Exit(1)

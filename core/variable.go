@@ -1,4 +1,4 @@
-package spinup
+package core
 
 import (
 	"encoding/json"
@@ -10,7 +10,7 @@ import (
 
 type Variables map[string]string
 
-func (s *Spinup) addVariable(name string, key string, value string) error {
+func (s *Core) addVariable(name string, key string, value string) error {
 	if s.projects == nil {
 		return fmt.Errorf("no projects found")
 	}
@@ -52,7 +52,7 @@ func (s *Spinup) addVariable(name string, key string, value string) error {
 	return nil
 }
 
-func (s *Spinup) removeVariable(name string, key string) error {
+func (s *Core) removeVariable(name string, key string) error {
 	if s.projects == nil {
 		return fmt.Errorf("no projects found")
 	}
@@ -100,7 +100,7 @@ func (s *Spinup) removeVariable(name string, key string) error {
 	return nil
 }
 
-func (s *Spinup) listVariables(name string) error {
+func (s *Core) listVariables(name string) error {
 	if s.projects == nil {
 		return fmt.Errorf("no projects found")
 	}
@@ -120,7 +120,7 @@ func (s *Spinup) listVariables(name string) error {
 	return nil
 }
 
-func (s *Spinup) handleVariable() {
+func (s *Core) handleVariable() {
 	if len(os.Args) < 3 {
 		fmt.Printf("Usage: %s variable <add|remove|list> [args...]\n", config.ProgramName)
 		return

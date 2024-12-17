@@ -1,4 +1,4 @@
-package spinup
+package core
 
 import (
 	"fmt"
@@ -10,14 +10,14 @@ import (
 	"github.com/iskandervdh/spinup/config"
 )
 
-type Spinup struct {
+type Core struct {
 	config   *config.Config
 	cli      *cli.CLI
 	commands Commands
 	projects Projects
 }
 
-func New(options ...func(*Spinup)) *Spinup {
+func New(options ...func(*Core)) *Core {
 	config, err := config.New()
 	cli := cli.New()
 
@@ -26,7 +26,7 @@ func New(options ...func(*Spinup)) *Spinup {
 		os.Exit(1)
 	}
 
-	s := &Spinup{
+	s := &Core{
 		config: config,
 		cli:    cli,
 	}
@@ -38,23 +38,23 @@ func New(options ...func(*Spinup)) *Spinup {
 	return s
 }
 
-func WithConfig(cfg *config.Config) func(*Spinup) {
-	return func(s *Spinup) {
+func WithConfig(cfg *config.Config) func(*Core) {
+	return func(s *Core) {
 		s.config = cfg
 	}
 }
 
-func WithCLI(cli *cli.CLI) func(*Spinup) {
-	return func(s *Spinup) {
+func WithCLI(cli *cli.CLI) func(*Core) {
+	return func(s *Core) {
 		s.cli = cli
 	}
 }
 
-func (s *Spinup) getConfig() *config.Config {
+func (s *Core) getConfig() *config.Config {
 	return s.config
 }
 
-func (s *Spinup) requireSudo() {
+func (s *Core) requireSudo() {
 	if s.config.IsTesting() {
 		return
 	}
@@ -67,7 +67,7 @@ func (s *Spinup) requireSudo() {
 	}
 }
 
-func (s *Spinup) getCommandsConfig() {
+func (s *Core) getCommandsConfig() {
 	commands, err := s.getCommands()
 
 	if err != nil {
@@ -78,7 +78,7 @@ func (s *Spinup) getCommandsConfig() {
 	s.commands = commands
 }
 
-func (s *Spinup) getProjectsConfig() {
+func (s *Core) getProjectsConfig() {
 	projects, err := s.getProjects()
 
 	if err != nil {
@@ -89,7 +89,7 @@ func (s *Spinup) getProjectsConfig() {
 	s.projects = projects
 }
 
-func (s *Spinup) getCommandNames() []string {
+func (s *Core) getCommandNames() []string {
 	if s.commands == nil {
 		s.getCommandsConfig()
 	}
@@ -103,7 +103,7 @@ func (s *Spinup) getCommandNames() []string {
 	return commandNames
 }
 
-func (s *Spinup) getProjectNames() []string {
+func (s *Core) getProjectNames() []string {
 	if s.projects == nil {
 		s.getProjectsConfig()
 	}
@@ -117,7 +117,7 @@ func (s *Spinup) getProjectNames() []string {
 	return projectNames
 }
 
-func (s *Spinup) getCommandsForProject(projectName string) []string {
+func (s *Core) getCommandsForProject(projectName string) []string {
 	if s.projects == nil {
 		s.getProjectsConfig()
 	}
@@ -131,7 +131,7 @@ func (s *Spinup) getCommandsForProject(projectName string) []string {
 	return project.Commands
 }
 
-func (s *Spinup) Handle() {
+func (s *Core) Handle() {
 	if len(os.Args) < 2 {
 		fmt.Printf("Usage: %s <command|project|run|init> [args...]\n", config.ProgramName)
 		return

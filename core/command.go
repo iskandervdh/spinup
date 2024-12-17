@@ -1,4 +1,4 @@
-package spinup
+package core
 
 import (
 	"encoding/json"
@@ -11,11 +11,11 @@ import (
 
 type Commands map[string]string
 
-func (s *Spinup) getCommandsFilePath() string {
+func (s *Core) getCommandsFilePath() string {
 	return path.Join(s.config.GetConfigDir(), config.CommandsFileName)
 }
 
-func (s *Spinup) getCommands() (Commands, error) {
+func (s *Core) getCommands() (Commands, error) {
 	commandsFileContent, err := os.ReadFile(s.getCommandsFilePath())
 
 	if err != nil {
@@ -34,7 +34,7 @@ func (s *Spinup) getCommands() (Commands, error) {
 	return commands, nil
 }
 
-func (s *Spinup) getCommand(name string) (string, error) {
+func (s *Core) getCommand(name string) (string, error) {
 	command, exists := s.commands[name]
 
 	if !exists {
@@ -44,7 +44,7 @@ func (s *Spinup) getCommand(name string) (string, error) {
 	return command, nil
 }
 
-func (s *Spinup) addCommand(name string, command string) {
+func (s *Core) addCommand(name string, command string) {
 	// Check if already exists
 	for commandName := range s.commands {
 		if commandName == name {
@@ -74,14 +74,14 @@ func (s *Spinup) addCommand(name string, command string) {
 	}
 }
 
-func (s *Spinup) addCommandInteractive() {
+func (s *Core) addCommandInteractive() {
 	name := s.cli.Input("Enter command name:")
 	command := s.cli.Input("Enter command:")
 
 	s.addCommand(name, command)
 }
 
-func (s *Spinup) removeCommand(name string) {
+func (s *Core) removeCommand(name string) {
 	if s.commands == nil {
 		return
 	}
@@ -107,7 +107,7 @@ func (s *Spinup) removeCommand(name string) {
 	}
 }
 
-func (s *Spinup) removeCommandInteractive() {
+func (s *Core) removeCommandInteractive() {
 	name, err, exited := s.cli.Selection("Select command to remove", s.getCommandNames())
 
 	if err != nil {
@@ -131,7 +131,7 @@ func (s *Spinup) removeCommandInteractive() {
 	s.removeCommand(name)
 }
 
-func (s *Spinup) listCommands() {
+func (s *Core) listCommands() {
 	if s.commands == nil {
 		return
 	}
@@ -143,7 +143,7 @@ func (s *Spinup) listCommands() {
 	}
 }
 
-func (s *Spinup) handleCommand() {
+func (s *Core) handleCommand() {
 	if len(os.Args) < 3 {
 		fmt.Println("Usage: spinup command <add|remove|list> [args...]")
 		return

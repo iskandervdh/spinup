@@ -1,4 +1,4 @@
-package spinup
+package core
 
 import (
 	"os"
@@ -13,7 +13,7 @@ func TestingSpinupConfigDir(testName string) string {
 	return path.Join(os.TempDir(), config.ProgramName, testName)
 }
 
-func TestingSpinup(testName string, _cli *cli.CLI) *Spinup {
+func TestingSpinup(testName string, _cli *cli.CLI) *Core {
 	// Remove old tmp config dir
 	testingConfigDir := TestingSpinupConfigDir(testName)
 	err := os.RemoveAll(testingConfigDir)

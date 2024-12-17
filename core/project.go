@@ -1,4 +1,4 @@
-package spinup
+package core
 
 import (
 	"encoding/json"
@@ -23,11 +23,11 @@ type Project struct {
 
 type Projects map[string]Project
 
-func (s *Spinup) getProjectsFilePath() string {
+func (s *Core) getProjectsFilePath() string {
 	return path.Join(s.config.GetConfigDir(), config.ProjectsFileName)
 }
 
-func (s *Spinup) getProjects() (Projects, error) {
+func (s *Core) getProjects() (Projects, error) {
 	projectsFileContent, err := os.ReadFile(s.getProjectsFilePath())
 
 	if err != nil {
@@ -46,7 +46,7 @@ func (s *Spinup) getProjects() (Projects, error) {
 	return projects, nil
 }
 
-func (s *Spinup) projectExists(name string) (bool, Project) {
+func (s *Core) projectExists(name string) (bool, Project) {
 	if s.projects == nil {
 		return false, Project{}
 	}
@@ -56,7 +56,7 @@ func (s *Spinup) projectExists(name string) (bool, Project) {
 	return exists, project
 }
 
-func (s *Spinup) _addProject(name string, domain string, port int, commandNames []string) tea.Msg {
+func (s *Core) _addProject(name string, domain string, port int, commandNames []string) tea.Msg {
 	// Check if commands exist
 	for _, commandName := range commandNames {
 		_, exists := s.commands[commandName]
@@ -121,7 +121,7 @@ func (s *Spinup) _addProject(name string, domain string, port int, commandNames 
 	return cli.DoneMsg(fmt.Sprintf("Added project '%s' with domain '%s' and port %d", name, domain, port))
 }
 
-func (s *Spinup) addProject(name string, domain string, port int, commandNames []string) {
+func (s *Core) addProject(name string, domain string, port int, commandNames []string) {
 	s.requireSudo()
 
 	if s.projects == nil {
@@ -135,7 +135,7 @@ func (s *Spinup) addProject(name string, domain string, port int, commandNames [
 	)
 }
 
-func (s *Spinup) addProjectInteractive() {
+func (s *Core) addProjectInteractive() {
 	name := s.cli.Input("Project name:")
 	domain := s.cli.Input("Domain:")
 	port := s.cli.Input("Port:")
@@ -161,7 +161,7 @@ func (s *Spinup) addProjectInteractive() {
 	s.addProject(name, domain, portInt, selectedCommands)
 }
 
-func (s *Spinup) _removeProject(name string) tea.Msg {
+func (s *Core) _removeProject(name string) tea.Msg {
 	exists, _ := s.projectExists(name)
 
 	if !exists {
@@ -208,7 +208,7 @@ func (s *Spinup) _removeProject(name string) tea.Msg {
 	return cli.DoneMsg(fmt.Sprintf("Removed project '%s'", name))
 }
 
-func (s *Spinup) removeProject(name string) {
+func (s *Core) removeProject(name string) {
 	s.requireSudo()
 
 	if s.projects == nil {
@@ -222,7 +222,7 @@ func (s *Spinup) removeProject(name string) {
 	)
 }
 
-func (s *Spinup) removeProjectInteractive() {
+func (s *Core) removeProjectInteractive() {
 	name, err, exited := s.cli.Selection("What project do you want to remove?", s.getProjectNames())
 
 	if err != nil {
@@ -246,7 +246,7 @@ func (s *Spinup) removeProjectInteractive() {
 	s.removeProject(name)
 }
 
-func (s *Spinup) listProjects() {
+func (s *Core) listProjects() {
 	if s.projects == nil {
 		return
 	}
@@ -263,7 +263,7 @@ func (s *Spinup) listProjects() {
 	}
 }
 
-func (s *Spinup) addCommandToProject(projectName string, commandName string) {
+func (s *Core) addCommandToProject(projectName string, commandName string) {
 	exists, project := s.projectExists(projectName)
 
 	if !exists {
@@ -308,7 +308,7 @@ func (s *Spinup) addCommandToProject(projectName string, commandName string) {
 	}
 }
 
-func (s *Spinup) removeCommandFromProject(projectName string, commandName string) {
+func (s *Core) removeCommandFromProject(projectName string, commandName string) {
 	exists, project := s.projectExists(projectName)
 
 	if !exists {
@@ -345,7 +345,7 @@ func (s *Spinup) removeCommandFromProject(projectName string, commandName string
 	}
 }
 
-func (s *Spinup) setProjectDir(projectName string, dir *string) {
+func (s *Core) setProjectDir(projectName string, dir *string) {
 	exists, project := s.projectExists(projectName)
 
 	if !exists {
@@ -400,7 +400,7 @@ func (s *Spinup) setProjectDir(projectName string, dir *string) {
 	}
 }
 
-func (s *Spinup) getProjectDir(projectName string) {
+func (s *Core) getProjectDir(projectName string) {
 	exists, project := s.projectExists(projectName)
 
 	if !exists {
@@ -416,7 +416,7 @@ func (s *Spinup) getProjectDir(projectName string) {
 	fmt.Println(*project.Dir)
 }
 
-func (s *Spinup) handleProject() {
+func (s *Core) handleProject() {
 	if len(os.Args) < 3 {
 		s.cli.ErrorPrintf("Usage: %s project <add|remove|list> [args...]", config.ProgramName)
 		return

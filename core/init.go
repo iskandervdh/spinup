@@ -1,4 +1,4 @@
-package spinup
+package core
 
 import (
 	"encoding/json"
@@ -8,7 +8,7 @@ import (
 	"github.com/iskandervdh/spinup/config"
 )
 
-func (s *Spinup) createConfigDir() error {
+func (s *Core) createConfigDir() error {
 	// Create config directory if it doesn't exist
 	err := os.MkdirAll(s.config.GetConfigDir(), 0755)
 
@@ -19,7 +19,7 @@ func (s *Spinup) createConfigDir() error {
 	return nil
 }
 
-func (s *Spinup) createProjectsConfigFile() error {
+func (s *Core) createProjectsConfigFile() error {
 	projectFilePath := s.getProjectsFilePath()
 
 	if _, err := os.Stat(projectFilePath); err == nil {
@@ -53,7 +53,7 @@ func (s *Spinup) createProjectsConfigFile() error {
 	return nil
 }
 
-func (s *Spinup) createCommandsConfigFile() error {
+func (s *Core) createCommandsConfigFile() error {
 	commandsFilePath := s.getCommandsFilePath()
 
 	if _, err := os.Stat(commandsFilePath); err == nil {
@@ -87,7 +87,7 @@ func (s *Spinup) createCommandsConfigFile() error {
 	return nil
 }
 
-func (s *Spinup) init() {
+func (s *Core) init() {
 	err := s.createConfigDir()
 
 	if err != nil {

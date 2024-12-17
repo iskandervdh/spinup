@@ -1,4 +1,4 @@
-package spinup
+package core
 
 import (
 	"testing"
