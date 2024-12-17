@@ -5,7 +5,7 @@ import (
 )
 
 func TestRun(t *testing.T) {
-	s := TestingSpinup("run")
+	s := TestingSpinup("run", nil)
 
 	s.getCommandsConfig()
 	s.getProjectsConfig()

@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"strings"
 
@@ -16,6 +17,11 @@ type errMsg struct {
 	text string
 }
 
+type CLI struct {
+	in  io.Reader
+	out io.Writer
+}
+
 func DoneMsg(text string) doneMsg {
 	return doneMsg{text: text}
 }
@@ -24,11 +30,36 @@ func ErrMsg(text string) errMsg {
 	return errMsg{text: text}
 }
 
-func ClearTerminal() {
-	fmt.Print("\033[H\033[2J")
+func New(options ...func(*CLI)) *CLI {
+	c := &CLI{
+		in:  os.Stdin,
+		out: os.Stdout,
+	}
+
+	for _, option := range options {
+		option(c)
+	}
+
+	return c
 }
 
-func Question(prompt string, options []string) []string {
+func WithIn(in io.Reader) func(*CLI) {
+	return func(c *CLI) {
+		c.in = in
+	}
+}
+
+func WithOut(out io.Writer) func(*CLI) {
+	return func(c *CLI) {
+		c.out = out
+	}
+}
+
+func (c *CLI) ClearTerminal() {
+	fmt.Fprint(c.out, "\033[H\033[2J")
+}
+
+func (c *CLI) Question(prompt string, options []string) ([]string, error, bool) {
 	q := question{
 		prompt:   prompt,
 		options:  options,
@@ -36,18 +67,18 @@ func Question(prompt string, options []string) []string {
 		exited:   false,
 	}
 
-	p := tea.NewProgram(q)
+	p := tea.NewProgram(q, tea.WithInput(c.in), tea.WithOutput(c.out))
+
 	m, err := p.Run()
 
 	if err != nil {
-		ErrorPrint(err)
-		os.Exit(1)
+		return nil, err, false
 	}
 
 	r := m.(question)
 
 	if r.exited {
-		os.Exit(0)
+		return nil, nil, r.exited
 	}
 
 	selectedOptions := make([]string, 0, len(q.selected))
@@ -58,34 +89,33 @@ func Question(prompt string, options []string) []string {
 		}
 	}
 
-	return selectedOptions
+	return selectedOptions, nil, r.exited
 }
 
-func Selection(prompt string, options []string) string {
+func (c *CLI) Selection(prompt string, options []string) (string, error, bool) {
 	s := selection{
 		prompt:  prompt,
 		options: options,
 		exited:  false,
 	}
 
-	p := tea.NewProgram(s)
+	p := tea.NewProgram(s, tea.WithInput(c.in), tea.WithOutput(c.out))
 	m, err := p.Run()
 
 	if err != nil {
-		ErrorPrint(err)
-		os.Exit(1)
+		return "", err, false
 	}
 
 	r := m.(selection)
 
 	if r.exited {
-		os.Exit(0)
+		return "", nil, r.exited
 	}
 
-	return r.options[r.cursor]
+	return r.options[r.cursor], nil, r.exited
 }
 
-func Input(prompt string) string {
+func (c *CLI) Input(prompt string) string {
 	i := input{
 		prompt: prompt,
 		value:  "",
@@ -93,11 +123,11 @@ func Input(prompt string) string {
 		cursor: newCursor(),
 	}
 
-	p := tea.NewProgram(i)
+	p := tea.NewProgram(i, tea.WithInput(c.in), tea.WithOutput(c.out))
 	m, err := p.Run()
 
 	if err != nil {
-		ErrorPrint(err)
+		c.ErrorPrint(err)
 		os.Exit(1)
 	}
 
@@ -110,19 +140,19 @@ func Input(prompt string) string {
 	return r.value
 }
 
-func Confirm(prompt string) bool {
-	c := confirm{
+func (c *CLI) Confirm(prompt string) bool {
+	conf := confirm{
 		prompt: prompt,
 		value:  "",
 		exited: false,
 		cursor: newCursor(),
 	}
 
-	p := tea.NewProgram(c)
+	p := tea.NewProgram(conf, tea.WithInput(c.in), tea.WithOutput(c.out))
 	m, err := p.Run()
 
 	if err != nil {
-		ErrorPrint(err)
+		c.ErrorPrint(err)
 		os.Exit(1)
 	}
 
@@ -140,22 +170,29 @@ func Confirm(prompt string) bool {
 	return false
 }
 
-func Loading(loadingText string, f func() tea.Msg) {
+func (c *CLI) Loading(loadingText string, f func() tea.Msg) *loading {
 	s := newLoadingSpinner()
 
-	m := loading{
+	l := loading{
 		spinner:     s,
 		loadingText: loadingText,
 	}
 
-	p := tea.NewProgram(m)
+	p := tea.NewProgram(l)
 
 	go func() {
 		msg := f()
 		p.Send(msg)
 	}()
 
-	if _, err := p.Run(); err != nil {
-		ErrorPrintf("Error starting program: %v", err)
+	m, err := p.Run()
+
+	if err != nil {
+		c.ErrorPrintf("Error starting program: %v", err)
+		return nil
 	}
+
+	r := m.(loading)
+
+	return &r
 }

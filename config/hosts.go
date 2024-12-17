@@ -12,13 +12,23 @@ import (
 var HostsBeginMarker = fmt.Sprintf("### BEGIN_%s_HOSTS", strings.ToUpper(ProgramName))
 var HostsEndMarker = fmt.Sprintf("\n### END_%s_HOSTS", strings.ToUpper(ProgramName))
 
-func (c *Config) backupHosts() {
+func (c *Config) backupHosts() error {
 	// Create a directory to store the backups if it doesn't exist
-	c.withSudo("mkdir", "-p", c.hostsBackupDir).Run()
+	err := c.withSudo("mkdir", "-p", c.hostsBackupDir).Run()
+
+	if err != nil {
+		return err
+	}
 
 	// Backup the hosts file with a timestamp
 	fileName := fmt.Sprintf("%s/hosts_%s.bak", c.hostsBackupDir, time.Now().Format("2006-01-02_15:04:05"))
-	c.withSudo("cp", c.hostsFile, fileName).Run()
+	err = c.withSudo("cp", c.hostsFile, fileName).Run()
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (c *Config) getHostsContent() (string, int, int, error) {
@@ -41,6 +51,10 @@ func (c *Config) getHostsContent() (string, int, int, error) {
 }
 
 func (c *Config) AddHost(domain string) error {
+	if domain == "" {
+		return fmt.Errorf("domain is empty")
+	}
+
 	hostsContent, beginIndex, endIndex, err := c.getHostsContent()
 
 	if err != nil {
@@ -49,13 +63,23 @@ func (c *Config) AddHost(domain string) error {
 
 	customHosts := hostsContent[beginIndex+len(HostsBeginMarker) : endIndex]
 
+	// Check if host already exists
+	if strings.Contains(customHosts, fmt.Sprintf("\n127.0.0.1\t%s", domain)) {
+		return fmt.Errorf("domain %s already exists", domain)
+	}
+
 	// Add domain to hosts file
 	customHosts += fmt.Sprintf("\n127.0.0.1\t%s", domain)
 
 	// Save hosts file
 	newHostsContent := hostsContent[:beginIndex+len(HostsBeginMarker)] + customHosts + hostsContent[endIndex:]
 
-	c.backupHosts()
+	err = c.backupHosts()
+
+	if err != nil {
+		return err
+	}
+
 	saveNewHosts := c.withSudo("tee", c.hostsFile)
 	saveNewHosts.Stdin = strings.NewReader(newHostsContent)
 
@@ -100,14 +124,32 @@ func (c *Config) RemoveHost(domain string) error {
 	return nil
 }
 
-func (c *Config) InitHosts() error {
-	// Create hosts file if it doesn't exist
-	if _, err := os.Stat(c.hostsFile); os.IsNotExist(err) {
-		_, err := os.Create(c.hostsFile)
+func (c *Config) InitHosts(cli *cli.CLI) error {
+	// Check if hosts file exists
+	fileInfo, err := os.Stat(c.hostsFile)
 
-		if err != nil {
+	// Create hosts file if it doesn't exist
+	if err != nil {
+		if os.IsNotExist(err) {
+			_, err := os.Create(c.hostsFile)
+
+			if err != nil {
+				return err
+			}
+
+			// Check if hosts file was created
+			fileInfo, err = os.Stat(c.hostsFile)
+
+			if err != nil {
+				return err
+			}
+		} else {
 			return err
 		}
+	}
+
+	if fileInfo.IsDir() {
+		return fmt.Errorf("hosts file is a directory")
 	}
 
 	hostsContent, beginIndex, endIndex, _ := c.getHostsContent()
@@ -122,11 +164,16 @@ func (c *Config) InitHosts() error {
 	hostsContent += HostsBeginMarker
 	hostsContent += HostsEndMarker
 
-	c.backupHosts()
+	err = c.backupHosts()
+
+	if err != nil {
+		return err
+	}
+
 	saveNewHosts := c.withSudo("tee", c.hostsFile)
 	saveNewHosts.Stdin = strings.NewReader(hostsContent)
 
-	err := saveNewHosts.Run()
+	err = saveNewHosts.Run()
 
 	if err != nil {
 		return err

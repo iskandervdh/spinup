@@ -38,34 +38,34 @@ func errorText(text string) string {
 	)
 }
 
-func InfoPrint(a ...any) {
-	fmt.Print(infoText(fmt.Sprint(a...)))
+func (c *CLI) InfoPrint(a ...any) {
+	fmt.Fprint(c.out, infoText(fmt.Sprint(a...)))
 }
 
-func InfoPrintf(format string, a ...any) {
-	fmt.Print(infoText(fmt.Sprintf(format, a...)))
+func (c *CLI) InfoPrintf(format string, a ...any) {
+	fmt.Fprint(c.out, infoText(fmt.Sprintf(format, a...)))
 }
 
-func SuccessPrint(a ...any) {
-	fmt.Print(successText(fmt.Sprint(a...)))
+func (c *CLI) SuccessPrint(a ...any) {
+	fmt.Fprint(c.out, successText(fmt.Sprint(a...)))
 }
 
-func SuccessPrintf(format string, a ...any) {
-	fmt.Print(successText(fmt.Sprintf(format, a...)))
+func (c *CLI) SuccessPrintf(format string, a ...any) {
+	fmt.Fprint(c.out, successText(fmt.Sprintf(format, a...)))
 }
 
-func WarningPrint(a ...any) {
-	fmt.Print(warningText(fmt.Sprint(a...)))
+func (c *CLI) WarningPrint(a ...any) {
+	fmt.Fprint(c.out, warningText(fmt.Sprint(a...)))
 }
 
-func WarningPrintf(format string, a ...any) {
-	fmt.Print(warningText(fmt.Sprintf(format, a...)))
+func (c *CLI) WarningPrintf(format string, a ...any) {
+	fmt.Fprint(c.out, warningText(fmt.Sprintf(format, a...)))
 }
 
-func ErrorPrint(a ...any) {
-	fmt.Print(errorText(fmt.Sprint(a...)))
+func (c *CLI) ErrorPrint(a ...any) {
+	fmt.Fprint(c.out, errorText(fmt.Sprint(a...)))
 }
 
-func ErrorPrintf(format string, a ...any) {
-	fmt.Print(errorText(fmt.Sprintf(format, a...)))
+func (c *CLI) ErrorPrintf(format string, a ...any) {
+	fmt.Fprint(c.out, errorText(fmt.Sprintf(format, a...)))
 }

@@ -5,6 +5,7 @@ import (
 	"path"
 	"testing"
 
+	"github.com/iskandervdh/spinup/cli"
 	"github.com/iskandervdh/spinup/config"
 )
 
@@ -12,7 +13,7 @@ func TestingSpinupConfigDir(testName string) string {
 	return path.Join(os.TempDir(), config.ProgramName, testName)
 }
 
-func TestingSpinup(testName string) *Spinup {
+func TestingSpinup(testName string, _cli *cli.CLI) *Spinup {
 	// Remove old tmp config dir
 	testingConfigDir := TestingSpinupConfigDir(testName)
 	err := os.RemoveAll(testingConfigDir)
@@ -21,8 +22,12 @@ func TestingSpinup(testName string) *Spinup {
 		panic(err)
 	}
 
+	if _cli == nil {
+		_cli = cli.New()
+	}
+
 	c := config.NewTesting(testingConfigDir)
-	s := NewWithConfig(c)
+	s := New(WithConfig(c), WithCLI(_cli))
 	s.init()
 
 	return s
@@ -30,7 +35,7 @@ func TestingSpinup(testName string) *Spinup {
 
 func TestNew(t *testing.T) {
 	testName := "new"
-	s := TestingSpinup(testName)
+	s := TestingSpinup(testName, nil)
 
 	if s == nil {
 		t.Error("Expected Spinup instance, got nil")
@@ -53,7 +58,7 @@ func TestNew(t *testing.T) {
 }
 
 func TestInit(t *testing.T) {
-	s := TestingSpinup("init")
+	s := TestingSpinup("init", nil)
 
 	configDir := s.getConfig().GetConfigDir()
 
@@ -63,7 +68,7 @@ func TestInit(t *testing.T) {
 }
 
 func TestCommandsConfigInit(t *testing.T) {
-	s := TestingSpinup("commands_config_init")
+	s := TestingSpinup("commands_config_init", nil)
 
 	commandsFilePath := path.Join(s.getConfig().GetConfigDir(), config.CommandsFileName)
 
@@ -100,7 +105,7 @@ func TestCommandsConfigInit(t *testing.T) {
 }
 
 func TestProjectsConfigInit(t *testing.T) {
-	s := TestingSpinup("projects_config_init")
+	s := TestingSpinup("projects_config_init", nil)
 
 	projectsFilePath := path.Join(s.getConfig().GetConfigDir(), config.ProjectsFileName)
 
@@ -137,7 +142,7 @@ func TestProjectsConfigInit(t *testing.T) {
 }
 
 func TestHostsConfigInit(t *testing.T) {
-	s := TestingSpinup("hosts_config_init")
+	s := TestingSpinup("hosts_config_init", nil)
 
 	hostsFilePath := s.getConfig().GetHostsFile()
 
@@ -174,7 +179,7 @@ func TestHostsConfigInit(t *testing.T) {
 }
 
 func TestHostsBackupDirInit(t *testing.T) {
-	s := TestingSpinup("hosts_backup_dir_init")
+	s := TestingSpinup("hosts_backup_dir_init", nil)
 
 	hostsBackupDir := s.getConfig().GetHostsBackupDir()
 
