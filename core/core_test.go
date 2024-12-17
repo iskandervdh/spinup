@@ -5,37 +5,32 @@ import (
 	"path"
 	"testing"
 
-	"github.com/iskandervdh/spinup/cli"
 	"github.com/iskandervdh/spinup/config"
 )
 
-func TestingSpinupConfigDir(testName string) string {
+func TestingConfigDir(testName string) string {
 	return path.Join(os.TempDir(), config.ProgramName, testName)
 }
 
-func TestingSpinup(testName string, _cli *cli.CLI) *Core {
+func TestingCore(testName string) *Core {
 	// Remove old tmp config dir
-	testingConfigDir := TestingSpinupConfigDir(testName)
+	testingConfigDir := TestingConfigDir(testName)
 	err := os.RemoveAll(testingConfigDir)
 
 	if err != nil {
 		panic(err)
 	}
 
-	if _cli == nil {
-		_cli = cli.New()
-	}
-
 	c := config.NewTesting(testingConfigDir)
-	s := New(WithConfig(c), WithCLI(_cli))
-	s.init()
+	s := New(WithConfig(c))
+	s.Init()
 
 	return s
 }
 
 func TestNew(t *testing.T) {
 	testName := "new"
-	s := TestingSpinup(testName, nil)
+	s := TestingCore(testName)
 
 	if s == nil {
 		t.Error("Expected Spinup instance, got nil")
@@ -47,10 +42,10 @@ func TestNew(t *testing.T) {
 		return
 	}
 
-	if s.getConfig().GetConfigDir() != TestingSpinupConfigDir(testName) {
+	if s.getConfig().GetConfigDir() != TestingConfigDir(testName) {
 		t.Error(
 			"Expected ConfigDir to be",
-			TestingSpinupConfigDir(testName),
+			TestingConfigDir(testName),
 			"got",
 			s.getConfig().GetConfigDir(),
 		)
@@ -58,7 +53,7 @@ func TestNew(t *testing.T) {
 }
 
 func TestInit(t *testing.T) {
-	s := TestingSpinup("init", nil)
+	s := TestingCore("init")
 
 	configDir := s.getConfig().GetConfigDir()
 
@@ -68,7 +63,7 @@ func TestInit(t *testing.T) {
 }
 
 func TestCommandsConfigInit(t *testing.T) {
-	s := TestingSpinup("commands_config_init", nil)
+	s := TestingCore("commands_config_init")
 
 	commandsFilePath := path.Join(s.getConfig().GetConfigDir(), config.CommandsFileName)
 
@@ -105,7 +100,7 @@ func TestCommandsConfigInit(t *testing.T) {
 }
 
 func TestProjectsConfigInit(t *testing.T) {
-	s := TestingSpinup("projects_config_init", nil)
+	s := TestingCore("projects_config_init")
 
 	projectsFilePath := path.Join(s.getConfig().GetConfigDir(), config.ProjectsFileName)
 
@@ -142,7 +137,7 @@ func TestProjectsConfigInit(t *testing.T) {
 }
 
 func TestHostsConfigInit(t *testing.T) {
-	s := TestingSpinup("hosts_config_init", nil)
+	s := TestingCore("hosts_config_init")
 
 	hostsFilePath := s.getConfig().GetHostsFile()
 
@@ -179,7 +174,7 @@ func TestHostsConfigInit(t *testing.T) {
 }
 
 func TestHostsBackupDirInit(t *testing.T) {
-	s := TestingSpinup("hosts_backup_dir_init", nil)
+	s := TestingCore("hosts_backup_dir_init")
 
 	hostsBackupDir := s.getConfig().GetHostsBackupDir()
 

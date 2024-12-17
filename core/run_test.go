@@ -5,17 +5,17 @@ import (
 )
 
 func TestRun(t *testing.T) {
-	s := TestingSpinup("run", nil)
+	s := TestingCore("run")
 
-	s.getCommandsConfig()
-	s.getProjectsConfig()
+	s.GetCommandsConfig()
+	s.GetProjectsConfig()
 
-	s.addCommand("ls", "ls")
+	s.AddCommand("ls", "ls")
 
-	s.addProject("test", "test.local", 1234, []string{"ls"})
+	s.AddProject("test", "test.local", 1234, []string{"ls"})
 
 	// "Refetch" the projects from the config file
-	s.getProjectsConfig()
+	s.GetProjectsConfig()
 
-	s.tryToRun("test")
+	s.TryToRun("test")
 }

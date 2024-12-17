@@ -1,4 +1,4 @@
-package cli
+package components
 
 import (
 	"fmt"
@@ -6,7 +6,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-type question struct {
+type Question struct {
 	prompt   string
 	options  []string
 	cursor   int
@@ -14,11 +14,36 @@ type question struct {
 	exited   bool
 }
 
-func (q question) Init() tea.Cmd {
+func NewQuestion(prompt string, options []string) Question {
+	return Question{
+		prompt:   prompt,
+		options:  options,
+		selected: make([]bool, len(options)),
+		exited:   false,
+	}
+}
+
+func (q Question) GetSelected() []string {
+	selected := make([]string, 0, len(q.selected))
+
+	for i, checked := range q.selected {
+		if checked {
+			selected = append(selected, q.options[i])
+		}
+	}
+
+	return selected
+}
+
+func (q Question) GetExited() bool {
+	return q.exited
+}
+
+func (q Question) Init() tea.Cmd {
 	return nil
 }
 
-func (q question) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (q Question) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 
 	case tea.KeyMsg:
@@ -54,7 +79,7 @@ func (q question) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return q, nil
 }
 
-func (q question) View() string {
+func (q Question) View() string {
 	s := fmt.Sprintf("%s\n\n", q.prompt)
 
 	for i, choice := range q.options {

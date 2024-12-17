@@ -2,15 +2,15 @@ package core
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
 
+	"github.com/iskandervdh/spinup/common"
 	"github.com/iskandervdh/spinup/config"
 )
 
-func (s *Core) createConfigDir() error {
+func (c *Core) createConfigDir() error {
 	// Create config directory if it doesn't exist
-	err := os.MkdirAll(s.config.GetConfigDir(), 0755)
+	err := os.MkdirAll(c.config.GetConfigDir(), 0755)
 
 	if err != nil {
 		return err
@@ -19,112 +19,96 @@ func (s *Core) createConfigDir() error {
 	return nil
 }
 
-func (s *Core) createProjectsConfigFile() error {
-	projectFilePath := s.getProjectsFilePath()
+func (c *Core) createProjectsConfigFile() common.Msg {
+	projectFilePath := c.getProjectsFilePath()
 
 	if _, err := os.Stat(projectFilePath); err == nil {
-		s.cli.WarningPrintf(
-			"%s file already exists at %s\nSkipping initialization...\n",
-			config.ProjectsFileName,
-			projectFilePath,
-		)
-		return nil
+		return common.NewWarnMsg("%s already exists at %s\nSkipping initialization", config.ProjectsFileName, projectFilePath)
 	} else if !os.IsNotExist(err) {
-		return fmt.Errorf("error checking if %s file exists: %w", config.ProjectsFileName, err)
+		return common.NewErrMsg("Error checking if %s file exists: %v", config.ProjectsFileName, err)
 	}
 
 	emptyProjects := Projects{}
 	emptyData, err := json.MarshalIndent(emptyProjects, "", "  ")
 
 	if err != nil {
-		return fmt.Errorf("error encoding empty projects to json: %w", err)
+		return common.NewErrMsg("Error encoding empty projects to json: %v", err)
 	}
 
 	err = os.WriteFile(projectFilePath, emptyData, 0644)
 
 	if err != nil {
-		return fmt.Errorf("error writing empty projects to file: %w", err)
+		return common.NewErrMsg("Error writing empty projects to file: %v", err)
 	}
 
-	if !s.config.IsTesting() {
-		s.cli.InfoPrint("Initialized empty projects.json file at ", projectFilePath)
-	}
-
-	return nil
+	return common.NewInfoMsg("Initialized empty projects.json file at ", projectFilePath)
 }
 
-func (s *Core) createCommandsConfigFile() error {
-	commandsFilePath := s.getCommandsFilePath()
+func (c *Core) createCommandsConfigFile() common.Msg {
+	commandsFilePath := c.getCommandsFilePath()
 
 	if _, err := os.Stat(commandsFilePath); err == nil {
-		s.cli.WarningPrintf(
-			"%s file already exists at %s\nSkipping initialization...\n",
-			config.CommandsFileName,
-			commandsFilePath,
-		)
-		return nil
+		return common.NewWarnMsg("%s already exists at %s\nSkipping initialization", config.CommandsFileName, commandsFilePath)
 	} else if !os.IsNotExist(err) {
-		return fmt.Errorf("error checking if commands.json file exists: %w", err)
+		return common.NewErrMsg("Error checking if commands.json file exists: %v", err)
 	}
 
 	emptyCommands := Commands{}
 	emptyData, err := json.MarshalIndent(emptyCommands, "", "  ")
 
 	if err != nil {
-		return fmt.Errorf("error encoding empty commands to json: %w", err)
+		return common.NewErrMsg("Error encoding empty commands to json: %v", err)
 	}
 
 	err = os.WriteFile(commandsFilePath, emptyData, 0644)
 
 	if err != nil {
-		return fmt.Errorf("error writing empty commands to file: %w", err)
+		return common.NewErrMsg("Error writing empty commands to file: %v", err)
 	}
 
-	if !s.config.IsTesting() {
-		s.cli.InfoPrint("Initialized empty commands.json file at ", commandsFilePath)
-	}
-
-	return nil
+	return common.NewInfoMsg("Initialized empty commands.json file at ", commandsFilePath)
 }
 
-func (s *Core) init() {
-	err := s.createConfigDir()
+// TODO: Handle other types of messages and send them to the CLI via events
+func (c *Core) Init() common.Msg {
+	err := c.createConfigDir()
 
 	if err != nil {
-		s.cli.ErrorPrint("Error creating config directory: ", err)
-		os.Exit(1)
+		return common.NewErrMsg("Error creating config directory: %v", err)
 	}
 
-	err = s.createProjectsConfigFile()
+	msg := c.createProjectsConfigFile()
+
+	if _, ok := msg.(*common.ErrMsg); ok {
+		return common.NewErrMsg("Error creating projects.json file: %s", msg.GetText())
+	} else {
+		*c.msgChan <- msg
+	}
+
+	msg = c.createCommandsConfigFile()
+
+	if _, ok := msg.(*common.ErrMsg); ok {
+		return common.NewErrMsg("Error creating commands.json file: %s", msg.GetText())
+	} else {
+		*c.msgChan <- msg
+	}
+
+	c.RequireSudo()
+	err = c.config.InitHosts()
+
+	// if warn != nil {
+	// 	c.cli.WarningPrint(warn)
+	// }
 
 	if err != nil {
-		s.cli.ErrorPrint("Error creating projects.json file:", err)
-		os.Exit(1)
+		return common.NewErrMsg("Error initializing hosts file: %v", err)
 	}
 
-	err = s.createCommandsConfigFile()
+	err = c.config.InitNginx()
 
 	if err != nil {
-		s.cli.ErrorPrint("Error creating commands.json file:", err)
-		os.Exit(1)
+		return common.NewErrMsg("Error initializing nginx: %v", err)
 	}
 
-	s.requireSudo()
-	err = s.config.InitHosts(s.cli)
-
-	if err != nil {
-		s.cli.ErrorPrint("Error initializing hosts file:", err)
-		os.Exit(1)
-	}
-
-	err = s.config.InitNginx()
-
-	if err != nil {
-		s.cli.ErrorPrint("Error initializing nginx:", err)
-		os.Exit(1)
-	}
-
-	if !s.config.IsTesting() {
-		s.cli.InfoPrint("\nInitialization complete")
-	}
+	return common.NewSuccessMsg("\nInitialization complete")
 }

@@ -6,10 +6,8 @@ import (
 	"os"
 	"path"
 	"strconv"
-	"strings"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/iskandervdh/spinup/cli"
+	"github.com/iskandervdh/spinup/common"
 	"github.com/iskandervdh/spinup/config"
 )
 
@@ -23,78 +21,78 @@ type Project struct {
 
 type Projects map[string]Project
 
-func (s *Core) getProjectsFilePath() string {
-	return path.Join(s.config.GetConfigDir(), config.ProjectsFileName)
+func (c *Core) getProjectsFilePath() string {
+	return path.Join(c.config.GetConfigDir(), config.ProjectsFileName)
 }
 
-func (s *Core) getProjects() (Projects, error) {
-	projectsFileContent, err := os.ReadFile(s.getProjectsFilePath())
+func (c *Core) GetProjects() (Projects, error) {
+	projectsFileContent, err := os.ReadFile(c.getProjectsFilePath())
 
 	if err != nil {
-		s.cli.ErrorPrint("Error reading projects.json file:", err)
-		return nil, err
+		return nil, fmt.Errorf("error reading projects.json file: %s", err)
 	}
 
 	var projects Projects
 	err = json.Unmarshal(projectsFileContent, &projects)
 
 	if err != nil {
-		s.cli.ErrorPrint("Error parsing projects.json file:", err)
-		return nil, err
+		return nil, fmt.Errorf("error parsing projects.json file: %s", err)
 	}
 
 	return projects, nil
 }
 
-func (s *Core) projectExists(name string) (bool, Project) {
-	if s.projects == nil {
+func (c *Core) ProjectExists(name string) (bool, Project) {
+	if c.projects == nil {
 		return false, Project{}
 	}
 
-	project, exists := s.projects[name]
+	project, exists := c.projects[name]
 
 	return exists, project
 }
 
-func (s *Core) _addProject(name string, domain string, port int, commandNames []string) tea.Msg {
+func (c *Core) AddProject(name string, domain string, port int, commandNames []string) common.Msg {
+	c.RequireSudo()
+
 	// Check if commands exist
 	for _, commandName := range commandNames {
-		_, exists := s.commands[commandName]
+		_, exists := c.commands[commandName]
 
 		if !exists {
-			return cli.ErrMsg("Command " + commandName + " does not exist")
+			return common.NewErrMsg("Command " + commandName + " does not exist")
 		}
 	}
 
 	// Check if project already exists or if domain or port is already in use
-	for projectName, project := range s.projects {
+	for projectName, project := range c.projects {
 		if projectName == name {
-			return cli.ErrMsg("Project '" + name + "' already exists")
+			return common.NewErrMsg("Project '" + name + "' already exists")
 		}
 
 		if project.Domain == domain {
-			return cli.ErrMsg("Project with domain '" + domain + "' already exists: " + projectName)
+			return common.NewErrMsg("Project with domain '" + domain + "' already exists: " + projectName)
 
 		}
 
 		if project.Port == port {
-			return cli.ErrMsg("Project with port " + strconv.Itoa(port) + " already exists: " + projectName)
+			return common.NewErrMsg("Project with port " + strconv.Itoa(port) + " already exists: " + projectName)
 		}
 	}
 
-	err := s.config.AddNginxConfig(name, domain, port)
+	err := c.config.AddNginxConfig(name, domain, port)
 
 	if err != nil {
-		return cli.ErrMsg(fmt.Sprintln("Error trying to create nginx config file", err))
+		return common.NewErrMsg(fmt.Sprintln("Error trying to create nginx config file", err))
 	}
 
-	err = s.config.AddHost(domain)
+	err = c.config.AddHost(domain)
 
 	if err != nil {
 		// Remove nginx config file if adding domain to hosts file fails
-		s.config.RemoveNginxConfig(name)
+		c.config.RemoveNginxConfig(name)
 
-		return cli.ErrMsg(fmt.Sprintln("Error trying to add domain to hosts file", err))
+		return common.NewErrMsg(fmt.Sprintln("Error trying to add domain to hosts file", err))
 	}
 
 	newProject := Project{
@@ -104,88 +102,50 @@ func (s *Core) _addProject(name string, domain string, port int, commandNames []
 		Variables: make(map[string]string),
 	}
 
-	s.projects[name] = newProject
+	c.projects[name] = newProject
 
-	updatedProjectsConfig, err := json.MarshalIndent(s.projects, "", "  ")
-
-	if err != nil {
-		return cli.ErrMsg(fmt.Sprintln("Error encoding projects to json:", err))
-	}
-
-	err = os.WriteFile(s.getProjectsFilePath(), updatedProjectsConfig, 0644)
+	updatedProjectsConfig, err := json.MarshalIndent(c.projects, "", "  ")
 
 	if err != nil {
-		return cli.ErrMsg(fmt.Sprintln("Error writing projects to file:", err))
+		return common.NewErrMsg(fmt.Sprintln("Error encoding projects to json:", err))
 	}
 
-	return cli.DoneMsg(fmt.Sprintf("Added project '%s' with domain '%s' and port %d", name, domain, port))
+	err = os.WriteFile(c.getProjectsFilePath(), updatedProjectsConfig, 0644)
+
+	if err != nil {
+		return common.NewErrMsg(fmt.Sprintln("Error writing projects to file:", err))
+	}
+
+	return common.NewSuccessMsg(fmt.Sprintf("Added project '%s' with domain '%s' and port %d", name, domain, port))
 }
 
-func (s *Core) addProject(name string, domain string, port int, commandNames []string) {
-	s.requireSudo()
+func (c *Core) RemoveProject(name string) common.Msg {
+	c.RequireSudo()
 
-	if s.projects == nil {
-		return
-	}
-
-	s.cli.Loading(fmt.Sprintf("Adding project %s...", name),
-		func() tea.Msg {
-			return s._addProject(name, domain, port, commandNames)
-		},
-	)
-}
-
-func (s *Core) addProjectInteractive() {
-	name := s.cli.Input("Project name:")
-	domain := s.cli.Input("Domain:")
-	port := s.cli.Input("Port:")
-
-	portInt, err := strconv.Atoi(port)
-
-	if err != nil {
-		s.cli.ErrorPrint("Port must be an integer")
-		return
-	}
-
-	selectedCommands, err, exited := s.cli.Question("Commands", s.getCommandNames())
-
-	if err != nil {
-		s.cli.ErrorPrint("Error getting commands:", err)
-		os.Exit(1) // TODO: Maybe return error instead of exiting
-	}
-
-	if exited {
-		return
-	}
-
-	s.addProject(name, domain, portInt, selectedCommands)
-}
-
-func (s *Core) _removeProject(name string) tea.Msg {
-	exists, _ := s.projectExists(name)
+	exists, _ := c.ProjectExists(name)
 
 	if !exists {
-		return cli.ErrMsg("Project '" + name + "' does not exist, nothing to remove")
+		return common.NewErrMsg("Project '" + name + "' does not exist, nothing to remove")
 	}
 
-	err := s.config.RemoveNginxConfig(name)
+	err := c.config.RemoveNginxConfig(name)
 
 	if err != nil {
-		return cli.ErrMsg("Could not remove nginx config file: " + err.Error())
+		return common.NewErrMsg("Could not remove nginx config file: " + err.Error())
 	}
 
-	err = s.config.RemoveHost(s.projects[name].Domain)
+	err = c.config.RemoveHost(c.projects[name].Domain)
 
 	if err != nil {
 		// Remove nginx config file if adding domain to hosts file fails
-		s.config.RemoveNginxConfig(name)
+		c.config.RemoveNginxConfig(name)
 
-		return cli.ErrMsg("Error trying to remove domain from hosts file: " + err.Error())
+		return common.NewErrMsg("Error trying to remove domain from hosts file: " + err.Error())
 	}
 
 	var updatedProjects Projects = make(map[string]Project)
 
-	for projectName, project := range s.projects {
+	for projectName, project := range c.projects {
 		if projectName == name {
 			continue
 		}
@@ -196,169 +156,101 @@ func (s *Core) _removeProject(name string) tea.Msg {
 	updatedProjectsConfig, err := json.MarshalIndent(updatedProjects, "", "  ")
 
 	if err != nil {
-		return cli.ErrMsg("Error encoding projects to json: " + err.Error())
+		return common.NewErrMsg("Error encoding projects to json: " + err.Error())
 	}
 
-	err = os.WriteFile(s.getProjectsFilePath(), updatedProjectsConfig, 0644)
+	err = os.WriteFile(c.getProjectsFilePath(), updatedProjectsConfig, 0644)
 
 	if err != nil {
-		return cli.ErrMsg("Error writing projects to file: " + err.Error())
+		return common.NewErrMsg("Error writing projects to file: " + err.Error())
 	}
 
-	return cli.DoneMsg(fmt.Sprintf("Removed project '%s'", name))
+	return common.NewSuccessMsg(fmt.Sprintf("Removed project '%s'", name))
 }
 
-func (s *Core) removeProject(name string) {
-	s.requireSudo()
-
-	if s.projects == nil {
-		return
-	}
-
-	s.cli.Loading(fmt.Sprintf("Removing project %s...", name),
-		func() tea.Msg {
-			return s._removeProject(name)
-		},
-	)
-}
-
-func (s *Core) removeProjectInteractive() {
-	name, err, exited := s.cli.Selection("What project do you want to remove?", s.getProjectNames())
-
-	if err != nil {
-		s.cli.ErrorPrint("Error getting project names:", err)
-		return
-	}
-
-	if exited {
-		return
-	}
-
-	if name == "" {
-		s.cli.ErrorPrint("No project selected")
-		return
-	}
-
-	if !s.cli.Confirm("Are you sure you want to remove project " + name + "?") {
-		return
-	}
-
-	s.removeProject(name)
-}
-
-func (s *Core) listProjects() {
-	if s.projects == nil {
-		return
-	}
-
-	fmt.Printf("%-10s %-30s %-10s %-20s\n", "Name", "Domain", "Port", "Commands")
-
-	for projectName, project := range s.projects {
-		fmt.Printf("%-10s %-30s %-10d %-20s\n",
-			projectName,
-			project.Domain,
-			project.Port,
-			strings.Join(project.Commands, ", "),
-		)
-	}
-}
-
-func (s *Core) addCommandToProject(projectName string, commandName string) {
-	exists, project := s.projectExists(projectName)
+func (c *Core) AddCommandToProject(projectName string, commandName string) common.Msg {
+	exists, project := c.ProjectExists(projectName)
 
 	if !exists {
-		s.cli.ErrorPrintf("Project '%s' does not exist", projectName)
-		return
+		return common.NewErrMsg("Project '%s' does not exist", projectName)
 	}
 
-	_, exists = s.commands[commandName]
+	_, exists = c.commands[commandName]
 
 	if !exists {
-		s.cli.ErrorPrintf("Command '%s' does not exist", commandName)
-		return
+		return common.NewErrMsg("Command '%s' does not exist", commandName)
 	}
 
 	for _, command := range project.Commands {
 		if command == commandName {
-			s.cli.ErrorPrintf("Command '%s' already exists in project '%s'", commandName, projectName)
-			return
+			return common.NewErrMsg("Command '%s' already exists in project '%s'", commandName, projectName)
 		}
 	}
 
 	project.Commands = append(project.Commands, commandName)
 
-	s.projects[projectName] = project
+	c.projects[projectName] = project
 
-	updatedProjectsConfig, err := json.MarshalIndent(s.projects, "", "  ")
-
-	if err != nil {
-		s.cli.ErrorPrint("Error encoding projects to json:", err)
-		return
-	}
-
-	err = os.WriteFile(s.getProjectsFilePath(), updatedProjectsConfig, 0644)
+	updatedProjectsConfig, err := json.MarshalIndent(c.projects, "", "  ")
 
 	if err != nil {
-		s.cli.ErrorPrint("Error writing projects to file:", err)
-		return
+		return common.NewErrMsg("Error encoding projects to json:", err)
 	}
 
-	if !s.config.IsTesting() {
-		s.cli.InfoPrintf("Added command '%s' to project '%s'", commandName, projectName)
+	err = os.WriteFile(c.getProjectsFilePath(), updatedProjectsConfig, 0644)
+
+	if err != nil {
+		return common.NewErrMsg("Error writing projects to file:", err)
 	}
+
+	return common.NewSuccessMsg("Added command '%s' to project '%s'", commandName, projectName)
+
 }
 
-func (s *Core) removeCommandFromProject(projectName string, commandName string) {
-	exists, project := s.projectExists(projectName)
+func (c *Core) RemoveCommandFromProject(projectName string, commandName string) common.Msg {
+	exists, project := c.ProjectExists(projectName)
 
 	if !exists {
-		s.cli.ErrorPrintf("Project '%s' does not exist", projectName)
-		return
+		return common.NewErrMsg("Project '%s' does not exist", projectName)
 	}
 
 	for i, command := range project.Commands {
 		if command == commandName {
 			project.Commands = append(project.Commands[:i], project.Commands[i+1:]...)
 
-			s.projects[projectName] = project
+			c.projects[projectName] = project
 
-			updatedProjectsConfig, err := json.MarshalIndent(s.projects, "", "  ")
-
-			if err != nil {
-				s.cli.ErrorPrint("Error encoding projects to json:", err)
-				return
-			}
-
-			err = os.WriteFile(s.getProjectsFilePath(), updatedProjectsConfig, 0644)
+			updatedProjectsConfig, err := json.MarshalIndent(c.projects, "", "  ")
 
 			if err != nil {
-				s.cli.ErrorPrint("Error writing projects to file:", err)
-				return
+				return common.NewErrMsg("Error encoding projects to json: %s", err)
 			}
 
-			if !s.config.IsTesting() {
-				s.cli.InfoPrintf("Removed command '%s' from project '%s'", commandName, projectName)
+			err = os.WriteFile(c.getProjectsFilePath(), updatedProjectsConfig, 0644)
+
+			if err != nil {
+				return common.NewErrMsg("Error writing projects to file: %s", err)
 			}
 
-			return
+			return common.NewSuccessMsg("Removed command '%s' from project '%s'", commandName, projectName)
 		}
 	}
+
+	return common.NewInfoMsg("Command '%s' not found in project '%s'. Nothing to remove.", commandName, projectName)
 }
 
-func (s *Core) setProjectDir(projectName string, dir *string) {
-	exists, project := s.projectExists(projectName)
+func (c *Core) SetProjectDir(projectName string, dir *string) common.Msg {
+	exists, project := c.ProjectExists(projectName)
 
 	if !exists {
-		s.cli.ErrorPrintf("Project '%s' does not exist", projectName)
-		return
+		return common.NewErrMsg("Project '%s' does not exist", projectName)
 	}
 
 	if dir == nil {
 		cwd, err := os.Getwd()
 
 		if err != nil {
-			s.cli.ErrorPrint("Error getting current working directory:", err)
-			return
+			return common.NewErrMsg("Error getting current working directory: %s", err)
 		}
 
 		project.Dir = &cwd
@@ -367,127 +259,43 @@ func (s *Core) setProjectDir(projectName string, dir *string) {
 		info, err := os.Stat(*dir)
 
 		if err != nil {
-			s.cli.ErrorPrintf("Directory '%s' does not exist: %s", *dir, err)
-			return
+			return common.NewErrMsg("Directory '%s' does not exist: %s", *dir, err)
 		}
 
 		if !info.IsDir() {
-			s.cli.ErrorPrintf("'%s' is not a directory", *dir)
-			return
+			return common.NewErrMsg("'%s' is not a directory", *dir)
 		}
 
 		project.Dir = dir
 	}
 
-	s.projects[projectName] = project
+	c.projects[projectName] = project
 
-	updatedProjectsConfig, err := json.MarshalIndent(s.projects, "", "  ")
-
-	if err != nil {
-		s.cli.ErrorPrint("Error encoding projects to json:", err)
-		return
-	}
-
-	err = os.WriteFile(s.getProjectsFilePath(), updatedProjectsConfig, 0644)
+	updatedProjectsConfig, err := json.MarshalIndent(c.projects, "", "  ")
 
 	if err != nil {
-		s.cli.ErrorPrint("Error writing projects to file:", err)
-		return
+		return common.NewErrMsg("Error encoding projects to json: %s", err)
 	}
 
-	if !s.config.IsTesting() {
-		s.cli.InfoPrintf("Set directory to '%s' for project '%s'", *project.Dir, projectName)
+	err = os.WriteFile(c.getProjectsFilePath(), updatedProjectsConfig, 0644)
+
+	if err != nil {
+		return common.NewErrMsg("Error writing projects to file: %s", err)
 	}
+
+	return common.NewSuccessMsg("Set directory to '%s' for project '%s'", *project.Dir, projectName)
 }
 
-func (s *Core) getProjectDir(projectName string) {
-	exists, project := s.projectExists(projectName)
+func (c *Core) GetProjectDir(projectName string) common.Msg {
+	exists, project := c.ProjectExists(projectName)
 
 	if !exists {
-		s.cli.ErrorPrintf("Project '%s' does not exist", projectName)
-		return
+		return common.NewErrMsg("Project '%s' does not exist", projectName)
 	}
 
 	if project.Dir == nil {
-		s.cli.ErrorPrintf("Project '%s' does not have a directory set", projectName)
-		return
+		return common.NewErrMsg("Project '%s' does not have a directory set", projectName)
 	}
 
-	fmt.Println(*project.Dir)
-}
-
-func (s *Core) handleProject() {
-	if len(os.Args) < 3 {
-		s.cli.ErrorPrintf("Usage: %s project <add|remove|list> [args...]", config.ProgramName)
-		return
-	}
-
-	switch os.Args[2] {
-	case "list", "ls":
-		s.listProjects()
-	case "add":
-		if len(os.Args) == 3 {
-			s.addProjectInteractive()
-			return
-		}
-
-		if len(os.Args) < 6 {
-			fmt.Printf("Usage: %s project add <name> <domain> <port>\n", config.ProgramName)
-			return
-		}
-
-		port, err := strconv.Atoi(os.Args[5])
-
-		if err != nil {
-			s.cli.ErrorPrint("Port must be an integer")
-			return
-		}
-
-		s.addProject(os.Args[3], os.Args[4], port, os.Args[6:])
-	case "remove", "rm":
-		if len(os.Args) == 3 {
-			s.removeProjectInteractive()
-			return
-		}
-
-		if len(os.Args) != 4 {
-			fmt.Printf("Usage: %s project remove|rm <name>\n", config.ProgramName)
-			return
-		}
-
-		s.removeProject(os.Args[3])
-	case "add-command", "ac":
-		if len(os.Args) < 5 {
-			fmt.Printf("Usage: %s project add-command|ac <project> <command>\n", config.ProgramName)
-			return
-		}
-
-		s.addCommandToProject(os.Args[3], os.Args[4])
-	case "remove-command", "rc":
-		if len(os.Args) < 5 {
-			fmt.Printf("Usage: %s project remove-command|rc <project> <command>\n", config.ProgramName)
-			return
-		}
-
-		s.removeCommandFromProject(os.Args[3], os.Args[4])
-	case "set-dir", "sd":
-		if len(os.Args) < 4 {
-			fmt.Printf("Usage: %s project set-dir|sp <project> [dir]\n", config.ProgramName)
-			return
-		}
-
-		if len(os.Args) == 5 {
-			s.setProjectDir(os.Args[3], &os.Args[4])
-			return
-		}
-
-		s.setProjectDir(os.Args[3], nil)
-	case "get-dir", "gd":
-		if len(os.Args) != 4 {
-			fmt.Printf("Usage: %s project get-dir|gp <project>\n", config.ProgramName)
-			return
-		}
-
-		s.getProjectDir(os.Args[3])
-	}
+	return common.NewRegularMsg(*project.Dir)
 }

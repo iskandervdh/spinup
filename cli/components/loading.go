@@ -1,4 +1,4 @@
-package cli
+package components
 
 import (
 	"fmt"
@@ -6,29 +6,37 @@ import (
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/iskandervdh/spinup/common"
 )
 
-type loading struct {
+type Loading struct {
 	spinner     spinner.Model
 	loadingText string
 	done        bool
 
-	doneText  string
-	errorText string
+	successText string
+	errorText   string
 }
 
-func newLoadingSpinner() spinner.Model {
+func NewSpinner() spinner.Model {
 	return spinner.New(
 		spinner.WithSpinner(spinner.Dot),
 		spinner.WithStyle(lipgloss.NewStyle().Foreground(lipgloss.Color("#a7e08f"))),
 	)
 }
 
-func (m loading) Init() tea.Cmd {
+func NewLoading(loadingText string) Loading {
+	return Loading{
+		spinner:     NewSpinner(),
+		loadingText: loadingText,
+	}
+}
+
+func (m Loading) Init() tea.Cmd {
 	return m.spinner.Tick
 }
 
-func (m loading) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m Loading) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 
 	case tea.KeyMsg:
@@ -45,27 +53,27 @@ func (m loading) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.spinner, cmd = m.spinner.Update(msg)
 		return m, cmd
 
-	case doneMsg:
+	case common.SuccessMsg:
 		m.done = true
-		m.doneText = msg.text
+		m.successText = msg.GetText()
 		return m, tea.Quit
 
-	case errMsg:
+	case common.ErrMsg:
 		m.done = true
-		m.errorText = msg.text
+		m.errorText = msg.GetText()
 		return m, tea.Quit
 	}
 
 	return m, nil
 }
 
-func (m loading) View() string {
+func (m Loading) View() string {
 	if m.errorText != "" {
-		return errorText(m.errorText)
+		return common.ErrorText(m.errorText)
 	}
 
 	if m.done {
-		return successText(m.doneText)
+		return common.SuccessText(m.successText)
 	}
 
 	return fmt.Sprintf("\n    %s %s\n", m.spinner.View(), m.loadingText)

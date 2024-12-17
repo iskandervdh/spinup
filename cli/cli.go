@@ -5,40 +5,49 @@ import (
 	"io"
 	"os"
 	"strings"
+	"sync"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/iskandervdh/spinup/cli/components"
+	"github.com/iskandervdh/spinup/common"
+	"github.com/iskandervdh/spinup/config"
+	"github.com/iskandervdh/spinup/core"
 )
-
-type doneMsg struct {
-	text string
-}
-
-type errMsg struct {
-	text string
-}
 
 type CLI struct {
 	in  io.Reader
 	out io.Writer
-}
 
-func DoneMsg(text string) doneMsg {
-	return doneMsg{text: text}
-}
-
-func ErrMsg(text string) errMsg {
-	return errMsg{text: text}
+	core      *core.Core
+	msgChan   *chan common.Msg
+	msgChanWg *sync.WaitGroup
 }
 
 func New(options ...func(*CLI)) *CLI {
+	msgChan := make(chan common.Msg, 100)
+	msgCanWg := sync.WaitGroup{}
+
 	c := &CLI{
-		in:  os.Stdin,
-		out: os.Stdout,
+		in:        os.Stdin,
+		out:       os.Stdout,
+		core:      core.New(core.WithMsgChan(&msgChan)),
+		msgChan:   &msgChan,
+		msgChanWg: &msgCanWg,
 	}
 
 	for _, option := range options {
 		option(c)
 	}
+
+	c.msgChanWg.Add(1)
+
+	go func() {
+		defer msgCanWg.Done()
+
+		for msg := range *c.msgChan {
+			c.MsgPrint(msg)
+		}
+	}()
 
 	return c
 }
@@ -55,17 +64,22 @@ func WithOut(out io.Writer) func(*CLI) {
 	}
 }
 
+func WithCore(core *core.Core) func(*CLI) {
+	return func(c *CLI) {
+		c.core = core
+	}
+}
+
 func (c *CLI) ClearTerminal() {
 	fmt.Fprint(c.out, "\033[H\033[2J")
 }
 
+func (c *CLI) sendMsg(msg common.Msg) {
+	*c.msgChan <- msg
+}
+
 func (c *CLI) Question(prompt string, options []string) ([]string, error, bool) {
-	q := question{
-		prompt:   prompt,
-		options:  options,
-		selected: make([]bool, len(options)),
-		exited:   false,
-	}
+	q := components.NewQuestion(prompt, options)
 
 	p := tea.NewProgram(q, tea.WithInput(c.in), tea.WithOutput(c.out))
 
@@ -75,29 +89,17 @@ func (c *CLI) Question(prompt string, options []string) ([]string, error, bool) 
 		return nil, err, false
 	}
 
-	r := m.(question)
+	r := m.(components.Question)
 
-	if r.exited {
-		return nil, nil, r.exited
+	if r.GetExited() {
+		return nil, nil, true
 	}
 
-	selectedOptions := make([]string, 0, len(q.selected))
-
-	for i, checked := range r.selected {
-		if checked {
-			selectedOptions = append(selectedOptions, q.options[i])
-		}
-	}
-
-	return selectedOptions, nil, r.exited
+	return r.GetSelected(), nil, false
 }
 
 func (c *CLI) Selection(prompt string, options []string) (string, error, bool) {
-	s := selection{
-		prompt:  prompt,
-		options: options,
-		exited:  false,
-	}
+	s := components.NewSelection(prompt, options)
 
 	p := tea.NewProgram(s, tea.WithInput(c.in), tea.WithOutput(c.out))
 	m, err := p.Run()
@@ -106,22 +108,17 @@ func (c *CLI) Selection(prompt string, options []string) (string, error, bool) {
 		return "", err, false
 	}
 
-	r := m.(selection)
+	r := m.(components.Selection)
 
-	if r.exited {
-		return "", nil, r.exited
+	if r.GetExited() {
+		return "", nil, true
 	}
 
-	return r.options[r.cursor], nil, r.exited
+	return r.GetValue(), nil, false
 }
 
 func (c *CLI) Input(prompt string) string {
-	i := input{
-		prompt: prompt,
-		value:  "",
-		exited: false,
-		cursor: newCursor(),
-	}
+	i := components.NewInput(prompt)
 
 	p := tea.NewProgram(i, tea.WithInput(c.in), tea.WithOutput(c.out))
 	m, err := p.Run()
@@ -131,22 +128,17 @@ func (c *CLI) Input(prompt string) string {
 		os.Exit(1)
 	}
 
-	r := m.(input)
+	r := m.(components.Input)
 
-	if r.exited {
+	if r.GetExited() {
 		os.Exit(0)
 	}
 
-	return r.value
+	return r.GetValue()
 }
 
 func (c *CLI) Confirm(prompt string) bool {
-	conf := confirm{
-		prompt: prompt,
-		value:  "",
-		exited: false,
-		cursor: newCursor(),
-	}
+	conf := components.NewConfirm(prompt)
 
 	p := tea.NewProgram(conf, tea.WithInput(c.in), tea.WithOutput(c.out))
 	m, err := p.Run()
@@ -156,13 +148,13 @@ func (c *CLI) Confirm(prompt string) bool {
 		os.Exit(1)
 	}
 
-	r := m.(confirm)
+	r := m.(components.Confirm)
 
-	if r.exited {
+	if r.GetExited() {
 		os.Exit(0)
 	}
 
-	switch strings.ToLower(r.value) {
+	switch strings.ToLower(r.GetValue()) {
 	case "y", "yes":
 		return true
 	}
@@ -170,13 +162,8 @@ func (c *CLI) Confirm(prompt string) bool {
 	return false
 }
 
-func (c *CLI) Loading(loadingText string, f func() tea.Msg) *loading {
-	s := newLoadingSpinner()
-
-	l := loading{
-		spinner:     s,
-		loadingText: loadingText,
-	}
+func (c *CLI) Loading(loadingText string, f func() common.Msg) common.Msg {
+	l := components.NewLoading(loadingText)
 
 	p := tea.NewProgram(l)
 
@@ -185,14 +172,67 @@ func (c *CLI) Loading(loadingText string, f func() tea.Msg) *loading {
 		p.Send(msg)
 	}()
 
-	m, err := p.Run()
-
-	if err != nil {
-		c.ErrorPrintf("Error starting program: %v", err)
-		return nil
+	if _, err := p.Run(); err != nil {
+		return common.NewErrMsg("Error starting program: %v", err)
 	}
 
-	r := m.(loading)
+	return nil
+}
 
-	return &r
+func (c *CLI) Handle() {
+	if len(os.Args) < 2 {
+		c.MsgPrint(common.NewInfoMsg("Usage: %s <command|project|variable|run|init> [args...]", config.ProgramName))
+		return
+	}
+
+	if os.Args[1] == "init" {
+		c.MsgPrint(c.core.Init())
+		return
+	}
+
+	c.core.GetCommandsConfig()
+	c.core.GetProjectsConfig()
+
+	switch os.Args[1] {
+	case "-v", "--version":
+		fmt.Printf("%s %s\n", config.ProgramName, strings.TrimSpace(config.Version))
+	case "command", "c":
+		c.handleCommand()
+	case "project", "p":
+		c.handleProject()
+	case "variable", "v":
+		c.handleVariable()
+	case "run":
+		if len(os.Args) < 3 {
+			c.sendMsg(common.NewInfoMsg("Usage: %s run <project>", config.ProgramName))
+			break
+		}
+
+		result := c.core.TryToRun(os.Args[2])
+
+		if _, ok := result.(*common.ErrMsg); ok {
+			c.ErrorPrint(result)
+			os.Exit(1)
+		}
+
+		if result == nil {
+			c.sendMsg(common.NewErrMsg("Unknown project '%s'\n", os.Args[2]))
+		}
+	default:
+		result := c.core.TryToRun(os.Args[1])
+
+		if _, ok := result.(*common.ErrMsg); ok {
+			c.ErrorPrint(result)
+			os.Exit(1)
+		}
+
+		if result == nil {
+			c.sendMsg(common.NewRegularMsg("Unknown subcommand or project '%s'\n\n", os.Args[1]))
+			c.sendMsg(common.NewRegularMsg("Expected 'command|c', 'project|p', 'run' or 'init' subcommand or a valid project name\n"))
+		}
+	}
+
+	close(*c.msgChan)
+
+	c.msgChanWg.Wait()
 }

@@ -5,8 +5,6 @@ import (
 	"os"
 	"strings"
 	"time"
-
-	"github.com/iskandervdh/spinup/cli"
 )
 
 var HostsBeginMarker = fmt.Sprintf("### BEGIN_%s_HOSTS", strings.ToUpper(ProgramName))
@@ -124,7 +122,7 @@ func (c *Config) RemoveHost(domain string) error {
 	return nil
 }
 
-func (c *Config) InitHosts(cli *cli.CLI) error {
+func (c *Config) InitHosts() error {
 	// Check if hosts file exists
 	fileInfo, err := os.Stat(c.hostsFile)
 
@@ -155,7 +153,7 @@ func (c *Config) InitHosts(cli *cli.CLI) error {
 	hostsContent, beginIndex, endIndex, _ := c.getHostsContent()
 
 	if beginIndex != -1 && endIndex != -1 {
-		cli.WarningPrint("Hosts file already initialized\nSkipping initialization...")
+		fmt.Println("Hosts file already initialized\nSkipping initialization...")
 		return nil
 	}
 
