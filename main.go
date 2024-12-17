@@ -1,10 +1,10 @@
 package main
 
 import (
-	"github.com/iskandervdh/spinup/spinup"
+	"github.com/iskandervdh/spinup/cli"
 )
 
 func main() {
-	s := spinup.New()
+	s := cli.New()
 	s.Handle()
 }

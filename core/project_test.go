@@ -1,4 +1,4 @@
-package spinup
+package core
 
 import (
 	"os"
@@ -8,9 +8,9 @@ import (
 )
 
 func TestGetProjectNamesEmpty(t *testing.T) {
-	s := TestingSpinup("get_project_names_empty", nil)
+	s := TestingCore("get_project_names_empty")
 
-	projectNames := s.getProjectNames()
+	projectNames := s.GetProjectNames()
 
 	if len(projectNames) != 0 {
 		t.Error("Expected no project names, got", len(projectNames))
@@ -19,18 +19,18 @@ func TestGetProjectNamesEmpty(t *testing.T) {
 }
 
 func TestAddProject(t *testing.T) {
-	s := TestingSpinup("add_project", nil)
+	s := TestingCore("add_project")
 
 	// Fetch the commands and projects from their config files
-	s.getCommandsConfig()
-	s.getProjectsConfig()
+	s.GetCommandsConfig()
+	s.GetProjectsConfig()
 
-	s.addProject("test", "test.local", 1234, []string{})
+	s.AddProject("test", "test.local", 1234, []string{})
 
 	// "Refetch" the projects from the config file
-	s.getProjectsConfig()
+	s.GetProjectsConfig()
 
-	projectNames := s.getProjectNames()
+	projectNames := s.GetProjectNames()
 
 	if len(projectNames) != 1 {
 		t.Error("Expected 1 project name, got", len(projectNames))
@@ -87,21 +87,21 @@ func TestAddProject(t *testing.T) {
 }
 
 func TestAddProjectWithCommands(t *testing.T) {
-	s := TestingSpinup("add_project_with_commands", nil)
+	s := TestingCore("add_project_with_commands")
 
 	// Fetch the commands and projects from their config files
-	s.getCommandsConfig()
-	s.getProjectsConfig()
+	s.GetCommandsConfig()
+	s.GetProjectsConfig()
 
-	s.addCommand("ls", "ls")
-	s.addCommand("pwd", "pwd")
+	s.AddCommand("ls", "ls")
+	s.AddCommand("pwd", "pwd")
 
-	s.addProject("test", "test.local", 1234, []string{"ls", "pwd"})
+	s.AddProject("test", "test.local", 1234, []string{"ls", "pwd"})
 
 	// "Refetch" the projects from the config file
-	s.getProjectsConfig()
+	s.GetProjectsConfig()
 
-	projectNames := s.getProjectNames()
+	projectNames := s.GetProjectNames()
 
 	if len(projectNames) != 1 {
 		t.Error("Expected 1 project name, got", len(projectNames))
@@ -129,23 +129,23 @@ func TestAddProjectWithCommands(t *testing.T) {
 }
 
 func TestRemoveProject(t *testing.T) {
-	s := TestingSpinup("remove_project", nil)
+	s := TestingCore("remove_project")
 
 	// Fetch the commands and projects from their config files
-	s.getCommandsConfig()
-	s.getProjectsConfig()
+	s.GetCommandsConfig()
+	s.GetProjectsConfig()
 
-	s.addProject("test", "test.local", 1234, []string{})
-
-	// "Refetch" the projects from the config file
-	s.getProjectsConfig()
-
-	s.removeProject("test")
+	s.AddProject("test", "test.local", 1234, []string{})
 
 	// "Refetch" the projects from the config file
-	s.getProjectsConfig()
+	s.GetProjectsConfig()
 
-	projectNames := s.getProjectNames()
+	s.RemoveProject("test")
+
+	// "Refetch" the projects from the config file
+	s.GetProjectsConfig()
+
+	projectNames := s.GetProjectNames()
 
 	if len(projectNames) != 0 {
 		t.Error("Expected no project names, got", len(projectNames))
