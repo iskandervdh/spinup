@@ -12,19 +12,41 @@ import (
 
 type Spinup struct {
 	config   *config.Config
+	cli      *cli.CLI
 	commands Commands
 	projects Projects
 }
 
-func New() *Spinup {
-	return &Spinup{
-		config: config.New(),
+func New(options ...func(*Spinup)) *Spinup {
+	config, err := config.New()
+	cli := cli.New()
+
+	if err != nil {
+		fmt.Println("Error getting config:", err)
+		os.Exit(1)
+	}
+
+	s := &Spinup{
+		config: config,
+		cli:    cli,
+	}
+
+	for _, option := range options {
+		option(s)
+	}
+
+	return s
+}
+
+func WithConfig(cfg *config.Config) func(*Spinup) {
+	return func(s *Spinup) {
+		s.config = cfg
 	}
 }
 
-func NewWithConfig(config *config.Config) *Spinup {
-	return &Spinup{
-		config: config,
+func WithCLI(cli *cli.CLI) func(*Spinup) {
+	return func(s *Spinup) {
+		s.cli = cli
 	}
 }
 
@@ -40,7 +62,7 @@ func (s *Spinup) requireSudo() {
 	err := exec.Command("sudo", "-v").Run()
 
 	if err != nil {
-		cli.ErrorPrint("This command requires sudo")
+		s.cli.ErrorPrint("This command requires sudo")
 		os.Exit(1)
 	}
 }
@@ -49,7 +71,7 @@ func (s *Spinup) getCommandsConfig() {
 	commands, err := s.getCommands()
 
 	if err != nil {
-		cli.ErrorPrint("Error getting commands. Did you run init?")
+		s.cli.ErrorPrint("Error getting commands. Did you run init?")
 		os.Exit(1)
 	}
 
@@ -60,7 +82,7 @@ func (s *Spinup) getProjectsConfig() {
 	projects, err := s.getProjects()
 
 	if err != nil {
-		cli.ErrorPrint("Error getting projects. Did you run init?")
+		s.cli.ErrorPrint("Error getting projects. Did you run init?")
 		os.Exit(1)
 	}
 

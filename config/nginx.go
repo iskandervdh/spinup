@@ -7,8 +7,8 @@ import (
 	"strings"
 )
 
-func (c *Config) restartNginx() {
-	exec.Command("sudo", "systemctl", "restart", "nginx").Run()
+func (c *Config) restartNginx() error {
+	return exec.Command("sudo", "systemctl", "restart", "nginx").Run()
 }
 
 func (c *Config) AddNginxConfig(name string, domain string, port int) error {

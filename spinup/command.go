@@ -6,7 +6,6 @@ import (
 	"os"
 	"path"
 
-	"github.com/iskandervdh/spinup/cli"
 	"github.com/iskandervdh/spinup/config"
 )
 
@@ -20,7 +19,7 @@ func (s *Spinup) getCommands() (Commands, error) {
 	commandsFileContent, err := os.ReadFile(s.getCommandsFilePath())
 
 	if err != nil {
-		cli.ErrorPrint("Error reading commands.json file:", err)
+		s.cli.ErrorPrint("Error reading commands.json file:", err)
 		return nil, err
 	}
 
@@ -28,7 +27,7 @@ func (s *Spinup) getCommands() (Commands, error) {
 	err = json.Unmarshal(commandsFileContent, &commands)
 
 	if err != nil {
-		cli.ErrorPrint("Error parsing commands.json file:", err)
+		s.cli.ErrorPrint("Error parsing commands.json file:", err)
 		return nil, err
 	}
 
@@ -49,7 +48,7 @@ func (s *Spinup) addCommand(name string, command string) {
 	// Check if already exists
 	for commandName := range s.commands {
 		if commandName == name {
-			cli.ErrorPrintf("Command '%s' already exists", name)
+			s.cli.ErrorPrintf("Command '%s' already exists", name)
 			return
 		}
 	}
@@ -59,25 +58,25 @@ func (s *Spinup) addCommand(name string, command string) {
 	updatedCommands, err := json.MarshalIndent(s.commands, "", "  ")
 
 	if err != nil {
-		cli.ErrorPrint("Error encoding projects to json:", err)
+		s.cli.ErrorPrint("Error encoding projects to json:", err)
 		return
 	}
 
 	err = os.WriteFile(s.getCommandsFilePath(), updatedCommands, 0644)
 
 	if err != nil {
-		cli.ErrorPrint("Error writing commands to file:", err)
+		s.cli.ErrorPrint("Error writing commands to file:", err)
 		return
 	}
 
 	if !s.config.IsTesting() {
-		cli.InfoPrintf("Added command '%s': %s", name, command)
+		s.cli.InfoPrintf("Added command '%s': %s", name, command)
 	}
 }
 
 func (s *Spinup) addCommandInteractive() {
-	name := cli.Input("Enter command name:")
-	command := cli.Input("Enter command:")
+	name := s.cli.Input("Enter command name:")
+	command := s.cli.Input("Enter command:")
 
 	s.addCommand(name, command)
 }
@@ -92,31 +91,40 @@ func (s *Spinup) removeCommand(name string) {
 	updatedCommands, err := json.MarshalIndent(s.commands, "", "  ")
 
 	if err != nil {
-		cli.ErrorPrint("Error encoding commands to json:", err)
+		s.cli.ErrorPrint("Error encoding commands to json:", err)
 		return
 	}
 
 	err = os.WriteFile(s.getCommandsFilePath(), updatedCommands, 0644)
 
 	if err != nil {
-		cli.ErrorPrint("Error writing commands to file:", err)
+		s.cli.ErrorPrint("Error writing commands to file:", err)
 		return
 	}
 
 	if !s.config.IsTesting() {
-		cli.InfoPrintf("Removed command '%s'", name)
+		s.cli.InfoPrintf("Removed command '%s'", name)
 	}
 }
 
 func (s *Spinup) removeCommandInteractive() {
-	name := cli.Selection("Select command to remove", s.getCommandNames())
+	name, err, exited := s.cli.Selection("Select command to remove", s.getCommandNames())
 
-	if name == "" {
-		cli.ErrorPrint("No command selected")
+	if err != nil {
+		s.cli.ErrorPrint("Error selecting command:", err)
 		return
 	}
 
-	if !cli.Confirm("Are you sure you want to remove command " + name + "?") {
+	if exited {
+		return
+	}
+
+	if name == "" {
+		s.cli.ErrorPrint("No command selected")
+		return
+	}
+
+	if !s.cli.Confirm("Are you sure you want to remove command " + name + "?") {
 		return
 	}
 

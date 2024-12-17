@@ -8,7 +8,7 @@ import (
 )
 
 func TestGetProjectNamesEmpty(t *testing.T) {
-	s := TestingSpinup("get_project_names_empty")
+	s := TestingSpinup("get_project_names_empty", nil)
 
 	projectNames := s.getProjectNames()
 
@@ -19,7 +19,7 @@ func TestGetProjectNamesEmpty(t *testing.T) {
 }
 
 func TestAddProject(t *testing.T) {
-	s := TestingSpinup("add_project")
+	s := TestingSpinup("add_project", nil)
 
 	// Fetch the commands and projects from their config files
 	s.getCommandsConfig()
@@ -87,7 +87,7 @@ func TestAddProject(t *testing.T) {
 }
 
 func TestAddProjectWithCommands(t *testing.T) {
-	s := TestingSpinup("add_project_with_commands")
+	s := TestingSpinup("add_project_with_commands", nil)
 
 	// Fetch the commands and projects from their config files
 	s.getCommandsConfig()
@@ -129,7 +129,7 @@ func TestAddProjectWithCommands(t *testing.T) {
 }
 
 func TestRemoveProject(t *testing.T) {
-	s := TestingSpinup("remove_project")
+	s := TestingSpinup("remove_project", nil)
 
 	// Fetch the commands and projects from their config files
 	s.getCommandsConfig()

@@ -31,7 +31,7 @@ func (s *Spinup) getProjects() (Projects, error) {
 	projectsFileContent, err := os.ReadFile(s.getProjectsFilePath())
 
 	if err != nil {
-		cli.ErrorPrint("Error reading projects.json file:", err)
+		s.cli.ErrorPrint("Error reading projects.json file:", err)
 		return nil, err
 	}
 
@@ -39,7 +39,7 @@ func (s *Spinup) getProjects() (Projects, error) {
 	err = json.Unmarshal(projectsFileContent, &projects)
 
 	if err != nil {
-		cli.ErrorPrint("Error parsing projects.json file:", err)
+		s.cli.ErrorPrint("Error parsing projects.json file:", err)
 		return nil, err
 	}
 
@@ -128,7 +128,7 @@ func (s *Spinup) addProject(name string, domain string, port int, commandNames [
 		return
 	}
 
-	cli.Loading(fmt.Sprintf("Adding project %s...", name),
+	s.cli.Loading(fmt.Sprintf("Adding project %s...", name),
 		func() tea.Msg {
 			return s._addProject(name, domain, port, commandNames)
 		},
@@ -136,18 +136,27 @@ func (s *Spinup) addProject(name string, domain string, port int, commandNames [
 }
 
 func (s *Spinup) addProjectInteractive() {
-	name := cli.Input("Project name:")
-	domain := cli.Input("Domain:")
-	port := cli.Input("Port:")
+	name := s.cli.Input("Project name:")
+	domain := s.cli.Input("Domain:")
+	port := s.cli.Input("Port:")
 
 	portInt, err := strconv.Atoi(port)
 
 	if err != nil {
-		cli.ErrorPrint("Port must be an integer")
+		s.cli.ErrorPrint("Port must be an integer")
 		return
 	}
 
-	selectedCommands := cli.Question("Commands", s.getCommandNames())
+	selectedCommands, err, exited := s.cli.Question("Commands", s.getCommandNames())
+
+	if err != nil {
+		s.cli.ErrorPrint("Error getting commands:", err)
+		os.Exit(1) // TODO: Maybe return error instead of exiting
+	}
+
+	if exited {
+		return
+	}
 
 	s.addProject(name, domain, portInt, selectedCommands)
 }
@@ -206,7 +215,7 @@ func (s *Spinup) removeProject(name string) {
 		return
 	}
 
-	cli.Loading("Adding project...",
+	s.cli.Loading(fmt.Sprintf("Removing project %s...", name),
 		func() tea.Msg {
 			return s._removeProject(name)
 		},
@@ -214,14 +223,23 @@ func (s *Spinup) removeProject(name string) {
 }
 
 func (s *Spinup) removeProjectInteractive() {
-	name := cli.Selection("What project do you want to remove?", s.getProjectNames())
+	name, err, exited := s.cli.Selection("What project do you want to remove?", s.getProjectNames())
 
-	if name == "" {
-		cli.ErrorPrint("No project selected")
+	if err != nil {
+		s.cli.ErrorPrint("Error getting project names:", err)
 		return
 	}
 
-	if !cli.Confirm("Are you sure you want to remove project " + name + "?") {
+	if exited {
+		return
+	}
+
+	if name == "" {
+		s.cli.ErrorPrint("No project selected")
+		return
+	}
+
+	if !s.cli.Confirm("Are you sure you want to remove project " + name + "?") {
 		return
 	}
 
@@ -249,20 +267,20 @@ func (s *Spinup) addCommandToProject(projectName string, commandName string) {
 	exists, project := s.projectExists(projectName)
 
 	if !exists {
-		cli.ErrorPrintf("Project '%s' does not exist", projectName)
+		s.cli.ErrorPrintf("Project '%s' does not exist", projectName)
 		return
 	}
 
 	_, exists = s.commands[commandName]
 
 	if !exists {
-		cli.ErrorPrintf("Command '%s' does not exist", commandName)
+		s.cli.ErrorPrintf("Command '%s' does not exist", commandName)
 		return
 	}
 
 	for _, command := range project.Commands {
 		if command == commandName {
-			cli.ErrorPrintf("Command '%s' already exists in project '%s'", commandName, projectName)
+			s.cli.ErrorPrintf("Command '%s' already exists in project '%s'", commandName, projectName)
 			return
 		}
 	}
@@ -274,19 +292,19 @@ func (s *Spinup) addCommandToProject(projectName string, commandName string) {
 	updatedProjectsConfig, err := json.MarshalIndent(s.projects, "", "  ")
 
 	if err != nil {
-		cli.ErrorPrint("Error encoding projects to json:", err)
+		s.cli.ErrorPrint("Error encoding projects to json:", err)
 		return
 	}
 
 	err = os.WriteFile(s.getProjectsFilePath(), updatedProjectsConfig, 0644)
 
 	if err != nil {
-		cli.ErrorPrint("Error writing projects to file:", err)
+		s.cli.ErrorPrint("Error writing projects to file:", err)
 		return
 	}
 
 	if !s.config.IsTesting() {
-		cli.InfoPrintf("Added command '%s' to project '%s'", commandName, projectName)
+		s.cli.InfoPrintf("Added command '%s' to project '%s'", commandName, projectName)
 	}
 }
 
@@ -294,7 +312,7 @@ func (s *Spinup) removeCommandFromProject(projectName string, commandName string
 	exists, project := s.projectExists(projectName)
 
 	if !exists {
-		cli.ErrorPrintf("Project '%s' does not exist", projectName)
+		s.cli.ErrorPrintf("Project '%s' does not exist", projectName)
 		return
 	}
 
@@ -307,19 +325,19 @@ func (s *Spinup) removeCommandFromProject(projectName string, commandName string
 			updatedProjectsConfig, err := json.MarshalIndent(s.projects, "", "  ")
 
 			if err != nil {
-				cli.ErrorPrint("Error encoding projects to json:", err)
+				s.cli.ErrorPrint("Error encoding projects to json:", err)
 				return
 			}
 
 			err = os.WriteFile(s.getProjectsFilePath(), updatedProjectsConfig, 0644)
 
 			if err != nil {
-				cli.ErrorPrint("Error writing projects to file:", err)
+				s.cli.ErrorPrint("Error writing projects to file:", err)
 				return
 			}
 
 			if !s.config.IsTesting() {
-				cli.InfoPrintf("Removed command '%s' from project '%s'", commandName, projectName)
+				s.cli.InfoPrintf("Removed command '%s' from project '%s'", commandName, projectName)
 			}
 
 			return
@@ -331,7 +349,7 @@ func (s *Spinup) setProjectDir(projectName string, dir *string) {
 	exists, project := s.projectExists(projectName)
 
 	if !exists {
-		cli.ErrorPrintf("Project '%s' does not exist", projectName)
+		s.cli.ErrorPrintf("Project '%s' does not exist", projectName)
 		return
 	}
 
@@ -339,7 +357,7 @@ func (s *Spinup) setProjectDir(projectName string, dir *string) {
 		cwd, err := os.Getwd()
 
 		if err != nil {
-			cli.ErrorPrint("Error getting current working directory:", err)
+			s.cli.ErrorPrint("Error getting current working directory:", err)
 			return
 		}
 
@@ -349,12 +367,12 @@ func (s *Spinup) setProjectDir(projectName string, dir *string) {
 		info, err := os.Stat(*dir)
 
 		if err != nil {
-			cli.ErrorPrintf("Directory '%s' does not exist: %s", *dir, err)
+			s.cli.ErrorPrintf("Directory '%s' does not exist: %s", *dir, err)
 			return
 		}
 
 		if !info.IsDir() {
-			cli.ErrorPrintf("'%s' is not a directory", *dir)
+			s.cli.ErrorPrintf("'%s' is not a directory", *dir)
 			return
 		}
 
@@ -366,19 +384,19 @@ func (s *Spinup) setProjectDir(projectName string, dir *string) {
 	updatedProjectsConfig, err := json.MarshalIndent(s.projects, "", "  ")
 
 	if err != nil {
-		cli.ErrorPrint("Error encoding projects to json:", err)
+		s.cli.ErrorPrint("Error encoding projects to json:", err)
 		return
 	}
 
 	err = os.WriteFile(s.getProjectsFilePath(), updatedProjectsConfig, 0644)
 
 	if err != nil {
-		cli.ErrorPrint("Error writing projects to file:", err)
+		s.cli.ErrorPrint("Error writing projects to file:", err)
 		return
 	}
 
 	if !s.config.IsTesting() {
-		cli.InfoPrintf("Set directory to '%s' for project '%s'", *project.Dir, projectName)
+		s.cli.InfoPrintf("Set directory to '%s' for project '%s'", *project.Dir, projectName)
 	}
 }
 
@@ -386,12 +404,12 @@ func (s *Spinup) getProjectDir(projectName string) {
 	exists, project := s.projectExists(projectName)
 
 	if !exists {
-		cli.ErrorPrintf("Project '%s' does not exist", projectName)
+		s.cli.ErrorPrintf("Project '%s' does not exist", projectName)
 		return
 	}
 
 	if project.Dir == nil {
-		cli.ErrorPrintf("Project '%s' does not have a directory set", projectName)
+		s.cli.ErrorPrintf("Project '%s' does not have a directory set", projectName)
 		return
 	}
 
@@ -400,7 +418,7 @@ func (s *Spinup) getProjectDir(projectName string) {
 
 func (s *Spinup) handleProject() {
 	if len(os.Args) < 3 {
-		cli.ErrorPrintf("Usage: %s project <add|remove|list> [args...]", config.ProgramName)
+		s.cli.ErrorPrintf("Usage: %s project <add|remove|list> [args...]", config.ProgramName)
 		return
 	}
 
@@ -421,7 +439,7 @@ func (s *Spinup) handleProject() {
 		port, err := strconv.Atoi(os.Args[5])
 
 		if err != nil {
-			cli.ErrorPrint("Port must be an integer")
+			s.cli.ErrorPrint("Port must be an integer")
 			return
 		}
 

@@ -46,7 +46,7 @@ func (s selection) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (s selection) View() string {
-	out := fmt.Sprintf("%s\n\n", s.prompt)
+	out := fmt.Sprintf("\n%s\n\n", s.prompt)
 
 	for i, choice := range s.options {
 		cursor := " "

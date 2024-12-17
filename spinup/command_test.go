@@ -1,11 +1,12 @@
 package spinup
 
 import (
+	"sort"
 	"testing"
 )
 
 func TestGetCommandNames(t *testing.T) {
-	s := TestingSpinup("get_command_names")
+	s := TestingSpinup("get_command_names", nil)
 
 	commandNames := s.getCommandNames()
 
@@ -16,7 +17,7 @@ func TestGetCommandNames(t *testing.T) {
 }
 
 func TestAddCommand(t *testing.T) {
-	s := TestingSpinup("add_command")
+	s := TestingSpinup("add_command", nil)
 
 	s.getCommandsConfig()
 
@@ -39,7 +40,7 @@ func TestAddCommand(t *testing.T) {
 }
 
 func TestAddCommandDuplicate(t *testing.T) {
-	s := TestingSpinup("add_command_duplicate")
+	s := TestingSpinup("add_command_duplicate", nil)
 
 	s.getCommandsConfig()
 
@@ -67,7 +68,7 @@ func TestAddCommandDuplicate(t *testing.T) {
 }
 
 func TestAddMultipleCommands(t *testing.T) {
-	s := TestingSpinup("add_multiple_commands")
+	s := TestingSpinup("add_multiple_commands", nil)
 
 	s.getCommandsConfig()
 
@@ -78,6 +79,7 @@ func TestAddMultipleCommands(t *testing.T) {
 	s.getCommandsConfig()
 
 	commandNames := s.getCommandNames()
+	sort.Strings(commandNames)
 
 	if len(commandNames) != 2 {
 		t.Error("Expected 2 command names, got", len(commandNames))
@@ -96,7 +98,7 @@ func TestAddMultipleCommands(t *testing.T) {
 }
 
 func TestRemoveCommand(t *testing.T) {
-	s := TestingSpinup("remove_command")
+	s := TestingSpinup("remove_command", nil)
 
 	s.getCommandsConfig()
 
@@ -119,7 +121,7 @@ func TestRemoveCommand(t *testing.T) {
 }
 
 func TestGetCommand(t *testing.T) {
-	s := TestingSpinup("get_command")
+	s := TestingSpinup("get_command", nil)
 
 	s.getCommandsConfig()
 
@@ -142,7 +144,7 @@ func TestGetCommand(t *testing.T) {
 }
 
 func TestGetCommandNotFound(t *testing.T) {
-	s := TestingSpinup("get_command_not_found")
+	s := TestingSpinup("get_command_not_found", nil)
 
 	s.getCommandsConfig()
 
@@ -152,4 +154,24 @@ func TestGetCommandNotFound(t *testing.T) {
 		t.Error("Expected error, got nil")
 		return
 	}
+}
+
+func TestListCommands(t *testing.T) {
+	s := TestingSpinup("list_commands", nil)
+
+	s.getCommandsConfig()
+
+	s.addCommand("test", "ls")
+	s.addCommand("test2", "ls")
+
+	// "Refetch" the commands config
+	s.getCommandsConfig()
+
+	s.listCommands()
+}
+
+func TestListCommandsNoCommands(t *testing.T) {
+	s := TestingSpinup("list_commands_no_commands", nil)
+
+	s.listCommands()
 }

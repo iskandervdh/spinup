@@ -10,8 +10,6 @@ import (
 	"strings"
 	"sync"
 	"syscall"
-
-	"github.com/iskandervdh/spinup/cli"
 )
 
 type commandWithName struct {
@@ -39,7 +37,7 @@ func (s *Spinup) prefixOutput(prefix string, reader io.Reader, writer io.Writer)
 	}
 
 	if err := scanner.Err(); err != nil {
-		cli.ErrorPrint("Error reading output:", err)
+		s.cli.ErrorPrint("Error reading output:", err)
 	}
 }
 
@@ -53,14 +51,14 @@ func (s *Spinup) runCommand(wg *sync.WaitGroup, project Project, command command
 	stdout, err := cmd.StdoutPipe()
 
 	if err != nil {
-		cli.ErrorPrint("Error creating StdoutPipe:", err)
+		s.cli.ErrorPrint("Error creating StdoutPipe:", err)
 		return
 	}
 
 	stderr, err := cmd.StderrPipe()
 
 	if err != nil {
-		cli.ErrorPrint("Error creating StderrPipe:", err)
+		s.cli.ErrorPrint("Error creating StderrPipe:", err)
 		return
 	}
 
@@ -75,7 +73,7 @@ func (s *Spinup) runCommand(wg *sync.WaitGroup, project Project, command command
 	err = cmd.Start()
 
 	if err != nil {
-		cli.ErrorPrint("Error starting command: ", err)
+		s.cli.ErrorPrint("Error starting command: ", err)
 		return
 	}
 
@@ -87,7 +85,7 @@ func (s *Spinup) runCommand(wg *sync.WaitGroup, project Project, command command
 			return
 		}
 
-		cli.ErrorPrint("Command finished with error: ", err)
+		s.cli.ErrorPrint("Command finished with error: ", err)
 		return
 	}
 }
@@ -101,7 +99,7 @@ func (s *Spinup) run(project Project, projectName string) {
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 
 	if !s.config.IsTesting() {
-		cli.InfoPrintf("Running project '%s'...", projectName)
+		s.cli.InfoPrintf("Running project '%s'...", projectName)
 	}
 
 	commands := []commandWithName{}
@@ -110,7 +108,7 @@ func (s *Spinup) run(project Project, projectName string) {
 		command, err := s.getCommand(commandName)
 
 		if err != nil {
-			cli.ErrorPrintf("Error getting command '%s': %s\n", commandName, err)
+			s.cli.ErrorPrintf("Error getting command '%s': %s\n", commandName, err)
 			os.Exit(1)
 		}
 
@@ -123,7 +121,7 @@ func (s *Spinup) run(project Project, projectName string) {
 	}
 
 	if len(commands) == 0 {
-		cli.ErrorPrint("No commands found")
+		s.cli.ErrorPrint("No commands found")
 		os.Exit(1)
 	}
 
@@ -133,7 +131,7 @@ func (s *Spinup) run(project Project, projectName string) {
 
 	go func() {
 		<-sigChan
-		cli.InfoPrintf("\nGracefully stopping project '%s'...", projectName)
+		s.cli.InfoPrintf("\nGracefully stopping project '%s'...", projectName)
 	}()
 
 	wg.Wait()
@@ -141,7 +139,7 @@ func (s *Spinup) run(project Project, projectName string) {
 
 func (s *Spinup) tryToRun(name string) bool {
 	if name == "" {
-		cli.ErrorPrint("No name provided")
+		s.cli.ErrorPrint("No name provided")
 		os.Exit(1)
 	}
 

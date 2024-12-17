@@ -5,29 +5,26 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/iskandervdh/spinup/cli"
 	"github.com/iskandervdh/spinup/config"
 )
 
 type Variables map[string]string
 
-func (s *Spinup) addVariable(name string, key string, value string) {
+func (s *Spinup) addVariable(name string, key string, value string) error {
 	if s.projects == nil {
-		return
+		return fmt.Errorf("no projects found")
 	}
 
 	exists, project := s.projectExists(name)
 
 	if !exists {
-		cli.ErrorPrintf("Project '%s' does not exist\n", name)
-		return
+		return fmt.Errorf("project '%s' does not exist", name)
 	}
 
 	// Check if the variable is already defined
 	for variableKey := range project.Variables {
 		if variableKey == key {
-			cli.ErrorPrintf("Variable with name '%s' already exists.\n", name)
-			return
+			return fmt.Errorf("variable with name '%s' already exists", name)
 		}
 	}
 
@@ -39,37 +36,35 @@ func (s *Spinup) addVariable(name string, key string, value string) {
 	updatedVariables, err := json.MarshalIndent(updatedProjects, "", "  ")
 
 	if err != nil {
-		cli.ErrorPrint("Error encoding projects to json:", err)
-		return
+		return fmt.Errorf("error encoding projects to json: %s", err)
 	}
 
 	err = os.WriteFile(s.getProjectsFilePath(), updatedVariables, 0644)
 
 	if err != nil {
-		cli.ErrorPrint("Error writing projects to file:", err)
-		return
+		return fmt.Errorf("error writing projects to file: %s", err)
 	}
 
 	if !s.config.IsTesting() {
-		cli.InfoPrintf("Added variable '%s' to project '%s' with value '%s'\n", key, name, value)
+		s.cli.InfoPrintf("Added variable '%s' to project '%s' with value '%s'\n", key, name, value)
 	}
+
+	return nil
 }
 
-func (s *Spinup) removeVariable(name string, key string) {
+func (s *Spinup) removeVariable(name string, key string) error {
 	if s.projects == nil {
-		return
+		return fmt.Errorf("no projects found")
 	}
 
 	exists, project := s.projectExists(name)
 
 	if !exists {
-		cli.ErrorPrintf("Project '%s' does not exist, nothing to remove\n", name)
-		return
+		return fmt.Errorf("project '%s' does not exist, nothing to remove", name)
 	}
 
 	if project.Variables[key] == "" {
-		cli.ErrorPrintf("Variable '%s' does not exist\n", key)
-		return
+		return fmt.Errorf("variable '%s' does not exist", key)
 	}
 
 	variables := make(map[string]string)
@@ -89,32 +84,31 @@ func (s *Spinup) removeVariable(name string, key string) {
 	updatedProjectConfig, err := json.MarshalIndent(updatedProjects, "", "  ")
 
 	if err != nil {
-		cli.ErrorPrint("Error encoding projects to json:", err)
-		return
+		return fmt.Errorf("error encoding projects to json: %s", err)
 	}
 
 	err = os.WriteFile(s.getProjectsFilePath(), updatedProjectConfig, 0644)
 
 	if err != nil {
-		cli.ErrorPrint("Error writing projects to file:", err)
-		return
+		return fmt.Errorf("error writing projects to file: %s", err)
 	}
 
 	if !s.config.IsTesting() {
-		cli.InfoPrintf("Removed variable '%s' from project '%s'\n", key, name)
+		s.cli.InfoPrintf("Removed variable '%s' from project '%s'\n", key, name)
 	}
+
+	return nil
 }
 
-func (s *Spinup) listVariables(name string) {
+func (s *Spinup) listVariables(name string) error {
 	if s.projects == nil {
-		return
+		return fmt.Errorf("no projects found")
 	}
 
 	exists, project := s.projectExists(name)
 
 	if !exists {
-		cli.ErrorPrintf("Project '%s' does not exist\n", name)
-		return
+		return fmt.Errorf("project '%s' does not exist", name)
 	}
 
 	fmt.Printf("%-20s %-30s\n", "Key", "Value")
@@ -122,6 +116,8 @@ func (s *Spinup) listVariables(name string) {
 	for key, value := range project.Variables {
 		fmt.Printf("%-20s %-30s\n", key, value)
 	}
+
+	return nil
 }
 
 func (s *Spinup) handleVariable() {
@@ -132,7 +128,16 @@ func (s *Spinup) handleVariable() {
 
 	switch os.Args[2] {
 	case "list", "ls":
-		s.listVariables(os.Args[3])
+		if len(os.Args) < 4 {
+			fmt.Printf("Usage: %s variable list|ls <project>\n", config.ProgramName)
+			return
+		}
+
+		err := s.listVariables(os.Args[3])
+
+		if err != nil {
+			s.cli.ErrorPrint("Error listing variables:", err)
+		}
 	case "add":
 		if len(os.Args) < 6 {
 			fmt.Printf("Usage: %s variable add <project> <key> <value>\n", config.ProgramName)
@@ -146,6 +151,10 @@ func (s *Spinup) handleVariable() {
 			return
 		}
 
-		s.removeVariable(os.Args[3], os.Args[4])
+		err := s.removeVariable(os.Args[3], os.Args[4])
+
+		if err != nil {
+			s.cli.ErrorPrint("Error removing variable:", err)
+		}
 	}
 }

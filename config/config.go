@@ -2,11 +2,10 @@ package config
 
 import (
 	_ "embed"
+	"fmt"
 	"os"
 	"os/exec"
 	"path"
-
-	"github.com/iskandervdh/spinup/cli"
 )
 
 var ProgramName = "spinup"
@@ -33,25 +32,30 @@ type Config struct {
 	testing bool
 }
 
-func GetConfigDirPath() string {
+func GetConfigDirPath() (string, error) {
 	home, err := os.UserHomeDir()
 
 	if err != nil {
-		cli.ErrorPrint("Cloud not get home directory of current user")
-		panic(err)
+		return "", fmt.Errorf("could not get home directory of current user")
 	}
 
-	return path.Join(home, ".config", ProgramName)
+	return path.Join(home, ".config", ProgramName), nil
 }
 
-func New() *Config {
+func New() (*Config, error) {
+	configDir, err := GetConfigDirPath()
+
+	if err != nil {
+		return nil, err
+	}
+
 	return &Config{
-		configDir:      GetConfigDirPath(),
+		configDir:      configDir,
 		nginxConfigDir: nginxConfigDir,
 		hostsFile:      hostsFile,
 		hostsBackupDir: hostsBackupDir,
 		testing:        false,
-	}
+	}, nil
 }
 
 func NewTesting(testingConfigDir string) *Config {
@@ -75,6 +79,7 @@ func (c *Config) withSudo(name string, args ...string) *exec.Cmd {
 /**
  * Getters
  */
+
 func (c *Config) GetConfigDir() string {
 	return c.configDir
 }
