@@ -188,3 +188,108 @@ func TestHostsBackupDirInit(t *testing.T) {
 		return
 	}
 }
+
+func TestSpinupHandleUnknownSubcommand(t *testing.T) {
+	s := TestingSpinup("handle", nil)
+
+	// Test handle without any arguments
+	os.Args = []string{"spinup", "handle"}
+	s.Handle()
+}
+
+func TestSpinupHandleNoArgs(t *testing.T) {
+	s := TestingSpinup("handle_no_args", nil)
+
+	os.Args = []string{"spinup"}
+	s.Handle()
+}
+
+func TestSpinupHandleInit(t *testing.T) {
+	s := TestingSpinup("handle_no_args", nil)
+
+	os.Args = []string{"spinup", "init"}
+	s.Handle()
+}
+
+func TestSpinupHandleVersion(t *testing.T) {
+	s := TestingSpinup("handle_no_args", nil)
+
+	os.Args = []string{"spinup", "-v"}
+	s.Handle()
+}
+
+func TestSpinupHandleCommand(*testing.T) {
+	s := TestingSpinup("handle_no_args", nil)
+
+	os.Args = []string{"spinup", "c"}
+	s.Handle()
+
+	os.Args = []string{"spinup", "c", "ls"}
+	s.Handle()
+
+	os.Args = []string{"spinup", "c", "add", "test"}
+	s.Handle()
+
+	os.Args = []string{"spinup", "c", "add", "test", "echo test"}
+	s.Handle()
+
+	os.Args = []string{"spinup", "c", "rm", "test"}
+	s.Handle()
+
+	os.Args = []string{"spinup", "c", "test"}
+	s.Handle()
+}
+
+func TestSpinupHandleProject(t *testing.T) {
+	s := TestingSpinup("handle_no_args", nil)
+
+	os.Args = []string{"spinup", "p"}
+	s.Handle()
+
+	os.Args = []string{"spinup", "p", "ls"}
+	s.Handle()
+
+	os.Args = []string{"spinup", "p", "add", "test"}
+	s.Handle()
+
+	os.Args = []string{"spinup", "p", "add", "test", "echo test"}
+	s.Handle()
+
+	os.Args = []string{"spinup", "p", "rm", "test"}
+	s.Handle()
+
+	os.Args = []string{"spinup", "p", "test"}
+	s.Handle()
+}
+
+func TestSpinupHandleVariable(t *testing.T) {
+	s := TestingSpinup("handle_no_args", nil)
+
+	os.Args = []string{"spinup", "v"}
+	s.Handle()
+
+	os.Args = []string{"spinup", "v", "ls"}
+	s.Handle()
+
+	os.Args = []string{"spinup", "v", "ls", "test"}
+	s.Handle()
+
+	os.Args = []string{"spinup", "v", "add", "test"}
+	s.Handle()
+
+	os.Args = []string{"spinup", "v", "add", "test", "echo test"}
+	s.Handle()
+
+	os.Args = []string{"spinup", "v", "rm", "test"}
+	s.Handle()
+
+	os.Args = []string{"spinup", "v", "test"}
+	s.Handle()
+}
+
+func TestSpinupHandle(t *testing.T) {
+	s := TestingSpinup("handle_no_args", nil)
+
+	os.Args = []string{"spinup", "run", "test"}
+	s.Handle()
+}
