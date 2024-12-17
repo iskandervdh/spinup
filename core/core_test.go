@@ -5,6 +5,7 @@ import (
 	"path"
 	"testing"
 
+	"github.com/iskandervdh/spinup/common"
 	"github.com/iskandervdh/spinup/config"
 )
 
@@ -21,11 +22,23 @@ func TestingCore(testName string) *Core {
 		panic(err)
 	}
 
-	c := config.NewTesting(testingConfigDir)
-	s := New(WithConfig(c))
-	s.Init()
+	cfg := config.NewTesting(testingConfigDir)
+	c := New(WithConfig(cfg))
 
-	return s
+	// Mock msgChan to prevent blocking during testing
+	c.msgChan = new(chan common.Msg)
+	*c.msgChan = make(chan common.Msg)
+
+	go func() {
+		for {
+			<-(*c.msgChan)
+		}
+	}()
+
+	// Mock init to prevent errors during testing
+	c.Init()
+
+	return c
 }
 
 func TestNew(t *testing.T) {
