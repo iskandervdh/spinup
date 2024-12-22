@@ -24,10 +24,10 @@ func (c *CLI) listCommands() {
 }
 
 func (c *CLI) addCommandInteractive() {
-	name := c.Input("Enter command name:")
-	command := c.Input("Enter command:")
+	name := c.Input("Enter command name:", "")
+	command := c.Input("Enter command:", "")
 
-	c.core.AddCommand(name, command)
+	c.sendMsg(c.core.AddCommand(name, command))
 }
 
 func (c *CLI) removeCommandInteractive() {
@@ -51,12 +51,45 @@ func (c *CLI) removeCommandInteractive() {
 		return
 	}
 
-	c.core.RemoveCommand(name)
+	c.sendMsg(c.core.RemoveCommand(name))
+}
+
+func (c *CLI) editCommandInteractive() {
+	name, err, exited := c.Selection("Select command to edit", c.core.GetCommandNames())
+
+	if err != nil {
+		c.ErrorPrint("Error selecting command:", err)
+		return
+	}
+
+	if exited {
+		return
+	}
+
+	if name == "" {
+		c.ErrorPrint("No command selected")
+		return
+	}
+
+	exist, command := c.core.CommandExists(name)
+
+	if !exist {
+		c.ErrorPrint("Command does not exist")
+		return
+	}
+
+	newCommand := c.Input("Edit command:", command)
+
+	if !c.Confirm("Are you sure you want to update command " + name + "?") {
+		return
+	}
+
+	c.sendMsg(c.core.UpdateCommand(name, newCommand))
 }
 
 func (c *CLI) handleCommand() {
 	if len(os.Args) < 3 {
-		c.sendMsg(common.NewInfoMsg("Usage: spinup command <add|remove|list> [args...]"))
+		c.sendMsg(common.NewRegularMsg("Usage: spinup command <add|remove|edit|rename|list> [args...]\n"))
 		return
 	}
 
@@ -72,11 +105,11 @@ func (c *CLI) handleCommand() {
 		}
 
 		if len(os.Args) < 5 {
-			c.sendMsg(common.NewInfoMsg("Usage: %s command add <name> <command>\n", config.ProgramName))
+			c.sendMsg(common.NewRegularMsg("Usage: %s command|c add <name> <command>\n", config.ProgramName))
 			return
 		}
 
-		c.core.AddCommand(os.Args[3], os.Args[4])
+		c.sendMsg(c.core.AddCommand(os.Args[3], os.Args[4]))
 	case "remove", "rm":
 		if len(os.Args) == 3 {
 			c.removeCommandInteractive()
@@ -84,13 +117,32 @@ func (c *CLI) handleCommand() {
 		}
 
 		if len(os.Args) < 4 {
-			c.sendMsg(common.NewInfoMsg("Usage: %s command remove <name>\n", config.ProgramName))
+			c.sendMsg(common.NewRegularMsg("Usage: %s command|c remove|rm <name>\n", config.ProgramName))
 			return
 		}
 
-		c.core.RemoveCommand(os.Args[3])
+		c.sendMsg(c.core.RemoveCommand(os.Args[3]))
+	case "edit", "e":
+		if len(os.Args) == 3 {
+			c.editCommandInteractive()
+			return
+		}
+
+		if len(os.Args) < 5 {
+			c.sendMsg(common.NewRegularMsg("Usage: %s command|c edit|e <name> <command>\n", config.ProgramName))
+			return
+		}
+
+		c.sendMsg(c.core.UpdateCommand(os.Args[3], os.Args[4]))
+	case "rename", "mv":
+		if len(os.Args) < 5 {
+			c.sendMsg(common.NewRegularMsg("Usage: %s command|c rename|mv <old-name> <new-name>\n", config.ProgramName))
+			return
+		}
+
+		c.sendMsg(c.core.RenameCommand(os.Args[3], os.Args[4]))
 	default:
 		c.sendMsg(common.NewErrMsg("Unknown subcommand '%s'\n", commandName))
-		c.sendMsg(common.NewInfoMsg("Expected 'add', 'remove' or 'list'"))
+		c.sendMsg(common.NewRegularMsg("Expected 'add', 'remove', 'edit', 'rename' or 'list'\n"))
 	}
 }

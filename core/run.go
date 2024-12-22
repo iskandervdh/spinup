@@ -105,10 +105,10 @@ func (c *Core) run(project Project, projectName string) common.Msg {
 	commands := []commandWithName{}
 
 	for _, commandName := range project.Commands {
-		command, err := c.getCommand(commandName)
+		exists, command := c.CommandExists(commandName)
 
-		if err != nil {
-			return common.NewErrMsg("Error getting command '%s': %s\n", commandName, err)
+		if !exists {
+			return common.NewErrMsg("Command '%s' does not exist", commandName)
 		}
 
 		commands = append(

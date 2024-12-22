@@ -15,15 +15,17 @@ func blink() tea.Cmd {
 }
 
 type cursor struct {
-	visible bool
+	visible  bool
+	position int
 }
 
 func newCursor() *cursor {
-	return &cursor{visible: true}
+	return &cursor{visible: true, position: 0}
 }
 
 func (c *cursor) init() tea.Cmd {
 	c.visible = true
+
 	return blink()
 }
 
@@ -33,10 +35,24 @@ func (c *cursor) toggle() tea.Cmd {
 	return blink()
 }
 
-func (c *cursor) get() string {
+func (c *cursor) moveLeft() {
+	if c.position > 0 {
+		c.position--
+		c.visible = true
+	}
+}
+
+func (c *cursor) moveRight(max int) {
+	if c.position < max {
+		c.position++
+		c.visible = true
+	}
+}
+
+func (c *cursor) get(currentChar string) string {
 	if c.visible {
-		return "\x1b[7m \x1b[0m"
+		return "\x1b[7m" + currentChar + "\x1b[0m"
 	}
 
-	return ""
+	return currentChar
 }

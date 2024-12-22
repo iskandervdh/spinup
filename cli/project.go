@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -41,9 +42,9 @@ func (c *CLI) addProject(name string, domain string, port int, commandNames []st
 }
 
 func (c *CLI) addProjectInteractive() {
-	name := c.Input("Project name:")
-	domain := c.Input("Domain:")
-	port := c.Input("Port:")
+	name := c.Input("Project name:", "")
+	domain := c.Input("Domain:", "")
+	port := c.Input("Port:", "")
 
 	portInt, err := strconv.Atoi(port)
 
@@ -52,11 +53,11 @@ func (c *CLI) addProjectInteractive() {
 		return
 	}
 
-	selectedCommands, err, exited := c.Question("Commands", c.core.GetCommandNames())
+	selectedCommands, err, exited := c.Question("Commands", c.core.GetCommandNames(), nil)
 
 	if err != nil {
 		c.ErrorPrint("Error getting commands:", err)
-		os.Exit(1) // TODO: Maybe return error instead of exiting
+		return
 	}
 
 	if exited {
@@ -66,7 +67,7 @@ func (c *CLI) addProjectInteractive() {
 	c.addProject(name, domain, portInt, selectedCommands)
 }
 
-func (c *CLI) RemoveProject(name string) {
+func (c *CLI) removeProject(name string) {
 	c.Loading(fmt.Sprintf("Removing project %s...", name),
 		func() common.Msg {
 			return c.core.RemoveProject(name)
@@ -98,13 +99,74 @@ func (c *CLI) removeProjectInteractive() {
 	c.core.RemoveProject(name)
 }
 
-func (c *CLI) handleProject() {
-	if len(os.Args) < 3 {
-		c.sendMsg(common.NewInfoMsg("Usage: %s project <add|remove|list> [args...]", config.ProgramName))
+func (c *CLI) editProject(name string, domain string, port int, commandNames []string) {
+	c.Loading(fmt.Sprintf("Updating project %s...", name),
+		func() common.Msg {
+			return c.core.UpdateProject(name, domain, port, commandNames)
+		},
+	)
+}
+
+func (c *CLI) editProjectInteractive() {
+	name, err, exited := c.Selection("What project do you want to edit?", c.core.GetProjectNames())
+
+	if err != nil {
+		c.ErrorPrint("Error getting project names:", err)
 		return
 	}
 
-	var msg common.Msg
+	if exited {
+		return
+	}
+
+	if name == "" {
+		c.ErrorPrint("No project selected")
+		return
+	}
+
+	exists, project := c.core.ProjectExists(name)
+
+	if !exists {
+		c.ErrorPrint("Project does not exist")
+		return
+	}
+
+	domain := c.Input("Domain:", project.Domain)
+	port := c.Input("Port:", strconv.Itoa(project.Port))
+
+	portInt, err := strconv.Atoi(port)
+
+	if err != nil {
+		c.ErrorPrint("Port must be an integer")
+		return
+	}
+
+	projectSelectedCommands := make([]bool, len(c.core.GetCommandNames()))
+	commandNames := c.core.GetCommandNames()
+
+	for i, commandName := range commandNames {
+		projectSelectedCommands[i] = slices.Contains(project.Commands, commandName)
+	}
+
+	selectedCommands, err, exited := c.Question("Commands", c.core.GetCommandNames(), projectSelectedCommands)
+
+	if err != nil {
+		c.ErrorPrint("Error getting commands:", err)
+		return
+	}
+
+	if exited {
+		return
+	}
+
+	c.sendMsg(c.core.UpdateProject(name, domain, portInt, selectedCommands))
+}
+
+func (c *CLI) handleProject() {
+	if len(os.Args) < 3 {
+		c.sendMsg(common.NewRegularMsg("Usage: %s project <add|remove|edit|rename|add-command|remove-command|set-dir|get-dir|list> [args...]\n", config.ProgramName))
+		return
+	}
 
 	switch os.Args[2] {
 	case "list", "ls":
@@ -116,7 +178,7 @@ func (c *CLI) handleProject() {
 		}
 
 		if len(os.Args) < 6 {
-			c.sendMsg(common.NewRegularMsg("Usage: %s project add <name> <domain> <port>\n", config.ProgramName))
+			c.sendMsg(common.NewRegularMsg("Usage: %s project add <name> <domain> <port> [command names...]\n", config.ProgramName))
 			return
 		}
 
@@ -139,44 +201,68 @@ func (c *CLI) handleProject() {
 			return
 		}
 
-		c.RemoveProject(os.Args[3])
+		c.removeProject(os.Args[3])
+	case "edit", "e":
+		if len(os.Args) < 4 {
+			c.editProjectInteractive()
+			return
+		}
+
+		if len(os.Args) < 6 {
+			c.sendMsg(common.NewRegularMsg("Usage: %s project edit <name> <domain> <port> [command names...]\n", config.ProgramName))
+			return
+		}
+
+		port, err := strconv.Atoi(os.Args[5])
+
+		if err != nil {
+			c.ErrorPrint("Port must be an integer")
+			return
+		}
+
+		c.editProject(os.Args[3], os.Args[4], port, os.Args[6:])
+	case "rename", "mv":
+		if len(os.Args) < 5 {
+			c.sendMsg(common.NewRegularMsg("Usage: %s project rename|mv <old-name> <new-name>\n", config.ProgramName))
+			return
+		}
+
+		c.sendMsg(c.core.RenameProject(os.Args[3], os.Args[4]))
 	case "add-command", "ac":
 		if len(os.Args) < 5 {
 			c.sendMsg(common.NewRegularMsg("Usage: %s project add-command|ac <project> <command>\n", config.ProgramName))
 			return
 		}
 
-		msg = c.core.AddCommandToProject(os.Args[3], os.Args[4])
+		c.sendMsg(c.core.AddCommandToProject(os.Args[3], os.Args[4]))
 	case "remove-command", "rc":
 		if len(os.Args) < 5 {
 			c.sendMsg(common.NewRegularMsg("Usage: %s project remove-command|rc <project> <command>\n", config.ProgramName))
 			return
 		}
 
-		msg = c.core.RemoveCommandFromProject(os.Args[3], os.Args[4])
+		c.sendMsg(c.core.RemoveCommandFromProject(os.Args[3], os.Args[4]))
 	case "set-dir", "sd":
 		if len(os.Args) < 4 {
-			c.sendMsg(common.NewRegularMsg("Usage: %s project set-dir|sp <project> [dir]\n", config.ProgramName))
+			c.sendMsg(common.NewRegularMsg("Usage: %s project set-dir|sd <project> [dir]\n", config.ProgramName))
 			return
 		}
 
 		if len(os.Args) == 5 {
-			c.core.SetProjectDir(os.Args[3], &os.Args[4])
+			c.sendMsg(c.core.SetProjectDir(os.Args[3], &os.Args[4]))
 			return
 		}
 
-		msg = c.core.SetProjectDir(os.Args[3], nil)
+		c.sendMsg(c.core.SetProjectDir(os.Args[3], nil))
 	case "get-dir", "gd":
 		if len(os.Args) != 4 {
-			c.sendMsg(common.NewRegularMsg("Usage: %s project get-dir|gp <project>\n", config.ProgramName))
+			c.sendMsg(common.NewRegularMsg("Usage: %s project get-dir|gd <project>\n", config.ProgramName))
 			return
 		}
 
-		msg = c.core.GetProjectDir(os.Args[3])
+		c.sendMsg(c.core.GetProjectDir(os.Args[3]))
 	default:
-		msg = common.NewErrMsg("Unknown subcommand '%s'", os.Args[2])
-
+		c.sendMsg(common.NewErrMsg("Unknown subcommand '%s'", os.Args[2]))
+		c.sendMsg(common.NewRegularMsg("Expected 'add', 'remove|rm', 'edit|e', 'rename|mv', 'add-command|ac', 'remove-command|rc', 'set-dir|sd', 'get-dir|gd' subcommand\n"))
 	}
-
-	c.MsgPrint(msg)
 }

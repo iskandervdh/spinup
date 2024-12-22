@@ -122,6 +122,38 @@ func (c *Config) RemoveHost(domain string) error {
 	return nil
 }
 
+func (c *Config) UpdateHost(oldDomain string, newDomain string) error {
+	if oldDomain == "" {
+		return fmt.Errorf("old domain is empty")
+	}
+
+	if newDomain == "" {
+		return fmt.Errorf("new domain is empty")
+	}
+
+	hostsContent, beginIndex, endIndex, err := c.getHostsContent()
+
+	if err != nil {
+		return err
+	}
+
+	customHosts := hostsContent[beginIndex+len(HostsBeginMarker) : endIndex]
+
+	// Update domain in hosts file
+	customHosts = strings.Replace(customHosts, fmt.Sprintf("\n127.0.0.1\t%s", oldDomain), fmt.Sprintf("\n127.0.0.1\t%s", newDomain), -1)
+
+	// Save hosts file
+	newHostsContent := hostsContent[:beginIndex+len(HostsBeginMarker)] + customHosts + hostsContent[endIndex:]
+
+	c.backupHosts()
+	saveNewHosts := c.withSudo("tee", c.hostsFile)
+	saveNewHosts.Stdin = strings.NewReader(newHostsContent)
+
+	saveNewHosts.Run()
+
+	return nil
+}
+
 func (c *Config) InitHosts() error {
 	// Check if hosts file exists
 	fileInfo, err := os.Stat(c.hostsFile)
