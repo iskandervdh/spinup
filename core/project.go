@@ -210,7 +210,7 @@ func (c *Core) UpdateProject(name string, domain string, port int, commandNames 
 	err = c.config.UpdateHost(project.Domain, domain)
 
 	if err != nil {
-		// Remove nginx config file if adding domain to hosts file fails
+		// Undo editing of nginx config file if adding new domain to hosts file fails
 		c.config.UpdateNginxConfig(name, project.Domain, project.Port)
 
 		return common.NewErrMsg("Error trying to update domain in hosts file: %s", err)
