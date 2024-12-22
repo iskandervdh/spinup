@@ -78,8 +78,8 @@ func (c *CLI) sendMsg(msg common.Msg) {
 	*c.msgChan <- msg
 }
 
-func (c *CLI) Question(prompt string, options []string) ([]string, error, bool) {
-	q := components.NewQuestion(prompt, options)
+func (c *CLI) Question(prompt string, options []string, defaultSelected []bool) ([]string, error, bool) {
+	q := components.NewQuestion(prompt, options, defaultSelected)
 
 	p := tea.NewProgram(q, tea.WithInput(c.in), tea.WithOutput(c.out))
 

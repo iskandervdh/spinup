@@ -14,11 +14,17 @@ type Question struct {
 	exited   bool
 }
 
-func NewQuestion(prompt string, options []string) Question {
+func NewQuestion(prompt string, options []string, defaultSelected []bool) Question {
+	if defaultSelected == nil {
+		defaultSelected = make([]bool, len(options))
+	} else if len(defaultSelected) != len(options) {
+		panic("defaultSelected length must be equal to options length")
+	}
+
 	return Question{
 		prompt:   prompt,
 		options:  options,
-		selected: make([]bool, len(options)),
+		selected: defaultSelected,
 		exited:   false,
 	}
 }

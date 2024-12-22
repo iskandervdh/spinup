@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -52,7 +53,7 @@ func (c *CLI) addProjectInteractive() {
 		return
 	}
 
-	selectedCommands, err, exited := c.Question("Commands", c.core.GetCommandNames())
+	selectedCommands, err, exited := c.Question("Commands", c.core.GetCommandNames(), nil)
 
 	if err != nil {
 		c.ErrorPrint("Error getting commands:", err)
@@ -140,7 +141,14 @@ func (c *CLI) editProjectInteractive() {
 		return
 	}
 
-	selectedCommands, err, exited := c.Question("Commands", c.core.GetCommandNames())
+	projectSelectedCommands := make([]bool, len(c.core.GetCommandNames()))
+	commandNames := c.core.GetCommandNames()
+
+	for i, commandName := range commandNames {
+		projectSelectedCommands[i] = slices.Contains(project.Commands, commandName)
+	}
+
+	selectedCommands, err, exited := c.Question("Commands", c.core.GetCommandNames(), projectSelectedCommands)
 
 	if err != nil {
 		c.ErrorPrint("Error getting commands:", err)
