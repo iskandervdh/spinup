@@ -73,6 +73,33 @@ func (c *Config) RemoveNginxConfig(name string) error {
 	return nil
 }
 
+func (c *Config) UpdateNginxConfig(name string, domain string, port int) error {
+	err := c.RemoveNginxConfig(name)
+
+	if err != nil {
+		return err
+	}
+
+	return c.AddNginxConfig(name, domain, port)
+}
+
+func (c *Config) RenameNginxConfig(oldName string, newName string) error {
+	oldNginxConfigFilePath := fmt.Sprintf("%s/%s.conf", c.nginxConfigDir, oldName)
+	newNginxConfigFilePath := fmt.Sprintf("%s/%s.conf", c.nginxConfigDir, newName)
+
+	err := c.withSudo("mv", oldNginxConfigFilePath, newNginxConfigFilePath).Run()
+
+	if err != nil {
+		return err
+	}
+
+	if !c.IsTesting() {
+		c.restartNginx()
+	}
+
+	return nil
+}
+
 func (c *Config) InitNginx() error {
 	if _, err := os.Stat(c.nginxConfigDir); os.IsNotExist(err) {
 		err := os.MkdirAll(c.nginxConfigDir, 0755)

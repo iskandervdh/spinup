@@ -116,7 +116,7 @@ func (c *Core) AddProject(name string, domain string, port int, commandNames []s
 		return common.NewErrMsg(fmt.Sprintln("Error writing projects to file:", err))
 	}
 
-	return common.NewSuccessMsg(fmt.Sprintf("Added project '%s' with domain '%s' and port %d", name, domain, port))
+	return common.NewSuccessMsg(fmt.Sprintf("Added project '%s' with domain '%s', port %d and commands %s", name, domain, port, commandNames))
 }
 
 func (c *Core) RemoveProject(name string) common.Msg {
@@ -166,6 +166,113 @@ func (c *Core) RemoveProject(name string) common.Msg {
 	}
 
 	return common.NewSuccessMsg(fmt.Sprintf("Removed project '%s'", name))
+}
+
+func (c *Core) UpdateProject(name string, domain string, port int, commandNames []string) common.Msg {
+	c.RequireSudo()
+
+	exists, project := c.ProjectExists(name)
+
+	if !exists {
+		return common.NewErrMsg("Project '%s' does not exist", name)
+	}
+
+	// Check if commands exist
+	for _, commandName := range commandNames {
+		_, exists := c.commands[commandName]
+
+		if !exists {
+			return common.NewErrMsg("Command '%s' does not exist", commandName)
+		}
+	}
+
+	// Check if domain or port is already in use
+	for projectName, p := range c.projects {
+		if projectName == name {
+			continue
+		}
+
+		if p.Domain == domain {
+			return common.NewErrMsg("Project with domain '%s' already exists: %s", domain, projectName)
+		}
+
+		if p.Port == port {
+			return common.NewErrMsg("Project with port %d already exists: %s", port, projectName)
+		}
+	}
+
+	err := c.config.UpdateNginxConfig(name, domain, port)
+
+	if err != nil {
+		return common.NewErrMsg("Error trying to update nginx config file: %s", err)
+	}
+
+	err = c.config.UpdateHost(project.Domain, domain)
+
+	if err != nil {
+		// Remove nginx config file if adding domain to hosts file fails
+		c.config.UpdateNginxConfig(name, project.Domain, project.Port)
+
+		return common.NewErrMsg("Error trying to update domain in hosts file: %s", err)
+	}
+
+	project.Domain = domain
+	project.Port = port
+	project.Commands = commandNames
+
+	c.projects[name] = project
+
+	updatedProjectsConfig, err := json.MarshalIndent(c.projects, "", "  ")
+
+	if err != nil {
+		return common.NewErrMsg("Error encoding projects to json: %s", err)
+	}
+
+	err = os.WriteFile(c.getProjectsFilePath(), updatedProjectsConfig, 0644)
+
+	if err != nil {
+		return common.NewErrMsg("Error writing projects to file: %s", err)
+	}
+
+	return common.NewSuccessMsg("Updated project '%s' with domain '%s', port %d and commands %s", name, domain, port, commandNames)
+}
+
+func (c *Core) RenameProject(oldName string, newName string) common.Msg {
+	exists, project := c.ProjectExists(oldName)
+
+	if !exists {
+		return common.NewErrMsg("Project '%s' does not exist", oldName)
+	}
+
+	newNameProjectExists, _ := c.ProjectExists(newName)
+
+	if newNameProjectExists {
+		return common.NewErrMsg("Project '%s' already exists", newName)
+	}
+
+	err := c.config.RenameNginxConfig(oldName, newName)
+
+	if err != nil {
+		return common.NewErrMsg("Error trying to rename nginx config file: %s", err)
+	}
+
+	c.projects[newName] = project
+
+	delete(c.projects, oldName)
+
+	updatedProjectsConfig, err := json.MarshalIndent(c.projects, "", "  ")
+
+	if err != nil {
+		return common.NewErrMsg("Error encoding projects to json: %s", err)
+	}
+
+	err = os.WriteFile(c.getProjectsFilePath(), updatedProjectsConfig, 0644)
+
+	if err != nil {
+		return common.NewErrMsg("Error writing projects to file: %s", err)
+	}
+
+	return common.NewSuccessMsg("Renamed project '%s' to '%s'", oldName, newName)
 }
 
 func (c *Core) AddCommandToProject(projectName string, commandName string) common.Msg {

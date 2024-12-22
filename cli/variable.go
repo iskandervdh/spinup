@@ -26,7 +26,7 @@ func (c *CLI) listVariables(name string) error {
 
 func (c *CLI) handleVariable() {
 	if len(os.Args) < 3 {
-		c.sendMsg(common.NewInfoMsg("Usage: %s variable <add|remove|list> [args...]\n", config.ProgramName))
+		c.sendMsg(common.NewRegularMsg("Usage: %s variable <add|remove|list> [args...]\n", config.ProgramName))
 		return
 	}
 
@@ -44,17 +44,17 @@ func (c *CLI) handleVariable() {
 		}
 	case "add":
 		if len(os.Args) < 6 {
-			c.sendMsg(common.NewInfoMsg("Usage: %s variable add <project> <key> <value>\n", config.ProgramName))
+			c.sendMsg(common.NewRegularMsg("Usage: %s variable add <project> <key> <value>\n", config.ProgramName))
 			return
 		}
 
 		c.core.AddVariable(os.Args[3], os.Args[4], os.Args[5])
 	case "remove", "rm":
 		if len(os.Args) < 5 {
-			c.sendMsg(common.NewInfoMsg("Usage: %s variable remove|rm <project> <key>\n", config.ProgramName))
+			c.sendMsg(common.NewRegularMsg("Usage: %s variable remove|rm <project> <key>\n", config.ProgramName))
 			return
 		}
 
-		c.MsgPrint(c.core.RemoveVariable(os.Args[3], os.Args[4]))
+		c.sendMsg(c.core.RemoveVariable(os.Args[3], os.Args[4]))
 	}
 }

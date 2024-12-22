@@ -25,14 +25,14 @@ type CLI struct {
 
 func New(options ...func(*CLI)) *CLI {
 	msgChan := make(chan common.Msg, 100)
-	msgCanWg := sync.WaitGroup{}
+	msgChanWg := sync.WaitGroup{}
 
 	c := &CLI{
 		in:        os.Stdin,
 		out:       os.Stdout,
 		core:      core.New(core.WithMsgChan(&msgChan)),
 		msgChan:   &msgChan,
-		msgChanWg: &msgCanWg,
+		msgChanWg: &msgChanWg,
 	}
 
 	for _, option := range options {
@@ -42,7 +42,7 @@ func New(options ...func(*CLI)) *CLI {
 	c.msgChanWg.Add(1)
 
 	go func() {
-		defer msgCanWg.Done()
+		defer msgChanWg.Done()
 
 		for msg := range *c.msgChan {
 			c.MsgPrint(msg)
@@ -181,12 +181,12 @@ func (c *CLI) Loading(loadingText string, f func() common.Msg) common.Msg {
 
 func (c *CLI) Handle() {
 	if len(os.Args) < 2 {
-		c.MsgPrint(common.NewInfoMsg("Usage: %s <command|project|variable|run|init> [args...]", config.ProgramName))
+		c.sendMsg(common.NewRegularMsg("Usage: %s <command|project|variable|run|init> [args...]\n", config.ProgramName))
 		return
 	}
 
 	if os.Args[1] == "init" {
-		c.MsgPrint(c.core.Init())
+		c.sendMsg(c.core.Init())
 		return
 	}
 
@@ -204,7 +204,7 @@ func (c *CLI) Handle() {
 		c.handleVariable()
 	case "run":
 		if len(os.Args) < 3 {
-			c.sendMsg(common.NewInfoMsg("Usage: %s run <project>", config.ProgramName))
+			c.sendMsg(common.NewRegularMsg("Usage: %s run <project>\n", config.ProgramName))
 			break
 		}
 
