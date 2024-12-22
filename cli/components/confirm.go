@@ -47,12 +47,33 @@ func (c Confirm) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return c, tea.Quit
 
 		case "backspace":
-			if len(c.value) > 0 {
-				c.value = c.value[:len(c.value)-1]
+			if c.cursor.position > 0 && len(c.value) > 0 {
+				c.value = c.value[:c.cursor.position-1] + c.value[c.cursor.position:]
+				c.cursor.moveLeft()
 			}
 
+		case "delete":
+			if c.cursor.position < len(c.value) {
+				c.value = c.value[:c.cursor.position] + c.value[c.cursor.position+1:]
+			}
+
+		case "left":
+			c.cursor.moveLeft()
+
+		case "right":
+			c.cursor.moveRight(len(c.value))
+
+		case "up", "down", "tab":
+			break
+
 		default:
-			c.value += msg.String()
+			if c.cursor.position < len(c.value) {
+				c.value = c.value[:c.cursor.position] + msg.String() + c.value[c.cursor.position:]
+			} else {
+				c.value += msg.String()
+			}
+
+			c.cursor.moveRight(len(c.value))
 		}
 
 	case blinkMsg:
@@ -63,5 +84,17 @@ func (c Confirm) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (c Confirm) View() string {
-	return c.prompt + " [Y/n] " + c.value + c.cursor.get()
+	currentChar := " "
+
+	if c.cursor.position < len(c.value) {
+		currentChar = string(c.value[c.cursor.position])
+	}
+
+	valueWithCursor := c.value[:c.cursor.position] + c.cursor.get(currentChar)
+
+	if c.cursor.position < len(c.value) {
+		valueWithCursor += c.value[c.cursor.position+1:]
+	}
+
+	return c.prompt + " [Y/n] " + valueWithCursor
 }

@@ -117,8 +117,8 @@ func (c *CLI) Selection(prompt string, options []string) (string, error, bool) {
 	return r.GetValue(), nil, false
 }
 
-func (c *CLI) Input(prompt string) string {
-	i := components.NewInput(prompt)
+func (c *CLI) Input(prompt string, defaultValue string) string {
+	i := components.NewInput(prompt, defaultValue)
 
 	p := tea.NewProgram(i, tea.WithInput(c.in), tea.WithOutput(c.out))
 	m, err := p.Run()

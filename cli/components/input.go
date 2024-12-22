@@ -11,13 +11,19 @@ type Input struct {
 	cursor *cursor
 }
 
-func NewInput(prompt string) Input {
-	return Input{
+func NewInput(prompt string, defaultValue string) Input {
+	input := Input{
 		prompt: prompt,
-		value:  "",
+		value:  defaultValue,
 		exited: false,
 		cursor: newCursor(),
 	}
+
+	if defaultValue != "" {
+		input.cursor.position = len(defaultValue)
+	}
+
+	return input
 }
 
 func (i Input) GetValue() string {
@@ -45,12 +51,33 @@ func (i Input) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return i, tea.Quit
 
 		case "backspace":
-			if len(i.value) > 0 {
-				i.value = i.value[:len(i.value)-1]
+			if i.cursor.position > 0 && len(i.value) > 0 {
+				i.value = i.value[:i.cursor.position-1] + i.value[i.cursor.position:]
+				i.cursor.moveLeft()
 			}
 
+		case "delete":
+			if i.cursor.position < len(i.value) {
+				i.value = i.value[:i.cursor.position] + i.value[i.cursor.position+1:]
+			}
+
+		case "left":
+			i.cursor.moveLeft()
+
+		case "right":
+			i.cursor.moveRight(len(i.value))
+
+		case "up", "down", "tab":
+			break
+
 		default:
-			i.value += msg.String()
+			if i.cursor.position < len(i.value) {
+				i.value = i.value[:i.cursor.position] + msg.String() + i.value[i.cursor.position:]
+			} else {
+				i.value += msg.String()
+			}
+
+			i.cursor.moveRight(len(i.value))
 		}
 
 	case blinkMsg:
@@ -61,5 +88,17 @@ func (i Input) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (i Input) View() string {
-	return i.prompt + " " + i.value + i.cursor.get()
+	currentChar := " "
+
+	if i.cursor.position < len(i.value) {
+		currentChar = string(i.value[i.cursor.position])
+	}
+
+	valueWithCursor := i.value[:i.cursor.position] + i.cursor.get(currentChar)
+
+	if i.cursor.position < len(i.value) {
+		valueWithCursor += i.value[i.cursor.position+1:]
+	}
+
+	return i.prompt + " " + valueWithCursor
 }

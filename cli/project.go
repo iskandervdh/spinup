@@ -41,9 +41,9 @@ func (c *CLI) addProject(name string, domain string, port int, commandNames []st
 }
 
 func (c *CLI) addProjectInteractive() {
-	name := c.Input("Project name:")
-	domain := c.Input("Domain:")
-	port := c.Input("Port:")
+	name := c.Input("Project name:", "")
+	domain := c.Input("Domain:", "")
+	port := c.Input("Port:", "")
 
 	portInt, err := strconv.Atoi(port)
 

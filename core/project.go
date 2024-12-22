@@ -204,7 +204,6 @@ func (c *Core) AddCommandToProject(projectName string, commandName string) commo
 	}
 
 	return common.NewSuccessMsg("Added command '%s' to project '%s'", commandName, projectName)
-
 }
 
 func (c *Core) RemoveCommandFromProject(projectName string, commandName string) common.Msg {

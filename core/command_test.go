@@ -130,10 +130,10 @@ func TestGetCommand(t *testing.T) {
 	// "Refetch" the commands config
 	s.GetCommandsConfig()
 
-	command, err := s.getCommand("test")
+	exists, command := s.CommandExists("test")
 
-	if err != nil {
-		t.Error("Expected command to be found, got nil")
+	if !exists {
+		t.Error("Expected command to exist, got", exists)
 		return
 	}
 
@@ -148,10 +148,10 @@ func TestGetCommandNotFound(t *testing.T) {
 
 	s.GetCommandsConfig()
 
-	_, err := s.getCommand("test")
+	exists, _ := s.CommandExists("test")
 
-	if err == nil {
-		t.Error("Expected error, got nil")
+	if exists {
+		t.Error("Expected command to not exist, got", exists)
 		return
 	}
 }

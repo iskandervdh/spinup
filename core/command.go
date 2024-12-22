@@ -33,14 +33,14 @@ func (c *Core) GetCommands() (Commands, error) {
 	return commands, nil
 }
 
-func (c *Core) getCommand(name string) (string, error) {
-	command, exists := c.commands[name]
-
-	if !exists {
-		return "", fmt.Errorf("command '%s' not found", name)
+func (c *Core) CommandExists(name string) (bool, string) {
+	if c.commands == nil {
+		return false, ""
 	}
 
-	return command, nil
+	command, exists := c.commands[name]
+
+	return exists, command
 }
 
 func (c *Core) AddCommand(name string, command string) common.Msg {
@@ -88,4 +88,61 @@ func (c *Core) RemoveCommand(name string) common.Msg {
 	}
 
 	return common.NewSuccessMsg("Removed command '%s'", name)
+}
+
+func (c *Core) UpdateCommand(name string, command string) common.Msg {
+	if c.commands == nil {
+		return common.NewErrMsg("No commands found")
+	}
+
+	_, exists := c.commands[name]
+
+	if !exists {
+		return common.NewErrMsg("Command '%s' not found", name)
+	}
+
+	c.commands[name] = command
+
+	updatedCommands, err := json.MarshalIndent(c.commands, "", "  ")
+
+	if err != nil {
+		return common.NewErrMsg("Error encoding commands to json: %s", err)
+	}
+
+	err = os.WriteFile(c.getCommandsFilePath(), updatedCommands, 0644)
+
+	if err != nil {
+		return common.NewErrMsg("Error writing commands to file: %s", err)
+	}
+
+	return common.NewSuccessMsg("Updated command '%s': %s", name, command)
+}
+
+func (c *Core) RenameCommand(oldName string, newName string) common.Msg {
+	if c.commands == nil {
+		return common.NewErrMsg("No commands found")
+	}
+
+	command, exists := c.commands[oldName]
+
+	if !exists {
+		return common.NewErrMsg("Command '%s' not found", oldName)
+	}
+
+	c.commands[newName] = command
+	delete(c.commands, oldName)
+
+	updatedCommands, err := json.MarshalIndent(c.commands, "", "  ")
+
+	if err != nil {
+		return common.NewErrMsg("Error encoding commands to json: %s", err)
+	}
+
+	err = os.WriteFile(c.getCommandsFilePath(), updatedCommands, 0644)
+
+	if err != nil {
+		return common.NewErrMsg("Error writing commands to file: %s", err)
+	}
+
+	return common.NewSuccessMsg("Renamed command '%s' to '%s'", oldName, newName)
 }
