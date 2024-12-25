@@ -46,7 +46,7 @@ func TestAddDomainAlias(t *testing.T) {
 	}
 
 	// Check if the domain alias is added to the hosts file
-	hostsFilePath := c.getConfig().GetHostsFile()
+	hostsFilePath := c.GetConfig().GetHostsFile()
 	hostsFile, err := os.Open(hostsFilePath)
 
 	if err != nil {
@@ -117,7 +117,7 @@ func TestRemoveDomainAlias(t *testing.T) {
 	}
 
 	// Check if the domain alias is removed from the hosts file
-	hostsFilePath := c.getConfig().GetHostsFile()
+	hostsFilePath := c.GetConfig().GetHostsFile()
 	hostsFile, err := os.Open(hostsFilePath)
 
 	if err != nil {

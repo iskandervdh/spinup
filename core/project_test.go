@@ -42,7 +42,7 @@ func TestAddProject(t *testing.T) {
 	}
 
 	// Check if nginx config file was updated
-	nginxFilePath := c.getConfig().GetNginxConfigDir() + "/test.conf"
+	nginxFilePath := c.GetConfig().GetNginxConfigDir() + "/test.conf"
 
 	if _, err := os.Stat(nginxFilePath); os.IsNotExist(err) {
 		t.Error("Expected nginx config file to exist, got", err)
@@ -50,7 +50,7 @@ func TestAddProject(t *testing.T) {
 	}
 
 	// Check if hosts file was updated
-	hostsFilePath := c.getConfig().GetHostsFile()
+	hostsFilePath := c.GetConfig().GetHostsFile()
 
 	hostsFile, err := os.Open(hostsFilePath)
 
@@ -153,7 +153,7 @@ func TestRemoveProject(t *testing.T) {
 	}
 
 	// Check if nginx config file was removed
-	nginxFilePath := c.getConfig().GetNginxConfigDir() + "/test.conf"
+	nginxFilePath := c.GetConfig().GetNginxConfigDir() + "/test.conf"
 
 	if _, err := os.Stat(nginxFilePath); !os.IsNotExist(err) {
 		t.Error("Expected nginx config file to not exist, got", err)
@@ -161,7 +161,7 @@ func TestRemoveProject(t *testing.T) {
 	}
 
 	// Check if hosts file was updated
-	hostsFilePath := c.getConfig().GetHostsFile()
+	hostsFilePath := c.GetConfig().GetHostsFile()
 	hostsFile, err := os.Open(hostsFilePath)
 
 	if err != nil {
@@ -197,7 +197,7 @@ func TestEditProject(t *testing.T) {
 	}
 
 	// Check if nginx config file was updated
-	nginxFilePath := c.getConfig().GetNginxConfigDir() + "/test.conf"
+	nginxFilePath := c.GetConfig().GetNginxConfigDir() + "/test.conf"
 
 	if _, err := os.Stat(nginxFilePath); os.IsNotExist(err) {
 		t.Error("Expected nginx config file to exist, got", err)
@@ -205,7 +205,7 @@ func TestEditProject(t *testing.T) {
 	}
 
 	// Check if hosts file was updated
-	hostsFilePath := c.getConfig().GetHostsFile()
+	hostsFilePath := c.GetConfig().GetHostsFile()
 
 	hostsFile, err := os.Open(hostsFilePath)
 
@@ -271,7 +271,7 @@ func TestRenameProject(t *testing.T) {
 	}
 
 	// Check if nginx config file was updated
-	nginxFilePath := c.getConfig().GetNginxConfigDir() + "/example.conf"
+	nginxFilePath := c.GetConfig().GetNginxConfigDir() + "/example.conf"
 
 	if _, err := os.Stat(nginxFilePath); os.IsNotExist(err) {
 		t.Error("Expected nginx config file to exist, got", err)
@@ -279,7 +279,7 @@ func TestRenameProject(t *testing.T) {
 	}
 
 	// Check if hosts file was updated
-	hostsFilePath := c.getConfig().GetHostsFile()
+	hostsFilePath := c.GetConfig().GetHostsFile()
 
 	hostsFile, err := os.Open(hostsFilePath)
 
