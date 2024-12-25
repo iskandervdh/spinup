@@ -95,12 +95,11 @@ func (c *Core) runCommand(wg *sync.WaitGroup, project Project, command commandWi
 
 // Run a project with the given name.
 func (c *Core) run(project Project, projectName string) common.Msg {
-	var wg sync.WaitGroup
-	wg.Add(len(project.Commands))
+	c.wg.Add(len(project.Commands))
 
 	// Start a signal listener for Ctrl+C (SIGINT) to gracefully stop the project when the user interrupts the process.
-	c.sigChan = make(chan os.Signal, 1)
-	signal.Notify(c.sigChan, syscall.SIGINT, syscall.SIGTERM)
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 
 	c.sendMsg(common.NewInfoMsg("Running project '%s'...", projectName))
 
@@ -127,17 +126,16 @@ func (c *Core) run(project Project, projectName string) common.Msg {
 	}
 
 	for _, command := range commands {
-		go c.runCommand(&wg, project, command)
+		go c.runCommand(c.wg, project, command)
 	}
 
 	go func() {
-		<-c.sigChan
+		<-sigChan
 
 		c.sendMsg(common.NewInfoMsg("\nGracefully stopping project '%s'...", projectName))
-		wg.Done()
 	}()
 
-	wg.Wait()
+	c.wg.Wait()
 
 	return common.NewSuccessMsg("")
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"sync"
 
 	"github.com/iskandervdh/spinup/common"
 	"github.com/iskandervdh/spinup/config"
@@ -17,7 +18,7 @@ import (
 type Core struct {
 	config  *config.Config
 	msgChan *chan common.Msg
-	sigChan chan os.Signal
+	wg      *sync.WaitGroup
 
 	commands Commands
 	projects Projects
@@ -34,6 +35,7 @@ func New(options ...func(*Core)) *Core {
 
 	s := &Core{
 		config: config,
+		wg:     &sync.WaitGroup{},
 	}
 
 	for _, option := range options {
@@ -136,9 +138,9 @@ func (c *Core) GetProjectNames() []string {
 	return projectNames
 }
 
-// Get the signal channel of the Core instance.
-func (c *Core) GetSigChan() chan os.Signal {
-	return c.sigChan
+// Get the wait group of the Core instance.
+func (c *Core) GetWg() *sync.WaitGroup {
+	return c.wg
 }
 
 // Get all the commands that are part of the given project.
