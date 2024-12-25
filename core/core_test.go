@@ -50,17 +50,17 @@ func TestNew(t *testing.T) {
 		return
 	}
 
-	if c.getConfig() == nil {
+	if c.GetConfig() == nil {
 		t.Error("Expected Config instance, got nil")
 		return
 	}
 
-	if c.getConfig().GetConfigDir() != TestingConfigDir(testName) {
+	if c.GetConfig().GetConfigDir() != TestingConfigDir(testName) {
 		t.Error(
 			"Expected ConfigDir to be",
 			TestingConfigDir(testName),
 			"got",
-			c.getConfig().GetConfigDir(),
+			c.GetConfig().GetConfigDir(),
 		)
 	}
 }
@@ -68,7 +68,7 @@ func TestNew(t *testing.T) {
 func TestInit(t *testing.T) {
 	c := TestingCore("init")
 
-	configDir := c.getConfig().GetConfigDir()
+	configDir := c.GetConfig().GetConfigDir()
 
 	if _, err := os.Stat(configDir); os.IsNotExist(err) {
 		t.Error("Expected ConfigDir to exist, got", err)
@@ -78,7 +78,7 @@ func TestInit(t *testing.T) {
 func TestCommandsConfigInit(t *testing.T) {
 	c := TestingCore("commands_config_init")
 
-	commandsFilePath := path.Join(c.getConfig().GetConfigDir(), config.CommandsFileName)
+	commandsFilePath := path.Join(c.GetConfig().GetConfigDir(), config.CommandsFileName)
 
 	if _, err := os.Stat(commandsFilePath); os.IsNotExist(err) {
 		t.Error("Expected commands config file to exist, got", err)
@@ -115,7 +115,7 @@ func TestCommandsConfigInit(t *testing.T) {
 func TestProjectsConfigInit(t *testing.T) {
 	c := TestingCore("projects_config_init")
 
-	projectsFilePath := path.Join(c.getConfig().GetConfigDir(), config.ProjectsFileName)
+	projectsFilePath := path.Join(c.GetConfig().GetConfigDir(), config.ProjectsFileName)
 
 	if _, err := os.Stat(projectsFilePath); os.IsNotExist(err) {
 		t.Error("Expected projects to exist, got", err)
@@ -152,7 +152,7 @@ func TestProjectsConfigInit(t *testing.T) {
 func TestHostsConfigInit(t *testing.T) {
 	c := TestingCore("hosts_config_init")
 
-	hostsFilePath := c.getConfig().GetHostsFile()
+	hostsFilePath := c.GetConfig().GetHostsFile()
 
 	if _, err := os.Stat(hostsFilePath); os.IsNotExist(err) {
 		t.Error("Expected hosts file to exist, got", err)
@@ -189,7 +189,7 @@ func TestHostsConfigInit(t *testing.T) {
 func TestHostsBackupDirInit(t *testing.T) {
 	c := TestingCore("hosts_backup_dir_init")
 
-	hostsBackupDir := c.getConfig().GetHostsBackupDir()
+	hostsBackupDir := c.GetConfig().GetHostsBackupDir()
 
 	if _, err := os.Stat(hostsBackupDir); os.IsNotExist(err) {
 		t.Error("Expected hosts backup dir to exist, got", err)

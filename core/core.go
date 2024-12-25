@@ -2,9 +2,9 @@ package core
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
-	"sync"
 
 	"github.com/iskandervdh/spinup/common"
 	"github.com/iskandervdh/spinup/config"
@@ -18,7 +18,10 @@ import (
 type Core struct {
 	config  *config.Config
 	msgChan *chan common.Msg
-	wg      *sync.WaitGroup
+	sigChan chan os.Signal
+
+	out io.Writer
+	err io.Writer
 
 	commands Commands
 	projects Projects
@@ -35,7 +38,8 @@ func New(options ...func(*Core)) *Core {
 
 	s := &Core{
 		config: config,
-		wg:     &sync.WaitGroup{},
+		out:    os.Stdout,
+		err:    os.Stderr,
 	}
 
 	for _, option := range options {
@@ -59,8 +63,16 @@ func WithMsgChan(msgChan *chan common.Msg) func(*Core) {
 	}
 }
 
+func (c *Core) SetOut(out *os.File) {
+	c.out = out
+}
+
+func (c *Core) SetErr(err *os.File) {
+	c.err = err
+}
+
 // Get the config of the Core instance.
-func (c *Core) getConfig() *config.Config {
+func (c *Core) GetConfig() *config.Config {
 	return c.config
 }
 
@@ -139,8 +151,8 @@ func (c *Core) GetProjectNames() []string {
 }
 
 // Get the wait group of the Core instance.
-func (c *Core) GetWg() *sync.WaitGroup {
-	return c.wg
+func (c *Core) GetSigChan() chan os.Signal {
+	return c.sigChan
 }
 
 // Get all the commands that are part of the given project.

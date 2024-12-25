@@ -46,7 +46,7 @@ func (c *Core) prefixOutput(prefix string, reader io.Reader, writer io.Writer) e
 	return nil
 }
 
-func (c *Core) runCommand(wg *sync.WaitGroup, project Project, command commandWithName) error {
+func (c *Core) runCommand(wg *sync.WaitGroup, project Project, command commandWithName, cmdChan chan *exec.Cmd) error {
 	defer wg.Done()
 
 	cmd := exec.Command(strings.Split(command.command, " ")[0], strings.Split(command.command, " ")[1:]...)
@@ -65,8 +65,8 @@ func (c *Core) runCommand(wg *sync.WaitGroup, project Project, command commandWi
 		return fmt.Errorf("error creating StderrPipe: %s", err)
 	}
 
-	go c.prefixOutput(fmt.Sprintf("[%s]", command.name), stdout, os.Stdout)
-	go c.prefixOutput(fmt.Sprintf("[%s]", command.name), stderr, os.Stderr)
+	go c.prefixOutput(fmt.Sprintf("[%s]", command.name), stdout, c.out)
+	go c.prefixOutput(fmt.Sprintf("[%s]", command.name), stderr, c.err)
 
 	// Run the project in the project's directory if it's set
 	if project.Dir != nil {
@@ -78,6 +78,9 @@ func (c *Core) runCommand(wg *sync.WaitGroup, project Project, command commandWi
 	if err != nil {
 		return fmt.Errorf("error starting command: %s", err)
 	}
+
+	// Send the command to the channel
+	cmdChan <- cmd
 
 	err = cmd.Wait()
 
@@ -95,15 +98,17 @@ func (c *Core) runCommand(wg *sync.WaitGroup, project Project, command commandWi
 
 // Run a project with the given name.
 func (c *Core) run(project Project, projectName string) common.Msg {
-	c.wg.Add(len(project.Commands))
+	var wg sync.WaitGroup
+	wg.Add(len(project.Commands))
 
 	// Start a signal listener for Ctrl+C (SIGINT) to gracefully stop the project when the user interrupts the process.
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+	c.sigChan = make(chan os.Signal, 1)
+	signal.Notify(c.sigChan, syscall.SIGINT, syscall.SIGTERM)
 
 	c.sendMsg(common.NewInfoMsg("Running project '%s'...", projectName))
 
 	commands := []commandWithName{}
+	cmdChan := make(chan *exec.Cmd, len(project.Commands))
 
 	// Add all commands to the commands array in a form that includes the command name.
 	for _, commandName := range project.Commands {
@@ -126,16 +131,22 @@ func (c *Core) run(project Project, projectName string) common.Msg {
 	}
 
 	for _, command := range commands {
-		go c.runCommand(c.wg, project, command)
+		go c.runCommand(&wg, project, command, cmdChan)
 	}
 
 	go func() {
-		<-sigChan
+		<-c.sigChan
 
 		c.sendMsg(common.NewInfoMsg("\nGracefully stopping project '%s'...", projectName))
+
+		// Send interrupt signal to all running commands
+		for i := 0; i < len(commands); i++ {
+			cmd := <-cmdChan
+			cmd.Process.Signal(syscall.SIGINT)
+		}
 	}()
 
-	c.wg.Wait()
+	wg.Wait()
 
 	return common.NewSuccessMsg("")
 }
