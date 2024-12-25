@@ -20,7 +20,7 @@ type commandWithName struct {
 	name    string
 }
 
-func (c *Core) commandTemplate(command string, project project) string {
+func (c *Core) commandTemplate(command string, project Project) string {
 	// Replace placeholders in command with project values
 	command = strings.ReplaceAll(command, "{{port}}", fmt.Sprintf("%d", project.Port))
 	command = strings.ReplaceAll(command, "{{domain}}", project.Domain)
@@ -46,7 +46,7 @@ func (c *Core) prefixOutput(prefix string, reader io.Reader, writer io.Writer) e
 	return nil
 }
 
-func (c *Core) runCommand(wg *sync.WaitGroup, project project, command commandWithName) error {
+func (c *Core) runCommand(wg *sync.WaitGroup, project Project, command commandWithName) error {
 	defer wg.Done()
 
 	cmd := exec.Command(strings.Split(command.command, " ")[0], strings.Split(command.command, " ")[1:]...)
@@ -94,7 +94,7 @@ func (c *Core) runCommand(wg *sync.WaitGroup, project project, command commandWi
 }
 
 // Run a project with the given name.
-func (c *Core) run(project project, projectName string) common.Msg {
+func (c *Core) run(project Project, projectName string) common.Msg {
 	var wg sync.WaitGroup
 	wg.Add(len(project.Commands))
 

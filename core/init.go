@@ -29,7 +29,7 @@ func (c *Core) createProjectsConfigFile() common.Msg {
 		return common.NewErrMsg("Error checking if %s file exists: %v", config.ProjectsFileName, err)
 	}
 
-	emptyProjects := projects{}
+	emptyProjects := Projects{}
 	emptyData, err := json.MarshalIndent(emptyProjects, "", "  ")
 
 	if err != nil {
@@ -55,7 +55,7 @@ func (c *Core) createCommandsConfigFile() common.Msg {
 		return common.NewErrMsg("Error checking if commands.json file exists: %v", err)
 	}
 
-	emptyCommands := commands{}
+	emptyCommands := Commands{}
 	emptyData, err := json.MarshalIndent(emptyCommands, "", "  ")
 
 	if err != nil {

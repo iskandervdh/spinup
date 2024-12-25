@@ -7,8 +7,8 @@ import (
 	"github.com/iskandervdh/spinup/common"
 )
 
-// variables is a map of variable names to their values.
-type variables map[string]string
+// Variables is a map of variable names to their values.
+type Variables map[string]string
 
 // Add a variable with the given key and value to the project with the given name.
 func (c *Core) AddVariable(projectName string, key string, value string) common.Msg {

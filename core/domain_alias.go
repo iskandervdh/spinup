@@ -8,8 +8,8 @@ import (
 	"github.com/iskandervdh/spinup/common"
 )
 
-// domainAliases is a map of domain aliases to their domain names.
-type domainAliases []string
+// DomainAliases is a map of domain aliases to their domain names.
+type DomainAliases []string
 
 // Add a domain alias to the given project.
 func (c *Core) AddDomainAlias(projectName string, domainAlias string) common.Msg {
