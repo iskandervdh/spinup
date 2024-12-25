@@ -220,6 +220,8 @@ func (c *CLI) Handle() {
 		c.handleProject()
 	case "variable", "v":
 		c.handleVariable()
+	case "domain-alias", "da":
+		c.handleDomainAlias()
 	case "run":
 		if len(os.Args) < 3 {
 			c.sendMsg(common.NewRegularMsg("Usage: %s run <project>\n", config.ProgramName))

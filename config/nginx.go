@@ -4,13 +4,19 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"regexp"
 	"strings"
 )
 
+// Regex to match the server_name directive in a Nginx config file.
+var serverNameRegex = regexp.MustCompile(`server_name\s+(.*);`)
+
+// Restart the Nginx service.
 func (c *Config) restartNginx() error {
 	return exec.Command("sudo", "systemctl", "restart", "nginx").Run()
 }
 
+// Add a new Nginx configuration file with the given name, domain and port.
 func (c *Config) AddNginxConfig(name string, domain string, port int) error {
 	config := fmt.Sprintf(`server {
 	listen 80;
@@ -56,6 +62,7 @@ func (c *Config) AddNginxConfig(name string, domain string, port int) error {
 	return nil
 }
 
+// Remove a Nginx configuration file with the given name.
 func (c *Config) RemoveNginxConfig(name string) error {
 	nginxConfigFilePath := fmt.Sprintf("%s/%s.conf", c.nginxConfigDir, name)
 	err := c.withSudo("rm", nginxConfigFilePath).Run()
@@ -71,6 +78,7 @@ func (c *Config) RemoveNginxConfig(name string) error {
 	return nil
 }
 
+// Update a Nginx configuration file with the given name, domain and port.
 func (c *Config) UpdateNginxConfig(name string, domain string, port int) error {
 	err := c.RemoveNginxConfig(name)
 
@@ -81,6 +89,7 @@ func (c *Config) UpdateNginxConfig(name string, domain string, port int) error {
 	return c.AddNginxConfig(name, domain, port)
 }
 
+// Rename a Nginx configuration file with the given old and new name.
 func (c *Config) RenameNginxConfig(oldName string, newName string) error {
 	oldNginxConfigFilePath := fmt.Sprintf("%s/%s.conf", c.nginxConfigDir, oldName)
 	newNginxConfigFilePath := fmt.Sprintf("%s/%s.conf", c.nginxConfigDir, newName)
@@ -98,6 +107,88 @@ func (c *Config) RenameNginxConfig(oldName string, newName string) error {
 	return nil
 }
 
+// Add a domain alias to a Nginx configuration file.
+func (c *Config) NginxAddDomainAlias(name string, domainAlias string) error {
+	nginxConfigFilePath := fmt.Sprintf("%s/%s.conf", c.nginxConfigDir, name)
+	content, err := os.ReadFile(nginxConfigFilePath)
+
+	if err != nil {
+		return err
+	}
+
+	lines := strings.Split(string(content), "\n")
+	serverName := ""
+
+	for _, line := range lines {
+		if serverNameRegex.MatchString(line) {
+			serverName = serverNameRegex.FindStringSubmatch(line)[1]
+		}
+	}
+
+	if serverName == "" {
+		return fmt.Errorf("server_name not found in config file")
+	}
+
+	newServerName := fmt.Sprintf("server_name %s %s;", serverName, domainAlias)
+	updatedConfig := strings.ReplaceAll(string(content), fmt.Sprintf("server_name %s;", serverName), newServerName)
+
+	updateCommand := c.withSudo("tee", nginxConfigFilePath)
+	updateCommand.Stdin = strings.NewReader(updatedConfig)
+	err = updateCommand.Run()
+
+	if err != nil {
+		return err
+	}
+
+	if !c.IsTesting() {
+		c.restartNginx()
+	}
+
+	return nil
+}
+
+// Remove a domain alias from a Nginx configuration file.
+func (c *Config) NginxRemoveDomainAlias(name string, domainAlias string) error {
+	nginxConfigFilePath := fmt.Sprintf("%s/%s.conf", c.nginxConfigDir, name)
+	content, err := os.ReadFile(nginxConfigFilePath)
+
+	if err != nil {
+		return err
+	}
+
+	lines := strings.Split(string(content), "\n")
+	serverName := ""
+
+	for _, line := range lines {
+		if serverNameRegex.MatchString(line) {
+			serverName = serverNameRegex.FindStringSubmatch(line)[1]
+		}
+	}
+
+	if serverName == "" {
+		return fmt.Errorf("server_name not found in config file")
+	}
+
+	updatedServerName := strings.Trim(strings.ReplaceAll(serverName, domainAlias, ""), " ")
+	newServerName := fmt.Sprintf("server_name %s;", updatedServerName)
+	updatedConfig := strings.ReplaceAll(string(content), fmt.Sprintf("server_name %s;", serverName), newServerName)
+
+	updateCommand := c.withSudo("tee", nginxConfigFilePath)
+	updateCommand.Stdin = strings.NewReader(updatedConfig)
+	err = updateCommand.Run()
+
+	if err != nil {
+		return err
+	}
+
+	if !c.IsTesting() {
+		c.restartNginx()
+	}
+
+	return nil
+}
+
+// Initialize the Nginx configuration directory.
 func (c *Config) InitNginx() error {
 	if _, err := os.Stat(c.nginxConfigDir); os.IsNotExist(err) {
 		err := os.MkdirAll(c.nginxConfigDir, 0755)

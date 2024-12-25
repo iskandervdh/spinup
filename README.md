@@ -164,7 +164,7 @@ This will run the commands defined in the configuration for the project.
 - [x] Use interactive CLI.
 - [x] Add tests.
 - [x] Better solution for showing what commands are available.
-- [ ] Make adding subdomains possible.
+- [x] Make adding domain aliases possible.
 - [ ] Adding certificates to enable https for the project.
 - [ ] Add option to set the path of the nginx folder to use.
 - [ ] GUI?
