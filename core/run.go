@@ -99,8 +99,8 @@ func (c *Core) run(project Project, projectName string) common.Msg {
 	wg.Add(len(project.Commands))
 
 	// Start a signal listener for Ctrl+C (SIGINT) to gracefully stop the project when the user interrupts the process.
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+	c.sigChan = make(chan os.Signal, 1)
+	signal.Notify(c.sigChan, syscall.SIGINT, syscall.SIGTERM)
 
 	c.sendMsg(common.NewInfoMsg("Running project '%s'...", projectName))
 
@@ -131,9 +131,10 @@ func (c *Core) run(project Project, projectName string) common.Msg {
 	}
 
 	go func() {
-		<-sigChan
+		<-c.sigChan
 
 		c.sendMsg(common.NewInfoMsg("\nGracefully stopping project '%s'...", projectName))
+		wg.Done()
 	}()
 
 	wg.Wait()

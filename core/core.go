@@ -17,6 +17,7 @@ import (
 type Core struct {
 	config  *config.Config
 	msgChan *chan common.Msg
+	sigChan chan os.Signal
 
 	commands Commands
 	projects Projects
@@ -133,6 +134,11 @@ func (c *Core) GetProjectNames() []string {
 	}
 
 	return projectNames
+}
+
+// Get the signal channel of the Core instance.
+func (c *Core) GetSigChan() chan os.Signal {
+	return c.sigChan
 }
 
 // Get all the commands that are part of the given project.
