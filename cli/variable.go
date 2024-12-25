@@ -8,6 +8,7 @@ import (
 	"github.com/iskandervdh/spinup/config"
 )
 
+// Print a list of all variables for a project to the output of the CLI.
 func (c *CLI) listVariables(name string) error {
 	exists, project := c.core.ProjectExists(name)
 
@@ -24,6 +25,7 @@ func (c *CLI) listVariables(name string) error {
 	return nil
 }
 
+// Handle the variable command.
 func (c *CLI) handleVariable() {
 	if len(os.Args) < 3 {
 		c.sendMsg(common.NewRegularMsg("Usage: %s variable <add|remove|list> [args...]\n", config.ProgramName))

@@ -7,9 +7,11 @@ import (
 	"time"
 )
 
+// Markers that indicate the beginning and end of the custom hosts section.
 var HostsBeginMarker = fmt.Sprintf("### BEGIN_%s_HOSTS", strings.ToUpper(ProgramName))
 var HostsEndMarker = fmt.Sprintf("\n### END_%s_HOSTS", strings.ToUpper(ProgramName))
 
+// Backup the hosts file with a timestamp so in case of an error the original file can be restored.
 func (c *Config) backupHosts() error {
 	// Create a directory to store the backups if it doesn't exist
 	err := c.withSudo("mkdir", "-p", c.hostsBackupDir).Run()
@@ -29,6 +31,7 @@ func (c *Config) backupHosts() error {
 	return nil
 }
 
+// Get the content of the hosts file and the begin and end of the custom hosts section.
 func (c *Config) getHostsContent() (string, int, int, error) {
 	hosts, err := os.ReadFile(c.hostsFile)
 
@@ -48,7 +51,8 @@ func (c *Config) getHostsContent() (string, int, int, error) {
 	return hostsContent, beginIndex, endIndex, nil
 }
 
-func (c *Config) AddHost(domain string) error {
+// Add a domain to the custom hosts section.
+func (c *Config) AddDomain(domain string) error {
 	if domain == "" {
 		return fmt.Errorf("domain is empty")
 	}
@@ -90,7 +94,8 @@ func (c *Config) AddHost(domain string) error {
 	return nil
 }
 
-func (c *Config) RemoveHost(domain string) error {
+// Remove a domain from the custom hosts section.
+func (c *Config) RemoveDomain(domain string) error {
 	if domain == "" {
 		return fmt.Errorf("domain is empty")
 	}
@@ -122,6 +127,7 @@ func (c *Config) RemoveHost(domain string) error {
 	return nil
 }
 
+// Update a domain in the custom hosts section.
 func (c *Config) UpdateHost(oldDomain string, newDomain string) error {
 	if oldDomain == "" {
 		return fmt.Errorf("old domain is empty")
@@ -154,6 +160,8 @@ func (c *Config) UpdateHost(oldDomain string, newDomain string) error {
 	return nil
 }
 
+// Initialize the custom hosts section in the hosts file
+// so domains can be added without overwriting the other contents of the file.
 func (c *Config) InitHosts() error {
 	// Check if hosts file exists
 	fileInfo, err := os.Stat(c.hostsFile)

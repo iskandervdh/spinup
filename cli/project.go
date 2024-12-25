@@ -11,6 +11,7 @@ import (
 	"github.com/iskandervdh/spinup/config"
 )
 
+// Print a list of all projects to the output of the CLI.
 func (c *CLI) listProjects() {
 	projects, err := c.core.GetProjects()
 
@@ -33,6 +34,7 @@ func (c *CLI) listProjects() {
 	}
 }
 
+// Add a project and display a loading message.
 func (c *CLI) addProject(name string, domain string, port int, commandNames []string) {
 	c.Loading(fmt.Sprintf("Adding project %s...", name),
 		func() common.Msg {
@@ -41,6 +43,7 @@ func (c *CLI) addProject(name string, domain string, port int, commandNames []st
 	)
 }
 
+// Add a project interactively by asking the user for the name, domain, port and commands.
 func (c *CLI) addProjectInteractive() {
 	name := c.Input("Project name:", "")
 	domain := c.Input("Domain:", "")
@@ -67,6 +70,7 @@ func (c *CLI) addProjectInteractive() {
 	c.addProject(name, domain, portInt, selectedCommands)
 }
 
+// Remove a project and display a loading message.
 func (c *CLI) removeProject(name string) {
 	c.Loading(fmt.Sprintf("Removing project %s...", name),
 		func() common.Msg {
@@ -75,6 +79,7 @@ func (c *CLI) removeProject(name string) {
 	)
 }
 
+// Remove a project interactively by asking the user to select a project to remove.
 func (c *CLI) removeProjectInteractive() {
 	name, err, exited := c.Selection("What project do you want to remove?", c.core.GetProjectNames())
 
@@ -99,6 +104,7 @@ func (c *CLI) removeProjectInteractive() {
 	c.core.RemoveProject(name)
 }
 
+// Edit a project and display a loading message.
 func (c *CLI) editProject(name string, domain string, port int, commandNames []string) {
 	c.Loading(fmt.Sprintf("Updating project %s...", name),
 		func() common.Msg {
@@ -107,6 +113,7 @@ func (c *CLI) editProject(name string, domain string, port int, commandNames []s
 	)
 }
 
+// Edit a project interactively by asking the user to select a project to edit and then enter new values.
 func (c *CLI) editProjectInteractive() {
 	name, err, exited := c.Selection("What project do you want to edit?", c.core.GetProjectNames())
 
@@ -162,6 +169,7 @@ func (c *CLI) editProjectInteractive() {
 	c.sendMsg(c.core.UpdateProject(name, domain, portInt, selectedCommands))
 }
 
+// Handle the project subcommand.
 func (c *CLI) handleProject() {
 	if len(os.Args) < 3 {
 		c.sendMsg(common.NewRegularMsg("Usage: %s project <add|remove|edit|rename|add-command|remove-command|set-dir|get-dir|list> [args...]\n", config.ProgramName))

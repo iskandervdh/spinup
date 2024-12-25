@@ -6,6 +6,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
+// Add a lipgloss info style to the given text.
 func InfoText(text string) string {
 	return fmt.Sprintln(
 		lipgloss.NewStyle().
@@ -14,6 +15,7 @@ func InfoText(text string) string {
 	)
 }
 
+// Add a lipgloss success style to the given text.
 func SuccessText(text string) string {
 	return fmt.Sprintln(
 		lipgloss.NewStyle().
@@ -22,6 +24,7 @@ func SuccessText(text string) string {
 	)
 }
 
+// Add a lipgloss warning style to the given text.
 func WarningText(text string) string {
 	return fmt.Sprintln(
 		lipgloss.NewStyle().
@@ -30,6 +33,7 @@ func WarningText(text string) string {
 	)
 }
 
+// Add a lipgloss error style to the given text.
 func ErrorText(text string) string {
 	return fmt.Sprintln(
 		lipgloss.NewStyle().

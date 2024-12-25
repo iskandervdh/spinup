@@ -35,14 +35,12 @@ func (c *Config) AddNginxConfig(name string, domain string, port int) error {
 		return fmt.Errorf("failed to check if config file exists: %v", err)
 	}
 
-	// Create the file
 	err := c.withSudo("touch", nginxConfigFilePath).Run()
 
 	if err != nil {
 		return err
 	}
 
-	// Write the config to the file
 	createCommand := c.withSudo("tee", nginxConfigFilePath)
 	createCommand.Stdin = strings.NewReader(config)
 	err = createCommand.Run()

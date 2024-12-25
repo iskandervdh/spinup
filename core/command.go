@@ -10,12 +10,15 @@ import (
 	"github.com/iskandervdh/spinup/config"
 )
 
+// Commands is a map of command names to their commands.
 type Commands map[string]string
 
+// Get the path to the commands.json file.
 func (c *Core) getCommandsFilePath() string {
 	return path.Join(c.config.GetConfigDir(), config.CommandsFileName)
 }
 
+// Get the commands from the commands.json file.
 func (c *Core) GetCommands() (Commands, error) {
 	commandsFileContent, err := os.ReadFile(c.getCommandsFilePath())
 
@@ -33,6 +36,7 @@ func (c *Core) GetCommands() (Commands, error) {
 	return commands, nil
 }
 
+// Check if a command with the given name exists. Returns the command if it exists.
 func (c *Core) CommandExists(name string) (bool, string) {
 	if c.commands == nil {
 		return false, ""
@@ -43,6 +47,7 @@ func (c *Core) CommandExists(name string) (bool, string) {
 	return exists, command
 }
 
+// Add a command with the given name and command string.
 func (c *Core) AddCommand(name string, command string) common.Msg {
 	// Check if already exists
 	for commandName := range c.commands {
@@ -68,6 +73,7 @@ func (c *Core) AddCommand(name string, command string) common.Msg {
 	return common.NewSuccessMsg("Added command '%s': %s", name, command)
 }
 
+// Remove the command with the given name.
 func (c *Core) RemoveCommand(name string) common.Msg {
 	if c.commands == nil {
 		return common.NewErrMsg("No commands found")
@@ -90,6 +96,7 @@ func (c *Core) RemoveCommand(name string) common.Msg {
 	return common.NewSuccessMsg("Removed command '%s'", name)
 }
 
+// Update the command with the given name to the given command string.
 func (c *Core) UpdateCommand(name string, command string) common.Msg {
 	if c.commands == nil {
 		return common.NewErrMsg("No commands found")
@@ -118,6 +125,7 @@ func (c *Core) UpdateCommand(name string, command string) common.Msg {
 	return common.NewSuccessMsg("Updated command '%s': %s", name, command)
 }
 
+// Rename the command with the given old name to the given new name.
 func (c *Core) RenameCommand(oldName string, newName string) common.Msg {
 	if c.commands == nil {
 		return common.NewErrMsg("No commands found")

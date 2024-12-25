@@ -14,15 +14,13 @@ var ProgramName = "spinup"
 var Version string
 
 var CommandsFileName = "commands.json"
-
 var ProjectsFileName = "projects.json"
 
 var nginxConfigDir = "/etc/nginx/conf.d"
-
 var hostsFile = "/etc/hosts"
-
 var hostsBackupDir = "/etc/hosts_bak"
 
+// Config contains all configuration options for the application.
 type Config struct {
 	configDir      string
 	nginxConfigDir string
@@ -32,6 +30,7 @@ type Config struct {
 	testing bool
 }
 
+// Returns the path to the configuration directory.
 func GetConfigDirPath() (string, error) {
 	home, err := os.UserHomeDir()
 
@@ -42,6 +41,7 @@ func GetConfigDirPath() (string, error) {
 	return path.Join(home, ".config", ProgramName), nil
 }
 
+// Create a new Config instance with the default configuration.
 func New() (*Config, error) {
 	configDir, err := GetConfigDirPath()
 
@@ -58,6 +58,8 @@ func New() (*Config, error) {
 	}, nil
 }
 
+// Create a new Config instance with the given configuration directory.
+// Used for testing purposes.
 func NewTesting(testingConfigDir string) *Config {
 	return &Config{
 		configDir:      testingConfigDir,
@@ -68,6 +70,7 @@ func NewTesting(testingConfigDir string) *Config {
 	}
 }
 
+// Add sudo to a command if not in testing mode.
 func (c *Config) withSudo(name string, args ...string) *exec.Cmd {
 	if c.IsTesting() {
 		return exec.Command(name, args...)
@@ -76,26 +79,27 @@ func (c *Config) withSudo(name string, args ...string) *exec.Cmd {
 	return exec.Command("sudo", append([]string{name}, args...)...)
 }
 
-/**
- * Getters
- */
-
+// Returns the path to the configuration directory.
 func (c *Config) GetConfigDir() string {
 	return c.configDir
 }
 
+// Returns the path to the nginx configuration directory.
 func (c *Config) GetNginxConfigDir() string {
 	return c.nginxConfigDir
 }
 
+// Returns the path to the hosts file.
 func (c *Config) GetHostsFile() string {
 	return c.hostsFile
 }
 
+// Returns the path to the hosts backup directory.
 func (c *Config) GetHostsBackupDir() string {
 	return c.hostsBackupDir
 }
 
+// Returns whether the application is in testing mode.
 func (c *Config) IsTesting() bool {
 	return c.testing
 }

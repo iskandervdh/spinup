@@ -2,6 +2,7 @@ package common
 
 import "fmt"
 
+// Msg is an interface for messages that can be printed to the output.
 type Msg interface {
 	GetText() string
 }

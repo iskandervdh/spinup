@@ -7,30 +7,32 @@ import (
 	"github.com/iskandervdh/spinup/common"
 )
 
+// Variable is a map of variable names to their values.
 type Variables map[string]string
 
-func (c *Core) AddVariable(name string, key string, value string) common.Msg {
+// Add a variable with the given key and value to the project with the given name.
+func (c *Core) AddVariable(projectName string, key string, value string) common.Msg {
 	if c.projects == nil {
 		return common.NewErrMsg("no projects found")
 	}
 
-	exists, project := c.ProjectExists(name)
+	exists, project := c.ProjectExists(projectName)
 
 	if !exists {
-		return common.NewErrMsg("project '%s' does not exist", name)
+		return common.NewErrMsg("project '%s' does not exist", projectName)
 	}
 
 	// Check if the variable is already defined
 	for variableKey := range project.Variables {
 		if variableKey == key {
-			return common.NewErrMsg("variable with name '%s' already exists", name)
+			return common.NewErrMsg("variable with name '%s' already exists", projectName)
 		}
 	}
 
 	project.Variables[key] = value
 
 	updatedProjects := c.projects
-	updatedProjects[name] = project
+	updatedProjects[projectName] = project
 
 	updatedVariables, err := json.MarshalIndent(updatedProjects, "", "  ")
 
@@ -44,19 +46,20 @@ func (c *Core) AddVariable(name string, key string, value string) common.Msg {
 		return common.NewErrMsg("error writing projects to file: %s", err)
 	}
 
-	return common.NewSuccessMsg("Added variable '%s' to project '%s' with value '%s'\n", key, name, value)
+	return common.NewSuccessMsg("Added variable '%s' to project '%s' with value '%s'\n", key, projectName, value)
 
 }
 
-func (c *Core) RemoveVariable(name string, key string) common.Msg {
+// Remove the variable with the given key from the project with the given name.
+func (c *Core) RemoveVariable(projectName string, key string) common.Msg {
 	if c.projects == nil {
 		return common.NewErrMsg("no projects found")
 	}
 
-	exists, project := c.ProjectExists(name)
+	exists, project := c.ProjectExists(projectName)
 
 	if !exists {
-		return common.NewErrMsg("project '%s' does not exist, nothing to remove", name)
+		return common.NewErrMsg("project '%s' does not exist, nothing to remove", projectName)
 	}
 
 	if project.Variables[key] == "" {
@@ -75,7 +78,7 @@ func (c *Core) RemoveVariable(name string, key string) common.Msg {
 
 	project.Variables = variables
 	updatedProjects := c.projects
-	updatedProjects[name] = project
+	updatedProjects[projectName] = project
 
 	updatedProjectConfig, err := json.MarshalIndent(updatedProjects, "", "  ")
 
@@ -89,5 +92,5 @@ func (c *Core) RemoveVariable(name string, key string) common.Msg {
 		return common.NewErrMsg("Error writing projects to file: %s", err)
 	}
 
-	return common.NewSuccessMsg("Removed variable '%s' from project '%s'\n", key, name)
+	return common.NewSuccessMsg("Removed variable '%s' from project '%s'\n", key, projectName)
 }

@@ -8,8 +8,8 @@ import (
 	"github.com/iskandervdh/spinup/config"
 )
 
+// Create the config directory if it doesn't exist.
 func (c *Core) createConfigDir() error {
-	// Create config directory if it doesn't exist
 	err := os.MkdirAll(c.config.GetConfigDir(), 0755)
 
 	if err != nil {
@@ -19,6 +19,7 @@ func (c *Core) createConfigDir() error {
 	return nil
 }
 
+// Create the projects.json file if it doesn't exist.
 func (c *Core) createProjectsConfigFile() common.Msg {
 	projectFilePath := c.getProjectsFilePath()
 
@@ -44,6 +45,7 @@ func (c *Core) createProjectsConfigFile() common.Msg {
 	return common.NewInfoMsg("Initialized empty projects.json file at ", projectFilePath)
 }
 
+// Create the commands.json file if it doesn't exist.
 func (c *Core) createCommandsConfigFile() common.Msg {
 	commandsFilePath := c.getCommandsFilePath()
 
@@ -70,6 +72,8 @@ func (c *Core) createCommandsConfigFile() common.Msg {
 }
 
 // TODO: Handle other types of messages and send them to the CLI via events
+
+// Initialize the config directory and files.
 func (c *Core) Init() common.Msg {
 	err := c.createConfigDir()
 

@@ -8,6 +8,7 @@ import (
 	"github.com/iskandervdh/spinup/config"
 )
 
+// Print a list of all commands to the output of the CLI.
 func (c *CLI) listCommands() {
 	commands, err := c.core.GetCommands()
 
@@ -23,6 +24,7 @@ func (c *CLI) listCommands() {
 	}
 }
 
+// Add a command interactively by asking the user for the name and command.
 func (c *CLI) addCommandInteractive() {
 	name := c.Input("Enter command name:", "")
 	command := c.Input("Enter command:", "")
@@ -30,6 +32,7 @@ func (c *CLI) addCommandInteractive() {
 	c.sendMsg(c.core.AddCommand(name, command))
 }
 
+// Remove a command interactively by asking the user to select a command to remove.
 func (c *CLI) removeCommandInteractive() {
 	name, err, exited := c.Selection("Select command to remove", c.core.GetCommandNames())
 
@@ -54,6 +57,7 @@ func (c *CLI) removeCommandInteractive() {
 	c.sendMsg(c.core.RemoveCommand(name))
 }
 
+// Edit a command interactively by asking the user to select a command to edit and then enter a new command.
 func (c *CLI) editCommandInteractive() {
 	name, err, exited := c.Selection("Select command to edit", c.core.GetCommandNames())
 
@@ -87,6 +91,7 @@ func (c *CLI) editCommandInteractive() {
 	c.sendMsg(c.core.UpdateCommand(name, newCommand))
 }
 
+// Handle the command subcommand.
 func (c *CLI) handleCommand() {
 	if len(os.Args) < 3 {
 		c.sendMsg(common.NewRegularMsg("Usage: spinup command <add|remove|edit|rename|list> [args...]\n"))

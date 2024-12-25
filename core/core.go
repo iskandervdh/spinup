@@ -9,6 +9,11 @@ import (
 	"github.com/iskandervdh/spinup/config"
 )
 
+// Core is the main struct for the core package.
+//
+// It contains the config, message channel, commands and projects.
+// The config is used to read and update the configuration.
+// The message channel is used to send messages to the CLI or the app.
 type Core struct {
 	config  *config.Config
 	msgChan *chan common.Msg
@@ -17,6 +22,7 @@ type Core struct {
 	projects Projects
 }
 
+// Create a new Core instance with the given options.
 func New(options ...func(*Core)) *Core {
 	config, err := config.New()
 
@@ -36,22 +42,29 @@ func New(options ...func(*Core)) *Core {
 	return s
 }
 
+// Optional function to set the config of the Core when creating a new instance.
 func WithConfig(config *config.Config) func(*Core) {
 	return func(c *Core) {
 		c.config = config
 	}
 }
 
+// Optional function to set the message channel of the Core when creating a new instance.
 func WithMsgChan(msgChan *chan common.Msg) func(*Core) {
 	return func(c *Core) {
 		c.msgChan = msgChan
 	}
 }
 
+// Get the config of the Core instance.
 func (c *Core) getConfig() *config.Config {
 	return c.config
 }
 
+// RequireSudo checks if the user has sudo permissions.
+// This is needed to update some system files.
+//
+// It returns an error if the user does not have sudo permissions.
 func (c *Core) RequireSudo() error {
 	if c.config.IsTesting() {
 		return nil
@@ -66,6 +79,7 @@ func (c *Core) RequireSudo() error {
 	return nil
 }
 
+// Get the commands from the commands.json file.
 func (c *Core) GetCommandsConfig() error {
 	commands, err := c.GetCommands()
 
@@ -78,6 +92,7 @@ func (c *Core) GetCommandsConfig() error {
 	return nil
 }
 
+// Get the projects from the projects.json file.
 func (c *Core) GetProjectsConfig() error {
 	projects, err := c.GetProjects()
 
@@ -90,6 +105,7 @@ func (c *Core) GetProjectsConfig() error {
 	return nil
 }
 
+// Get all the names of the commands.
 func (c *Core) GetCommandNames() []string {
 	if c.commands == nil {
 		c.GetCommandsConfig()
@@ -104,6 +120,7 @@ func (c *Core) GetCommandNames() []string {
 	return commandNames
 }
 
+// Get all the names of the projects.
 func (c *Core) GetProjectNames() []string {
 	if c.projects == nil {
 		c.GetProjectsConfig()
@@ -118,6 +135,7 @@ func (c *Core) GetProjectNames() []string {
 	return projectNames
 }
 
+// Get all the commands that are part of the given project.
 func (c *Core) getCommandsForProject(projectName string) []string {
 	if c.projects == nil {
 		c.GetProjectsConfig()
@@ -132,6 +150,7 @@ func (c *Core) getCommandsForProject(projectName string) []string {
 	return project.Commands
 }
 
+// Send a message to the message channel.
 func (c *Core) sendMsg(msg common.Msg) {
 	*c.msgChan <- msg
 }

@@ -14,6 +14,7 @@ import (
 	"github.com/iskandervdh/spinup/common"
 )
 
+// commandWithName is a struct to hold a command and its name.
 type commandWithName struct {
 	command string
 	name    string
@@ -92,11 +93,12 @@ func (c *Core) runCommand(wg *sync.WaitGroup, project Project, command commandWi
 	return nil
 }
 
+// Run a project with the given name.
 func (c *Core) run(project Project, projectName string) common.Msg {
 	var wg sync.WaitGroup
 	wg.Add(len(project.Commands))
 
-	// Start a signal listener for Ctrl+C (SIGINT)
+	// Start a signal listener for Ctrl+C (SIGINT) to gracefully stop the project when the user interrupts the process.
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 
@@ -104,6 +106,7 @@ func (c *Core) run(project Project, projectName string) common.Msg {
 
 	commands := []commandWithName{}
 
+	// Add all commands to the commands array in a form that includes the command name.
 	for _, commandName := range project.Commands {
 		exists, command := c.CommandExists(commandName)
 
@@ -138,6 +141,7 @@ func (c *Core) run(project Project, projectName string) common.Msg {
 	return common.NewSuccessMsg("")
 }
 
+// Try to run a project with the given name.
 func (c *Core) TryToRun(name string) common.Msg {
 	if name == "" {
 		return common.NewErrMsg("No name provided")

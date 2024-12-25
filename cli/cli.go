@@ -14,6 +14,9 @@ import (
 	"github.com/iskandervdh/spinup/core"
 )
 
+// CLI struct that that determines the input and output of the CLI.
+//
+// It uses a message channel to communicate with the core.
 type CLI struct {
 	in  io.Reader
 	out io.Writer
@@ -23,6 +26,7 @@ type CLI struct {
 	msgChanWg *sync.WaitGroup
 }
 
+// Create a new CLI instance with the given options.
 func New(options ...func(*CLI)) *CLI {
 	msgChan := make(chan common.Msg, 100)
 	msgChanWg := sync.WaitGroup{}
@@ -52,32 +56,38 @@ func New(options ...func(*CLI)) *CLI {
 	return c
 }
 
+// Optional function to set the input of the CLI when creating a new instance.
 func WithIn(in io.Reader) func(*CLI) {
 	return func(c *CLI) {
 		c.in = in
 	}
 }
 
+// Optional function to set the output of the CLI when creating a new instance.
 func WithOut(out io.Writer) func(*CLI) {
 	return func(c *CLI) {
 		c.out = out
 	}
 }
 
+// Optional function to set the core of the CLI when creating a new instance.
 func WithCore(core *core.Core) func(*CLI) {
 	return func(c *CLI) {
 		c.core = core
 	}
 }
 
+// Clear the terminal screen by sending the escape codes to the output.
 func (c *CLI) ClearTerminal() {
 	fmt.Fprint(c.out, "\033[H\033[2J")
 }
 
+// Send a message to the message channel.
 func (c *CLI) sendMsg(msg common.Msg) {
 	*c.msgChan <- msg
 }
 
+// CLI handling of Question component.
 func (c *CLI) Question(prompt string, options []string, defaultSelected []bool) ([]string, error, bool) {
 	q := components.NewQuestion(prompt, options, defaultSelected)
 
@@ -98,6 +108,7 @@ func (c *CLI) Question(prompt string, options []string, defaultSelected []bool) 
 	return r.GetSelected(), nil, false
 }
 
+// CLI handling of Selection component.
 func (c *CLI) Selection(prompt string, options []string) (string, error, bool) {
 	s := components.NewSelection(prompt, options)
 
@@ -117,6 +128,7 @@ func (c *CLI) Selection(prompt string, options []string) (string, error, bool) {
 	return r.GetValue(), nil, false
 }
 
+// CLI handling of Input component.
 func (c *CLI) Input(prompt string, defaultValue string) string {
 	i := components.NewInput(prompt, defaultValue)
 
@@ -137,6 +149,7 @@ func (c *CLI) Input(prompt string, defaultValue string) string {
 	return r.GetValue()
 }
 
+// CLI handling of Confirm component.
 func (c *CLI) Confirm(prompt string) bool {
 	conf := components.NewConfirm(prompt)
 
@@ -162,6 +175,7 @@ func (c *CLI) Confirm(prompt string) bool {
 	return false
 }
 
+// CLI handling of Loading component.
 func (c *CLI) Loading(loadingText string, f func() common.Msg) common.Msg {
 	l := components.NewLoading(loadingText)
 
@@ -179,6 +193,10 @@ func (c *CLI) Loading(loadingText string, f func() common.Msg) common.Msg {
 	return nil
 }
 
+// Function to be called after the CLI has been initialized.
+//
+// It will handle the arguments passed to the CLI and
+// execute the appropriate function based on the arguments.
 func (c *CLI) Handle() {
 	if len(os.Args) < 2 {
 		c.sendMsg(common.NewRegularMsg("Usage: %s <command|project|variable|run|init> [args...]\n", config.ProgramName))

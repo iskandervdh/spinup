@@ -11,6 +11,7 @@ import (
 	"github.com/iskandervdh/spinup/config"
 )
 
+// Project is a struct that represents a project as stored in the projects.json file.
 type Project struct {
 	Domain    string    `json:"domain"`
 	Port      int       `json:"port"`
@@ -19,12 +20,15 @@ type Project struct {
 	Variables Variables `json:"variables"`
 }
 
+// Projects is a map of project names to their projects.
 type Projects map[string]Project
 
+// Get the path to the projects.json file.
 func (c *Core) getProjectsFilePath() string {
 	return path.Join(c.config.GetConfigDir(), config.ProjectsFileName)
 }
 
+// Get the projects from the projects.json file.
 func (c *Core) GetProjects() (Projects, error) {
 	projectsFileContent, err := os.ReadFile(c.getProjectsFilePath())
 
@@ -42,6 +46,7 @@ func (c *Core) GetProjects() (Projects, error) {
 	return projects, nil
 }
 
+// Check if a project with the given name exists. Returns the project if it exists.
 func (c *Core) ProjectExists(name string) (bool, Project) {
 	if c.projects == nil {
 		return false, Project{}
@@ -52,6 +57,7 @@ func (c *Core) ProjectExists(name string) (bool, Project) {
 	return exists, project
 }
 
+// Add a project with the given name, domain, port and command names.
 func (c *Core) AddProject(name string, domain string, port int, commandNames []string) common.Msg {
 	c.RequireSudo()
 
@@ -86,7 +92,7 @@ func (c *Core) AddProject(name string, domain string, port int, commandNames []s
 		return common.NewErrMsg(fmt.Sprintln("Error trying to create nginx config file", err))
 	}
 
-	err = c.config.AddHost(domain)
+	err = c.config.AddDomain(domain)
 
 	if err != nil {
 		// Remove nginx config file if adding domain to hosts file fails
@@ -119,6 +125,7 @@ func (c *Core) AddProject(name string, domain string, port int, commandNames []s
 	return common.NewSuccessMsg(fmt.Sprintf("Added project '%s' with domain '%s', port %d and commands %s", name, domain, port, commandNames))
 }
 
+// Remove the project with the given name.
 func (c *Core) RemoveProject(name string) common.Msg {
 	c.RequireSudo()
 
@@ -134,7 +141,7 @@ func (c *Core) RemoveProject(name string) common.Msg {
 		return common.NewErrMsg("Could not remove nginx config file: " + err.Error())
 	}
 
-	err = c.config.RemoveHost(c.projects[name].Domain)
+	err = c.config.RemoveDomain(c.projects[name].Domain)
 
 	if err != nil {
 		// Remove nginx config file if adding domain to hosts file fails
@@ -168,6 +175,7 @@ func (c *Core) RemoveProject(name string) common.Msg {
 	return common.NewSuccessMsg(fmt.Sprintf("Removed project '%s'", name))
 }
 
+// Update the project with the given name to the given domain, port and command names.
 func (c *Core) UpdateProject(name string, domain string, port int, commandNames []string) common.Msg {
 	c.RequireSudo()
 
@@ -237,6 +245,7 @@ func (c *Core) UpdateProject(name string, domain string, port int, commandNames 
 	return common.NewSuccessMsg("Updated project '%s' with domain '%s', port %d and commands %s", name, domain, port, commandNames)
 }
 
+// Rename the project with the given old name to the given new name.
 func (c *Core) RenameProject(oldName string, newName string) common.Msg {
 	exists, project := c.ProjectExists(oldName)
 
@@ -275,6 +284,7 @@ func (c *Core) RenameProject(oldName string, newName string) common.Msg {
 	return common.NewSuccessMsg("Renamed project '%s' to '%s'", oldName, newName)
 }
 
+// Add a command to the project with the given name.
 func (c *Core) AddCommandToProject(projectName string, commandName string) common.Msg {
 	exists, project := c.ProjectExists(projectName)
 
@@ -313,6 +323,7 @@ func (c *Core) AddCommandToProject(projectName string, commandName string) commo
 	return common.NewSuccessMsg("Added command '%s' to project '%s'", commandName, projectName)
 }
 
+// Remove the command with the given commandName from the project with the given projectName.
 func (c *Core) RemoveCommandFromProject(projectName string, commandName string) common.Msg {
 	exists, project := c.ProjectExists(projectName)
 
@@ -345,6 +356,7 @@ func (c *Core) RemoveCommandFromProject(projectName string, commandName string) 
 	return common.NewInfoMsg("Command '%s' not found in project '%s'. Nothing to remove.", commandName, projectName)
 }
 
+// Set the directory for the project with the given name.
 func (c *Core) SetProjectDir(projectName string, dir *string) common.Msg {
 	exists, project := c.ProjectExists(projectName)
 
@@ -392,6 +404,7 @@ func (c *Core) SetProjectDir(projectName string, dir *string) common.Msg {
 	return common.NewSuccessMsg("Set directory to '%s' for project '%s'", *project.Dir, projectName)
 }
 
+// Get the directory for the project with the given name.
 func (c *Core) GetProjectDir(projectName string) common.Msg {
 	exists, project := c.ProjectExists(projectName)
 
