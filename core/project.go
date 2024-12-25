@@ -11,17 +11,18 @@ import (
 	"github.com/iskandervdh/spinup/config"
 )
 
-// Project is a struct that represents a project as stored in the projects.json file.
-type Project struct {
-	Domain    string    `json:"domain"`
-	Port      int       `json:"port"`
-	Commands  []string  `json:"commands"`
-	Dir       *string   `json:"dir"`
-	Variables Variables `json:"variables"`
+// project is a struct that represents a project as stored in the projects.json file.
+type project struct {
+	Domain        string        `json:"domain"`
+	Port          int           `json:"port"`
+	Commands      []string      `json:"commands"`
+	Dir           *string       `json:"dir"`
+	Variables     variables     `json:"variables"`
+	DomainAliases domainAliases `json:"domainAliases"`
 }
 
-// Projects is a map of project names to their projects.
-type Projects map[string]Project
+// projects is a map of project names to their projects.
+type projects map[string]project
 
 // Get the path to the projects.json file.
 func (c *Core) getProjectsFilePath() string {
@@ -29,14 +30,14 @@ func (c *Core) getProjectsFilePath() string {
 }
 
 // Get the projects from the projects.json file.
-func (c *Core) GetProjects() (Projects, error) {
+func (c *Core) GetProjects() (projects, error) {
 	projectsFileContent, err := os.ReadFile(c.getProjectsFilePath())
 
 	if err != nil {
 		return nil, fmt.Errorf("error reading projects.json file: %s", err)
 	}
 
-	var projects Projects
+	var projects projects
 	err = json.Unmarshal(projectsFileContent, &projects)
 
 	if err != nil {
@@ -47,9 +48,9 @@ func (c *Core) GetProjects() (Projects, error) {
 }
 
 // Check if a project with the given name exists. Returns the project if it exists.
-func (c *Core) ProjectExists(name string) (bool, Project) {
+func (c *Core) ProjectExists(name string) (bool, project) {
 	if c.projects == nil {
-		return false, Project{}
+		return false, project{}
 	}
 
 	project, exists := c.projects[name]
@@ -101,11 +102,12 @@ func (c *Core) AddProject(name string, domain string, port int, commandNames []s
 		return common.NewErrMsg(fmt.Sprintln("Error trying to add domain to hosts file", err))
 	}
 
-	newProject := Project{
-		Domain:    domain,
-		Port:      port,
-		Commands:  commandNames,
-		Variables: make(map[string]string),
+	newProject := project{
+		Domain:        domain,
+		Port:          port,
+		Commands:      commandNames,
+		Variables:     variables{},
+		DomainAliases: domainAliases{},
 	}
 
 	c.projects[name] = newProject
@@ -150,7 +152,7 @@ func (c *Core) RemoveProject(name string) common.Msg {
 		return common.NewErrMsg("Error trying to remove domain from hosts file: " + err.Error())
 	}
 
-	var updatedProjects Projects = make(map[string]Project)
+	var updatedProjects projects = make(map[string]project)
 
 	for projectName, project := range c.projects {
 		if projectName == name {

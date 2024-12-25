@@ -10,8 +10,8 @@ import (
 	"github.com/iskandervdh/spinup/config"
 )
 
-// Commands is a map of command names to their commands.
-type Commands map[string]string
+// commands is a map of command names to their commands.
+type commands map[string]string
 
 // Get the path to the commands.json file.
 func (c *Core) getCommandsFilePath() string {
@@ -19,14 +19,14 @@ func (c *Core) getCommandsFilePath() string {
 }
 
 // Get the commands from the commands.json file.
-func (c *Core) GetCommands() (Commands, error) {
+func (c *Core) GetCommands() (commands, error) {
 	commandsFileContent, err := os.ReadFile(c.getCommandsFilePath())
 
 	if err != nil {
 		return nil, fmt.Errorf("error reading commands.json file: %s", err)
 	}
 
-	var commands Commands
+	var commands commands
 	err = json.Unmarshal(commandsFileContent, &commands)
 
 	if err != nil {

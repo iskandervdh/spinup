@@ -18,8 +18,8 @@ type Core struct {
 	config  *config.Config
 	msgChan *chan common.Msg
 
-	commands Commands
-	projects Projects
+	commands commands
+	projects projects
 }
 
 // Create a new Core instance with the given options.
