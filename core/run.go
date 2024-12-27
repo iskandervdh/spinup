@@ -12,12 +12,14 @@ import (
 	"syscall"
 
 	"github.com/iskandervdh/spinup/common"
+	"golang.org/x/sys/unix"
 )
 
 // commandWithName is a struct to hold a command and its name.
 type commandWithName struct {
 	command string
 	name    string
+	cmd     *exec.Cmd
 }
 
 func (c *Core) commandTemplate(command string, project Project) string {
@@ -46,20 +48,28 @@ func (c *Core) prefixOutput(prefix string, reader io.Reader, writer io.Writer) e
 	return nil
 }
 
-func (c *Core) runCommand(wg *sync.WaitGroup, project Project, command commandWithName, cmdChan chan *exec.Cmd) error {
+func (c *Core) runCommand(wg *sync.WaitGroup, project Project, command *commandWithName) error {
 	defer wg.Done()
 
-	cmd := exec.Command(strings.Split(command.command, " ")[0], strings.Split(command.command, " ")[1:]...)
-	// Force color output
-	cmd.Env = append(os.Environ(), "FORCE_COLOR=1")
+	command.cmd = exec.Command(strings.Split(command.command, " ")[0], strings.Split(command.command, " ")[1:]...)
 
-	stdout, err := cmd.StdoutPipe()
+	// Set process group ID to create a new process group
+	if common.IsWindows() {
+		command.cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	} else {
+		command.cmd.SysProcAttr = &unix.SysProcAttr{Setpgid: true}
+	}
+
+	// Force color output
+	command.cmd.Env = append(os.Environ(), "FORCE_COLOR=1")
+
+	stdout, err := command.cmd.StdoutPipe()
 
 	if err != nil {
 		return fmt.Errorf("error creating StdoutPipe: %s", err)
 	}
 
-	stderr, err := cmd.StderrPipe()
+	stderr, err := command.cmd.StderrPipe()
 
 	if err != nil {
 		return fmt.Errorf("error creating StderrPipe: %s", err)
@@ -70,19 +80,16 @@ func (c *Core) runCommand(wg *sync.WaitGroup, project Project, command commandWi
 
 	// Run the project in the project's directory if it's set
 	if project.Dir != nil {
-		cmd.Dir = *project.Dir
+		command.cmd.Dir = *project.Dir
 	}
 
-	err = cmd.Start()
+	err = command.cmd.Start()
 
 	if err != nil {
 		return fmt.Errorf("error starting command: %s", err)
 	}
 
-	// Send the command to the channel
-	cmdChan <- cmd
-
-	err = cmd.Wait()
+	err = command.cmd.Wait()
 
 	if err != nil {
 		// Gracefully exit if the command was interrupted by the user
@@ -102,13 +109,13 @@ func (c *Core) run(project Project, projectName string) common.Msg {
 	wg.Add(len(project.Commands))
 
 	// Start a signal listener for Ctrl+C (SIGINT) to gracefully stop the project when the user interrupts the process.
-	c.sigChan = make(chan os.Signal, 1)
-	signal.Notify(c.sigChan, syscall.SIGINT, syscall.SIGTERM)
+	sigChan := make(chan os.Signal, 1)
+	c.sigChan = &sigChan
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 
 	c.sendMsg(common.NewInfoMsg("Running project '%s'...", projectName))
 
-	commands := []commandWithName{}
-	cmdChan := make(chan *exec.Cmd, len(project.Commands))
+	commands := []*commandWithName{}
 
 	// Add all commands to the commands array in a form that includes the command name.
 	for _, commandName := range project.Commands {
@@ -120,7 +127,7 @@ func (c *Core) run(project Project, projectName string) common.Msg {
 
 		commands = append(
 			commands,
-			commandWithName{
+			&commandWithName{
 				command: c.commandTemplate(command, project),
 				name:    commandName,
 			})
@@ -131,18 +138,29 @@ func (c *Core) run(project Project, projectName string) common.Msg {
 	}
 
 	for _, command := range commands {
-		go c.runCommand(&wg, project, command, cmdChan)
+		go c.runCommand(&wg, project, command)
 	}
 
 	go func() {
-		<-c.sigChan
+		<-*c.sigChan
 
 		c.sendMsg(common.NewInfoMsg("\nGracefully stopping project '%s'...", projectName))
 
-		// Send interrupt signal to all running commands
-		for i := 0; i < len(commands); i++ {
-			cmd := <-cmdChan
-			cmd.Process.Signal(syscall.SIGINT)
+		// Send terminate signal to all running commands
+		for _, command := range commands {
+			if command.cmd.Process != nil {
+				var err error
+
+				if common.IsWindows() {
+					err = command.cmd.Process.Kill() // Use Kill on Windows
+				} else {
+					err = syscall.Kill(-command.cmd.Process.Pid, syscall.SIGTERM) // Send SIGTERM to the process group on Unix
+				}
+
+				if err != nil {
+					c.sendMsg(common.NewErrMsg("Failed to send SIGTERM to command '%s': %s", command.name, err))
+				}
+			}
 		}
 	}()
 

@@ -67,7 +67,7 @@ func (c *Core) AddProject(name string, domain string, port int, commandNames []s
 		_, exists := c.commands[commandName]
 
 		if !exists {
-			return common.NewErrMsg("Command " + commandName + " does not exist")
+			return common.NewErrMsg("Command %s does not exist", commandName)
 		}
 	}
 

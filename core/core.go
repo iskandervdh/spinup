@@ -18,7 +18,7 @@ import (
 type Core struct {
 	config  *config.Config
 	msgChan *chan common.Msg
-	sigChan chan os.Signal
+	sigChan *chan os.Signal
 
 	out io.Writer
 	err io.Writer
@@ -63,11 +63,11 @@ func WithMsgChan(msgChan *chan common.Msg) func(*Core) {
 	}
 }
 
-func (c *Core) SetOut(out *os.File) {
+func (c *Core) SetOut(out io.Writer) {
 	c.out = out
 }
 
-func (c *Core) SetErr(err *os.File) {
+func (c *Core) SetErr(err io.Writer) {
 	c.err = err
 }
 
@@ -150,8 +150,8 @@ func (c *Core) GetProjectNames() []string {
 	return projectNames
 }
 
-// Get the wait group of the Core instance.
-func (c *Core) GetSigChan() chan os.Signal {
+// Get the signal channel of the Core instance.
+func (c *Core) GetSigChan() *chan os.Signal {
 	return c.sigChan
 }
 
