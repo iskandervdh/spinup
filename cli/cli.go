@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"strings"
 	"sync"
 
@@ -193,62 +194,90 @@ func (c *CLI) Loading(loadingText string, f func() common.Msg) common.Msg {
 	return nil
 }
 
+func (c *CLI) sendHelpMsg() {
+	c.sendMsg(common.NewRegularMsg("Usage: %s <command|project|variable|run|init> [args...]\n", config.ProgramName))
+}
+
+func (c *CLI) launchApp() {
+	c.sendMsg(common.NewRegularMsg("Launching app...\n"))
+	cmd := exec.Command(config.AppCommand)
+
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	err := cmd.Start()
+
+	if err != nil {
+		panic(err)
+	}
+
+	err = cmd.Wait()
+
+	if err != nil {
+		panic(err)
+	}
+}
+
 // Function to be called after the CLI has been initialized.
 //
 // It will handle the arguments passed to the CLI and
 // execute the appropriate function based on the arguments.
 func (c *CLI) Handle() {
-	if len(os.Args) < 2 {
-		c.sendMsg(common.NewRegularMsg("Usage: %s <command|project|variable|run|init> [args...]\n", config.ProgramName))
-		return
-	}
-
-	if os.Args[1] == "init" {
+	if len(os.Args) == 1 {
+		if common.AppInstalled() {
+			c.launchApp()
+		} else {
+			c.sendMsg(common.NewInfoMsg("App not installed. You can download it from https://github.com/iskandervdh/spinup-app/releases"))
+			c.sendHelpMsg()
+		}
+	} else if os.Args[1] == "init" {
 		c.sendMsg(c.core.Init())
-		return
-	}
+	} else {
+		c.core.GetCommandsConfig()
+		c.core.GetProjectsConfig()
 
-	c.core.GetCommandsConfig()
-	c.core.GetProjectsConfig()
+		switch os.Args[1] {
+		case "-v", "--version":
+			fmt.Printf("%s %s\n", config.ProgramName, strings.TrimSpace(config.Version))
+		case "-h", "--help":
+			c.sendHelpMsg()
+		case "command", "c":
+			c.handleCommand()
+		case "project", "p":
+			c.handleProject()
+		case "variable", "v":
+			c.handleVariable()
+		case "domain-alias", "da":
+			c.handleDomainAlias()
+		case "run":
+			if len(os.Args) < 3 {
+				c.sendMsg(common.NewRegularMsg("Usage: %s run <project>\n", config.ProgramName))
+				break
+			}
 
-	switch os.Args[1] {
-	case "-v", "--version":
-		fmt.Printf("%s %s\n", config.ProgramName, strings.TrimSpace(config.Version))
-	case "command", "c":
-		c.handleCommand()
-	case "project", "p":
-		c.handleProject()
-	case "variable", "v":
-		c.handleVariable()
-	case "domain-alias", "da":
-		c.handleDomainAlias()
-	case "run":
-		if len(os.Args) < 3 {
-			c.sendMsg(common.NewRegularMsg("Usage: %s run <project>\n", config.ProgramName))
-			break
-		}
+			result := c.core.TryToRun(os.Args[2])
 
-		result := c.core.TryToRun(os.Args[2])
+			if _, ok := result.(*common.ErrMsg); ok {
+				c.ErrorPrint(result)
+				os.Exit(1)
+			}
 
-		if _, ok := result.(*common.ErrMsg); ok {
-			c.ErrorPrint(result)
-			os.Exit(1)
-		}
+			if result == nil {
+				c.sendMsg(common.NewErrMsg("Unknown project '%s'\n", os.Args[2]))
+			}
+		default:
+			result := c.core.TryToRun(os.Args[1])
 
-		if result == nil {
-			c.sendMsg(common.NewErrMsg("Unknown project '%s'\n", os.Args[2]))
-		}
-	default:
-		result := c.core.TryToRun(os.Args[1])
+			if _, ok := result.(*common.ErrMsg); ok {
+				c.ErrorPrint(result)
+				os.Exit(1)
+			}
 
-		if _, ok := result.(*common.ErrMsg); ok {
-			c.ErrorPrint(result)
-			os.Exit(1)
-		}
-
-		if result == nil {
-			c.sendMsg(common.NewRegularMsg("Unknown subcommand or project '%s'\n\n", os.Args[1]))
-			c.sendMsg(common.NewRegularMsg("Expected 'command|c', 'project|p', 'run' or 'init' subcommand or a valid project name\n"))
+			if result == nil {
+				c.sendMsg(common.NewRegularMsg("Unknown subcommand or project '%s'\n\n", os.Args[1]))
+				c.sendMsg(common.NewRegularMsg("Expected 'command|c', 'project|p', 'run' or 'init' subcommand or a valid project name\n"))
+			}
 		}
 	}
 

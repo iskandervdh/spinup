@@ -9,6 +9,7 @@ import (
 )
 
 var ProgramName = "spinup"
+var AppCommand = "spinup-app"
 
 //go:embed .version
 var Version string
