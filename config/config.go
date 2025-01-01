@@ -32,7 +32,7 @@ type Config struct {
 }
 
 // Returns the path to the configuration directory.
-func GetConfigDirPath() (string, error) {
+func GetDefaultConfigDirPath() (string, error) {
 	home, err := os.UserHomeDir()
 
 	if err != nil {
@@ -44,7 +44,7 @@ func GetConfigDirPath() (string, error) {
 
 // Create a new Config instance with the default configuration.
 func New() (*Config, error) {
-	configDir, err := GetConfigDirPath()
+	configDir, err := GetDefaultConfigDirPath()
 
 	if err != nil {
 		return nil, err
@@ -83,6 +83,11 @@ func (c *Config) withSudo(name string, args ...string) *exec.Cmd {
 // Returns the path to the configuration directory.
 func (c *Config) GetConfigDir() string {
 	return c.configDir
+}
+
+// Returns the path of the sqlite3 database file.
+func (c *Config) GetDatabasePath() string {
+	return path.Join(c.configDir, "spinup.sqlite3")
 }
 
 // Returns the path to the nginx configuration directory.

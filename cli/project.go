@@ -9,7 +9,17 @@ import (
 
 	"github.com/iskandervdh/spinup/common"
 	"github.com/iskandervdh/spinup/config"
+	"github.com/iskandervdh/spinup/core"
 )
+
+// Convert a slice of database.Command to a slice of strings.
+func extractCommandStrings(commands []core.Command) []string {
+	var commandStrings []string
+	for _, command := range commands {
+		commandStrings = append(commandStrings, command.Name)
+	}
+	return commandStrings
+}
 
 // Print a list of all projects to the output of the CLI.
 func (c *CLI) listProjects() {
@@ -22,20 +32,22 @@ func (c *CLI) listProjects() {
 
 	c.sendMsg(common.NewRegularMsg("%-10s %-30s %-10s %-20s\n", "Name", "Domain", "Port", "Commands"))
 
-	for projectName, project := range projects {
+	for _, project := range projects {
+		commands := strings.Join(extractCommandStrings(project.Commands), ", ")
+
 		c.sendMsg(
 			common.NewRegularMsg("%-10s %-30s %-10d %-20s\n",
-				projectName,
+				project.Name,
 				project.Domain,
 				project.Port,
-				strings.Join(project.Commands, ", "),
+				commands,
 			),
 		)
 	}
 }
 
 // Add a project and display a loading message.
-func (c *CLI) addProject(name string, domain string, port int, commandNames []string) {
+func (c *CLI) addProject(name string, domain string, port int64, commandNames []string) {
 	c.Loading(fmt.Sprintf("Adding project %s...", name),
 		func() common.Msg {
 			return c.core.AddProject(name, domain, port, commandNames)
@@ -49,7 +61,7 @@ func (c *CLI) addProjectInteractive() {
 	domain := c.Input("Domain:", "")
 	port := c.Input("Port:", "")
 
-	portInt, err := strconv.Atoi(port)
+	portInt, err := strconv.ParseInt(port, 10, 64)
 
 	if err != nil {
 		c.ErrorPrint("Port must be an integer")
@@ -105,7 +117,7 @@ func (c *CLI) removeProjectInteractive() {
 }
 
 // Edit a project and display a loading message.
-func (c *CLI) editProject(name string, domain string, port int, commandNames []string) {
+func (c *CLI) editProject(name string, domain string, port int64, commandNames []string) {
 	c.Loading(fmt.Sprintf("Updating project %s...", name),
 		func() common.Msg {
 			return c.core.UpdateProject(name, domain, port, commandNames)
@@ -139,9 +151,9 @@ func (c *CLI) editProjectInteractive() {
 	}
 
 	domain := c.Input("Domain:", project.Domain)
-	port := c.Input("Port:", strconv.Itoa(project.Port))
+	port := c.Input("Port:", strconv.FormatInt(project.Port, 10))
 
-	portInt, err := strconv.Atoi(port)
+	portInt, err := strconv.ParseInt(port, 10, 64)
 
 	if err != nil {
 		c.ErrorPrint("Port must be an integer")
@@ -152,7 +164,7 @@ func (c *CLI) editProjectInteractive() {
 	commandNames := c.core.GetCommandNames()
 
 	for i, commandName := range commandNames {
-		projectSelectedCommands[i] = slices.Contains(project.Commands, commandName)
+		projectSelectedCommands[i] = slices.Contains(extractCommandStrings(project.Commands), commandName)
 	}
 
 	selectedCommands, err, exited := c.Question("Commands", c.core.GetCommandNames(), projectSelectedCommands)
@@ -190,7 +202,7 @@ func (c *CLI) handleProject() {
 			return
 		}
 
-		port, err := strconv.Atoi(os.Args[5])
+		port, err := strconv.ParseInt(os.Args[5], 10, 64)
 
 		if err != nil {
 			c.ErrorPrint("Port must be an integer")
@@ -221,7 +233,7 @@ func (c *CLI) handleProject() {
 			return
 		}
 
-		port, err := strconv.Atoi(os.Args[5])
+		port, err := strconv.ParseInt(os.Args[5], 10, 64)
 
 		if err != nil {
 			c.ErrorPrint("Port must be an integer")

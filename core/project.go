@@ -1,50 +1,93 @@
 package core
 
 import (
-	"encoding/json"
+	"database/sql"
 	"fmt"
 	"os"
-	"path"
+	"slices"
 	"strconv"
 
 	"github.com/iskandervdh/spinup/common"
-	"github.com/iskandervdh/spinup/config"
+	"github.com/iskandervdh/spinup/database/sqlc"
 )
 
 // Project is a struct that represents a Project as stored in the projects.json file.
 type Project struct {
-	Domain        string        `json:"domain"`
-	Port          int           `json:"port"`
-	Commands      []string      `json:"commands"`
-	Dir           *string       `json:"dir"`
-	Variables     Variables     `json:"variables"`
-	DomainAliases DomainAliases `json:"domainAliases"`
+	sqlc.Project
+	Commands      []Command
+	Variables     []Variable
+	DomainAliases []DomainAlias
 }
 
 // Projects is a map of project names to their Projects.
-type Projects map[string]Project
+type Projects []Project
 
-// Get the path to the projects.json file.
-func (c *Core) getProjectsFilePath() string {
-	return path.Join(c.config.GetConfigDir(), config.ProjectsFileName)
+func sqlcStructToCoreStruct[T any, U any](sqlcStruct T, convertFunc func(T) U) U {
+	return convertFunc(sqlcStruct)
+}
+
+func (c *Core) getProjectWithInfo(project sqlc.Project) (Project, error) {
+	projectCommands, err := c.dbQueries.GetProjectCommands(c.dbContext, project.ID)
+
+	if err != nil {
+		return Project{}, fmt.Errorf("error getting project commands: %s", err)
+	}
+
+	projectVariables, err := c.dbQueries.GetProjectVariables(c.dbContext, project.ID)
+
+	if err != nil {
+		return Project{}, fmt.Errorf("error getting project variables: %s", err)
+	}
+
+	projectDomainAliases, err := c.dbQueries.GetProjectDomainAliases(c.dbContext, project.ID)
+
+	if err != nil {
+		return Project{}, fmt.Errorf("error getting project domain aliases: %s", err)
+	}
+
+	return Project{
+		Project:       project,
+		Commands:      projectCommands,
+		Variables:     projectVariables,
+		DomainAliases: projectDomainAliases,
+	}, nil
+}
+
+func (c *Core) FetchProjects() error {
+	projects, err := c.dbQueries.GetProjects(c.dbContext)
+
+	if err != nil {
+		return fmt.Errorf("error getting commands: %s", err)
+	}
+
+	var projectsWithInfo Projects
+
+	for _, project := range projects {
+		projectWithInfo, err := c.getProjectWithInfo(project)
+
+		if err != nil {
+			return err
+		}
+
+		projectsWithInfo = append(projectsWithInfo, projectWithInfo)
+	}
+
+	c.projects = projectsWithInfo
+
+	return nil
 }
 
 // Get the projects from the projects.json file.
 func (c *Core) GetProjects() (Projects, error) {
-	projectsFileContent, err := os.ReadFile(c.getProjectsFilePath())
+	if c.projects == nil {
+		err := c.FetchProjects()
 
-	if err != nil {
-		return nil, fmt.Errorf("error reading projects.json file: %s", err)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	var projects Projects
-	err = json.Unmarshal(projectsFileContent, &projects)
-
-	if err != nil {
-		return nil, fmt.Errorf("error parsing projects.json file: %s", err)
-	}
-
-	return projects, nil
+	return c.projects, nil
 }
 
 // Check if a project with the given name exists. Returns the project if it exists.
@@ -53,37 +96,47 @@ func (c *Core) ProjectExists(name string) (bool, Project) {
 		return false, Project{}
 	}
 
-	project, exists := c.projects[name]
+	index := slices.IndexFunc(c.projects, func(project Project) bool {
+		return project.Name == name
+	})
 
-	return exists, project
+	if index == -1 {
+		return false, Project{}
+	}
+
+	return true, c.projects[index]
 }
 
 // Add a project with the given name, domain, port and command names.
-func (c *Core) AddProject(name string, domain string, port int, commandNames []string) common.Msg {
+func (c *Core) AddProject(name string, domain string, port int64, commandNames []string) common.Msg {
 	c.RequireSudo()
 
 	// Check if commands exist
+	commandIDs := make([]int64, len(commandNames))
+
 	for _, commandName := range commandNames {
-		_, exists := c.commands[commandName]
+		exists, command := c.CommandExists(commandName)
 
 		if !exists {
-			return common.NewErrMsg("Command %s does not exist", commandName)
+			c.sendMsg(common.NewErrMsg("Command '" + commandName + "' does not exist"))
 		}
+
+		commandIDs = append(commandIDs, command.ID)
 	}
 
 	// Check if project already exists or if domain or port is already in use
-	for projectName, project := range c.projects {
-		if projectName == name {
+	for _, project := range c.projects {
+		if project.Name == name {
 			return common.NewErrMsg("Project '" + name + "' already exists")
 		}
 
 		if project.Domain == domain {
-			return common.NewErrMsg("Project with domain '" + domain + "' already exists: " + projectName)
+			return common.NewErrMsg("Project with domain '" + domain + "' already exists: " + project.Name)
 
 		}
 
 		if project.Port == port {
-			return common.NewErrMsg("Project with port " + strconv.Itoa(port) + " already exists: " + projectName)
+			return common.NewErrMsg("Project with port " + strconv.FormatInt(port, 10) + " already exists: " + project.Name)
 		}
 	}
 
@@ -102,36 +155,35 @@ func (c *Core) AddProject(name string, domain string, port int, commandNames []s
 		return common.NewErrMsg(fmt.Sprintln("Error trying to add domain to hosts file", err))
 	}
 
-	newProject := Project{
-		Domain:        domain,
-		Port:          port,
-		Commands:      commandNames,
-		Variables:     Variables{},
-		DomainAliases: DomainAliases{},
-	}
-
-	c.projects[name] = newProject
-
-	updatedProjectsConfig, err := json.MarshalIndent(c.projects, "", "  ")
+	project, err := c.dbQueries.CreateProject(c.dbContext, sqlc.CreateProjectParams{
+		Name:   name,
+		Domain: domain,
+		Port:   int64(port),
+	})
 
 	if err != nil {
-		return common.NewErrMsg(fmt.Sprintln("Error encoding projects to json:", err))
+		return common.NewErrMsg(fmt.Sprintf("Error adding project to database: %s", err))
 	}
 
-	err = os.WriteFile(c.getProjectsFilePath(), updatedProjectsConfig, 0644)
+	for _, commandID := range commandIDs {
+		err = c.dbQueries.CreateProjectCommand(c.dbContext, sqlc.CreateProjectCommandParams{
+			ProjectID: project.ID,
+			CommandID: commandID,
+		})
 
-	if err != nil {
-		return common.NewErrMsg(fmt.Sprintln("Error writing projects to file:", err))
+		if err != nil {
+			return common.NewErrMsg(fmt.Sprintf("Error adding commands to project in database: %s", err))
+		}
 	}
 
-	return common.NewSuccessMsg(fmt.Sprintf("Added project '%s' with domain '%s', port %d and commands %s", name, domain, port, commandNames))
+	return common.NewSuccessMsg(fmt.Sprintf("Added project '%s'", name))
 }
 
 // Remove the project with the given name.
 func (c *Core) RemoveProject(name string) common.Msg {
 	c.RequireSudo()
 
-	exists, _ := c.ProjectExists(name)
+	exists, project := c.ProjectExists(name)
 
 	if !exists {
 		return common.NewErrMsg("Project '" + name + "' does not exist, nothing to remove")
@@ -143,7 +195,7 @@ func (c *Core) RemoveProject(name string) common.Msg {
 		return common.NewErrMsg("Could not remove nginx config file: " + err.Error())
 	}
 
-	err = c.config.RemoveDomain(c.projects[name].Domain)
+	err = c.config.RemoveDomain(project.Domain)
 
 	if err != nil {
 		// Remove nginx config file if adding domain to hosts file fails
@@ -152,33 +204,13 @@ func (c *Core) RemoveProject(name string) common.Msg {
 		return common.NewErrMsg("Error trying to remove domain from hosts file: " + err.Error())
 	}
 
-	var updatedProjects Projects = make(map[string]Project)
-
-	for projectName, project := range c.projects {
-		if projectName == name {
-			continue
-		}
-
-		updatedProjects[projectName] = project
-	}
-
-	updatedProjectsConfig, err := json.MarshalIndent(updatedProjects, "", "  ")
-
-	if err != nil {
-		return common.NewErrMsg("Error encoding projects to json: " + err.Error())
-	}
-
-	err = os.WriteFile(c.getProjectsFilePath(), updatedProjectsConfig, 0644)
-
-	if err != nil {
-		return common.NewErrMsg("Error writing projects to file: " + err.Error())
-	}
+	c.dbQueries.DeleteProject(c.dbContext, name)
 
 	return common.NewSuccessMsg(fmt.Sprintf("Removed project '%s'", name))
 }
 
 // Update the project with the given name to the given domain, port and command names.
-func (c *Core) UpdateProject(name string, domain string, port int, commandNames []string) common.Msg {
+func (c *Core) UpdateProject(name string, domain string, port int64, commandNames []string) common.Msg {
 	c.RequireSudo()
 
 	exists, project := c.ProjectExists(name)
@@ -189,7 +221,7 @@ func (c *Core) UpdateProject(name string, domain string, port int, commandNames 
 
 	// Check if commands exist
 	for _, commandName := range commandNames {
-		_, exists := c.commands[commandName]
+		exists, _ := c.CommandExists(commandName)
 
 		if !exists {
 			return common.NewErrMsg("Command '%s' does not exist", commandName)
@@ -197,17 +229,17 @@ func (c *Core) UpdateProject(name string, domain string, port int, commandNames 
 	}
 
 	// Check if domain or port is already in use
-	for projectName, p := range c.projects {
-		if projectName == name {
+	for _, project := range c.projects {
+		if project.Name == name {
 			continue
 		}
 
-		if p.Domain == domain {
-			return common.NewErrMsg("Project with domain '%s' already exists: %s", domain, projectName)
+		if project.Domain == domain {
+			return common.NewErrMsg("Project with domain '%s' already exists: %s", domain, project.Name)
 		}
 
-		if p.Port == port {
-			return common.NewErrMsg("Project with port %d already exists: %s", port, projectName)
+		if project.Port == port {
+			return common.NewErrMsg("Project with port %d already exists: %s", port, project.Name)
 		}
 	}
 
@@ -226,30 +258,22 @@ func (c *Core) UpdateProject(name string, domain string, port int, commandNames 
 		return common.NewErrMsg("Error trying to update domain in hosts file: %s", err)
 	}
 
-	project.Domain = domain
-	project.Port = port
-	project.Commands = commandNames
-
-	c.projects[name] = project
-
-	updatedProjectsConfig, err := json.MarshalIndent(c.projects, "", "  ")
-
-	if err != nil {
-		return common.NewErrMsg("Error encoding projects to json: %s", err)
-	}
-
-	err = os.WriteFile(c.getProjectsFilePath(), updatedProjectsConfig, 0644)
-
-	if err != nil {
-		return common.NewErrMsg("Error writing projects to file: %s", err)
-	}
+	c.dbQueries.UpdateProject(c.dbContext, sqlc.UpdateProjectParams{
+		Name:   name,
+		Domain: domain,
+		Port:   port,
+		Dir: sql.NullString{
+			String: "",
+			Valid:  false,
+		},
+	})
 
 	return common.NewSuccessMsg("Updated project '%s' with domain '%s', port %d and commands %s", name, domain, port, commandNames)
 }
 
 // Rename the project with the given old name to the given new name.
 func (c *Core) RenameProject(oldName string, newName string) common.Msg {
-	exists, project := c.ProjectExists(oldName)
+	exists, _ := c.ProjectExists(oldName)
 
 	if !exists {
 		return common.NewErrMsg("Project '%s' does not exist", oldName)
@@ -267,20 +291,13 @@ func (c *Core) RenameProject(oldName string, newName string) common.Msg {
 		return common.NewErrMsg("Error trying to rename nginx config file: %s", err)
 	}
 
-	c.projects[newName] = project
-
-	delete(c.projects, oldName)
-
-	updatedProjectsConfig, err := json.MarshalIndent(c.projects, "", "  ")
-
-	if err != nil {
-		return common.NewErrMsg("Error encoding projects to json: %s", err)
-	}
-
-	err = os.WriteFile(c.getProjectsFilePath(), updatedProjectsConfig, 0644)
+	err = c.dbQueries.RenameProject(c.dbContext, sqlc.RenameProjectParams{
+		Name:   newName,
+		Name_2: oldName,
+	})
 
 	if err != nil {
-		return common.NewErrMsg("Error writing projects to file: %s", err)
+		return common.NewErrMsg("Error renaming project in database: %s", err)
 	}
 
 	return common.NewSuccessMsg("Renamed project '%s' to '%s'", oldName, newName)
@@ -294,33 +311,22 @@ func (c *Core) AddCommandToProject(projectName string, commandName string) commo
 		return common.NewErrMsg("Project '%s' does not exist", projectName)
 	}
 
-	_, exists = c.commands[commandName]
+	exists, command := c.CommandExists(commandName)
 
 	if !exists {
 		return common.NewErrMsg("Command '%s' does not exist", commandName)
 	}
 
-	for _, command := range project.Commands {
-		if command == commandName {
+	for _, projectCommand := range project.Commands {
+		if projectCommand.ID == command.ID {
 			return common.NewErrMsg("Command '%s' already exists in project '%s'", commandName, projectName)
 		}
 	}
 
-	project.Commands = append(project.Commands, commandName)
-
-	c.projects[projectName] = project
-
-	updatedProjectsConfig, err := json.MarshalIndent(c.projects, "", "  ")
-
-	if err != nil {
-		return common.NewErrMsg("Error encoding projects to json:", err)
-	}
-
-	err = os.WriteFile(c.getProjectsFilePath(), updatedProjectsConfig, 0644)
-
-	if err != nil {
-		return common.NewErrMsg("Error writing projects to file:", err)
-	}
+	c.dbQueries.CreateProjectCommand(c.dbContext, sqlc.CreateProjectCommandParams{
+		ProjectID: project.ID,
+		CommandID: command.ID,
+	})
 
 	return common.NewSuccessMsg("Added command '%s' to project '%s'", commandName, projectName)
 }
@@ -333,26 +339,19 @@ func (c *Core) RemoveCommandFromProject(projectName string, commandName string) 
 		return common.NewErrMsg("Project '%s' does not exist", projectName)
 	}
 
-	for i, command := range project.Commands {
-		if command == commandName {
-			project.Commands = append(project.Commands[:i], project.Commands[i+1:]...)
+	exists, command := c.CommandExists(commandName)
 
-			c.projects[projectName] = project
+	if !exists {
+		return common.NewErrMsg("Command '%s' does not exist", commandName)
+	}
 
-			updatedProjectsConfig, err := json.MarshalIndent(c.projects, "", "  ")
+	err := c.dbQueries.DeleteCommandsProjects(c.dbContext, sqlc.DeleteCommandsProjectsParams{
+		CommandID: command.ID,
+		ProjectID: project.ID,
+	})
 
-			if err != nil {
-				return common.NewErrMsg("Error encoding projects to json: %s", err)
-			}
-
-			err = os.WriteFile(c.getProjectsFilePath(), updatedProjectsConfig, 0644)
-
-			if err != nil {
-				return common.NewErrMsg("Error writing projects to file: %s", err)
-			}
-
-			return common.NewSuccessMsg("Removed command '%s' from project '%s'", commandName, projectName)
-		}
+	if err != nil {
+		return common.NewErrMsg("Error removing command from project: %s", err)
 	}
 
 	return common.NewInfoMsg("Command '%s' not found in project '%s'. Nothing to remove.", commandName, projectName)
@@ -373,7 +372,10 @@ func (c *Core) SetProjectDir(projectName string, dir *string) common.Msg {
 			return common.NewErrMsg("Error getting current working directory: %s", err)
 		}
 
-		project.Dir = &cwd
+		project.Dir = sql.NullString{
+			String: cwd,
+			Valid:  true,
+		}
 	} else {
 		// Check if dir exists as a directory
 		info, err := os.Stat(*dir)
@@ -386,24 +388,18 @@ func (c *Core) SetProjectDir(projectName string, dir *string) common.Msg {
 			return common.NewErrMsg("'%s' is not a directory", *dir)
 		}
 
-		project.Dir = dir
+		project.Dir = sql.NullString{
+			String: *dir,
+			Valid:  true,
+		}
 	}
 
-	c.projects[projectName] = project
+	c.dbQueries.SetProjectDir(c.dbContext, sqlc.SetProjectDirParams{
+		Dir: project.Dir,
+		ID:  project.ID,
+	})
 
-	updatedProjectsConfig, err := json.MarshalIndent(c.projects, "", "  ")
-
-	if err != nil {
-		return common.NewErrMsg("Error encoding projects to json: %s", err)
-	}
-
-	err = os.WriteFile(c.getProjectsFilePath(), updatedProjectsConfig, 0644)
-
-	if err != nil {
-		return common.NewErrMsg("Error writing projects to file: %s", err)
-	}
-
-	return common.NewSuccessMsg("Set directory to '%s' for project '%s'", *project.Dir, projectName)
+	return common.NewSuccessMsg("Set directory to '%s' for project '%s'", project.Dir.String, projectName)
 }
 
 // Get the directory for the project with the given name.
@@ -414,9 +410,9 @@ func (c *Core) GetProjectDir(projectName string) common.Msg {
 		return common.NewErrMsg("Project '%s' does not exist", projectName)
 	}
 
-	if project.Dir == nil {
+	if !project.Dir.Valid {
 		return common.NewErrMsg("Project '%s' does not have a directory set", projectName)
 	}
 
-	return common.NewRegularMsg(*project.Dir)
+	return common.NewRegularMsg(project.Dir.String)
 }

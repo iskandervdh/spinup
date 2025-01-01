@@ -11,18 +11,18 @@ func TestAddDomainAlias(t *testing.T) {
 	c := TestingCore("add_domain_alias")
 
 	// Fetch the commands and projects from their config files
-	c.GetCommandsConfig()
-	c.GetProjectsConfig()
+	c.FetchCommands()
+	c.FetchProjects()
 
 	c.AddProject("test", "test.local", 1234, []string{})
 
 	// "Refetch" the projects from the config file
-	c.GetProjectsConfig()
+	c.FetchProjects()
 
 	c.AddDomainAlias("test", "test.test")
 
 	// "Refetch" the projects from the config file
-	c.GetProjectsConfig()
+	c.FetchProjects()
 
 	exists, project := c.ProjectExists("test")
 
@@ -41,7 +41,7 @@ func TestAddDomainAlias(t *testing.T) {
 		return
 	}
 
-	if project.DomainAliases[0] != "test.test" {
+	if project.DomainAliases[0].Value != "test.test" {
 		t.Error("Expected domain alias to be 'test.test', got", project.DomainAliases[0])
 	}
 
@@ -85,19 +85,19 @@ func TestRemoveDomainAlias(t *testing.T) {
 	c := TestingCore("remove_domain_alias")
 
 	// Fetch the commands and projects from their config files
-	c.GetCommandsConfig()
-	c.GetProjectsConfig()
+	c.FetchCommands()
+	c.FetchProjects()
 
 	c.AddProject("test", "test.local", 1234, []string{})
 	c.AddDomainAlias("test", "test.test")
 
 	// "Refetch" the projects from the config file
-	c.GetProjectsConfig()
+	c.FetchProjects()
 
 	c.RemoveDomainAlias("test", "test.test")
 
 	// "Refetch" the projects from the config file
-	c.GetProjectsConfig()
+	c.FetchProjects()
 
 	exists, project := c.ProjectExists("test")
 

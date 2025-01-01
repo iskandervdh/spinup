@@ -1,15 +1,13 @@
 package core
 
 import (
-	"encoding/json"
 	"fmt"
-	"os"
 
 	"github.com/iskandervdh/spinup/common"
+	"github.com/iskandervdh/spinup/database/sqlc"
 )
 
-// DomainAliases is a map of domain aliases to their domain names.
-type DomainAliases []string
+type DomainAlias = sqlc.DomainAlias
 
 // Add a domain alias to the given project.
 func (c *Core) AddDomainAlias(projectName string, domainAlias string) common.Msg {
@@ -38,7 +36,7 @@ func (c *Core) AddDomainAlias(projectName string, domainAlias string) common.Msg
 
 		// Check if the domain alias is already a domain alias of any project
 		for _, alias := range project.DomainAliases {
-			if alias == domainAlias {
+			if alias.Value == domainAlias {
 				return common.NewErrMsg("Domain alias '%s' already exists on project '%s'", domainAlias, projectName)
 			}
 		}
@@ -59,20 +57,13 @@ func (c *Core) AddDomainAlias(projectName string, domainAlias string) common.Msg
 		return common.NewErrMsg(fmt.Sprintln("Error trying to add domain to hosts file", err))
 	}
 
-	project.DomainAliases = append(project.DomainAliases, domainAlias)
-
-	c.projects[projectName] = project
-
-	updatedProjectsConfig, err := json.MarshalIndent(c.projects, "", "  ")
-
-	if err != nil {
-		return common.NewErrMsg("Error encoding projects to json: %s", err)
-	}
-
-	err = os.WriteFile(c.getProjectsFilePath(), updatedProjectsConfig, 0644)
+	err = c.dbQueries.CreateDomainAlias(c.dbContext, sqlc.CreateDomainAliasParams{
+		Value:     domainAlias,
+		ProjectID: project.ID,
+	})
 
 	if err != nil {
-		return common.NewErrMsg("Error writing projects to file: %s", err)
+		return common.NewErrMsg("Error adding domain alias to database: %s", err)
 	}
 
 	return common.NewSuccessMsg("Added domain alias '%s' to project '%s'", domainAlias, projectName)
@@ -106,22 +97,17 @@ func (c *Core) RemoveDomainAlias(projectName string, domainAlias string) common.
 	}
 
 	for i, alias := range project.DomainAliases {
-		if alias == domainAlias {
+		if alias.Value == domainAlias {
 			// Remove the given domain alias from the domain aliases array of the project
 			project.DomainAliases = append(project.DomainAliases[:i], project.DomainAliases[i+1:]...)
 
-			c.projects[projectName] = project
-
-			updatedProjectsConfig, err := json.MarshalIndent(c.projects, "", "  ")
-
-			if err != nil {
-				return common.NewErrMsg("Error encoding projects to json: %s", err)
-			}
-
-			err = os.WriteFile(c.getProjectsFilePath(), updatedProjectsConfig, 0644)
+			err := c.dbQueries.DeleteDomainAlias(c.dbContext, sqlc.DeleteDomainAliasParams{
+				Value:     domainAlias,
+				ProjectID: project.ID,
+			})
 
 			if err != nil {
-				return common.NewErrMsg("Error writing projects to file: %s", err)
+				return common.NewErrMsg("Error removing domain alias from database: %s", err)
 			}
 
 			return common.NewSuccessMsg("Removed domain alias '%s' from project '%s'", domainAlias, projectName)

@@ -22,13 +22,13 @@ func TestAddProject(t *testing.T) {
 	c := TestingCore("add_project")
 
 	// Fetch the commands and projects from their config files
-	c.GetCommandsConfig()
-	c.GetProjectsConfig()
+	c.FetchCommands()
+	c.FetchProjects()
 
 	c.AddProject("test", "test.local", 1234, []string{})
 
 	// "Refetch" the projects from the config file
-	c.GetProjectsConfig()
+	c.FetchProjects()
 
 	projectNames := c.GetProjectNames()
 
@@ -90,8 +90,8 @@ func TestAddProjectWithCommands(t *testing.T) {
 	c := TestingCore("add_project_with_commands")
 
 	// Fetch the commands and projects from their config files
-	c.GetCommandsConfig()
-	c.GetProjectsConfig()
+	c.FetchCommands()
+	c.FetchProjects()
 
 	c.AddCommand("ls", "ls")
 	c.AddCommand("pwd", "pwd")
@@ -99,7 +99,7 @@ func TestAddProjectWithCommands(t *testing.T) {
 	c.AddProject("test", "test.local", 1234, []string{"ls", "pwd"})
 
 	// "Refetch" the projects from the config file
-	c.GetProjectsConfig()
+	c.FetchProjects()
 
 	projectNames := c.GetProjectNames()
 
@@ -119,11 +119,11 @@ func TestAddProjectWithCommands(t *testing.T) {
 		return
 	}
 
-	if commands[0] != "ls" {
+	if commands[0].Command != "ls" {
 		t.Error("Expected first command to be 'ls', got", commands[0])
 	}
 
-	if commands[1] != "pwd" {
+	if commands[1].Command != "pwd" {
 		t.Error("Expected second command to be 'pwd', got", commands[1])
 	}
 }
@@ -132,18 +132,18 @@ func TestRemoveProject(t *testing.T) {
 	c := TestingCore("remove_project")
 
 	// Fetch the commands and projects from their config files
-	c.GetCommandsConfig()
-	c.GetProjectsConfig()
+	c.FetchCommands()
+	c.FetchProjects()
 
 	c.AddProject("test", "test.local", 1234, []string{})
 
 	// "Refetch" the projects from the config file
-	c.GetProjectsConfig()
+	c.FetchProjects()
 
 	c.RemoveProject("test")
 
 	// "Refetch" the projects from the config file
-	c.GetProjectsConfig()
+	c.FetchProjects()
 
 	projectNames := c.GetProjectNames()
 
@@ -176,18 +176,18 @@ func TestEditProject(t *testing.T) {
 	c := TestingCore("edit_project")
 
 	// Fetch the commands and projects from their config files
-	c.GetCommandsConfig()
-	c.GetProjectsConfig()
+	c.FetchCommands()
+	c.FetchProjects()
 
 	c.AddProject("test", "test.local", 1234, []string{})
 
 	// "Refetch" the projects from the config file
-	c.GetProjectsConfig()
+	c.FetchProjects()
 
 	c.UpdateProject("test", "example.local", 1235, []string{})
 
 	// "Refetch" the projects from the config file
-	c.GetProjectsConfig()
+	c.FetchProjects()
 
 	projectNames := c.GetProjectNames()
 
@@ -245,18 +245,18 @@ func TestRenameProject(t *testing.T) {
 	c := TestingCore("rename_project")
 
 	// Fetch the commands and projects from their config files
-	c.GetCommandsConfig()
-	c.GetProjectsConfig()
+	c.FetchCommands()
+	c.FetchProjects()
 
 	c.AddProject("test", "test.local", 1234, []string{})
 
 	// "Refetch" the projects from the config file
-	c.GetProjectsConfig()
+	c.FetchProjects()
 
 	c.RenameProject("test", "example")
 
 	// "Refetch" the projects from the config file
-	c.GetProjectsConfig()
+	c.FetchProjects()
 
 	projectNames := c.GetProjectNames()
 

@@ -1,14 +1,11 @@
 package core
 
 import (
-	"encoding/json"
-	"os"
-
 	"github.com/iskandervdh/spinup/common"
+	"github.com/iskandervdh/spinup/database/sqlc"
 )
 
-// Variables is a map of variable names to their values.
-type Variables map[string]string
+type Variable = sqlc.Variable
 
 // Add a variable with the given key and value to the project with the given name.
 func (c *Core) AddVariable(projectName string, key string, value string) common.Msg {
@@ -23,27 +20,20 @@ func (c *Core) AddVariable(projectName string, key string, value string) common.
 	}
 
 	// Check if the variable is already defined
-	for variableKey := range project.Variables {
-		if variableKey == key {
+	for _, variable := range project.Variables {
+		if variable.Name == key {
 			return common.NewErrMsg("variable with name '%s' already exists", projectName)
 		}
 	}
 
-	project.Variables[key] = value
-
-	updatedProjects := c.projects
-	updatedProjects[projectName] = project
-
-	updatedVariables, err := json.MarshalIndent(updatedProjects, "", "  ")
-
-	if err != nil {
-		return common.NewErrMsg("error encoding projects to json: %s", err)
-	}
-
-	err = os.WriteFile(c.getProjectsFilePath(), updatedVariables, 0644)
+	err := c.dbQueries.CreateVariable(c.dbContext, sqlc.CreateVariableParams{
+		ProjectID: project.ID,
+		Name:      key,
+		Value:     value,
+	})
 
 	if err != nil {
-		return common.NewErrMsg("error writing projects to file: %s", err)
+		return common.NewErrMsg("Error creating variable: %s", err)
 	}
 
 	return common.NewSuccessMsg("Added variable '%s' to project '%s' with value '%s'\n", key, projectName, value)
@@ -62,34 +52,13 @@ func (c *Core) RemoveVariable(projectName string, key string) common.Msg {
 		return common.NewErrMsg("project '%s' does not exist, nothing to remove", projectName)
 	}
 
-	if project.Variables[key] == "" {
-		return common.NewErrMsg("variable '%s' does not exist", key)
-	}
-
-	variables := make(map[string]string)
-
-	for variableKey, variableValue := range project.Variables {
-		if variableKey == key {
-			continue
-		}
-
-		variables[variableKey] = variableValue
-	}
-
-	project.Variables = variables
-	updatedProjects := c.projects
-	updatedProjects[projectName] = project
-
-	updatedProjectConfig, err := json.MarshalIndent(updatedProjects, "", "  ")
+	err := c.dbQueries.DeleteVariable(c.dbContext, sqlc.DeleteVariableParams{
+		ProjectID: project.ID,
+		Name:      key,
+	})
 
 	if err != nil {
-		return common.NewErrMsg("Error encoding projects to json: %s", err)
-	}
-
-	err = os.WriteFile(c.getProjectsFilePath(), updatedProjectConfig, 0644)
-
-	if err != nil {
-		return common.NewErrMsg("Error writing projects to file: %s", err)
+		return common.NewErrMsg("Error deleting variable: %s", err)
 	}
 
 	return common.NewSuccessMsg("Removed variable '%s' from project '%s'\n", key, projectName)

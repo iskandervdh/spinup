@@ -1,13 +1,20 @@
 package core
 
 import (
+	"context"
+	"database/sql"
 	"fmt"
 	"io"
 	"os"
 	"os/exec"
+	"slices"
 
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/iskandervdh/spinup/common"
 	"github.com/iskandervdh/spinup/config"
+	"github.com/iskandervdh/spinup/database"
+	"github.com/iskandervdh/spinup/database/sqlc"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 // Core is the main struct for the core package.
@@ -23,8 +30,38 @@ type Core struct {
 	out io.Writer
 	err io.Writer
 
+	dbQueries *sqlc.Queries
+	dbContext context.Context
+
 	commands Commands
 	projects Projects
+}
+
+func (c *Core) connectToDB(config *config.Config) (*sql.DB, error) {
+	databasePath := config.GetDatabasePath()
+
+	_, err := os.Stat(databasePath)
+
+	if err != nil {
+		if os.IsNotExist(err) {
+			// fmt.Println("Database does not exist, initializing...")
+			err := c.InitSqliteDB()
+
+			if err != nil {
+				return nil, fmt.Errorf("error initializing database: %s", err)
+			}
+		} else {
+			return nil, fmt.Errorf("error getting database info: %s", err)
+		}
+	}
+
+	db, err := sql.Open("sqlite3", databasePath)
+
+	if err != nil {
+		return nil, fmt.Errorf("error opening database: %s", err)
+	}
+
+	return db, nil
 }
 
 // Create a new Core instance with the given options.
@@ -36,17 +73,37 @@ func New(options ...func(*Core)) *Core {
 		os.Exit(1)
 	}
 
-	s := &Core{
+	c := &Core{
 		config: config,
 		out:    os.Stdout,
 		err:    os.Stderr,
+
+		dbContext: context.Background(),
+
+		commands: nil,
+		projects: nil,
 	}
 
 	for _, option := range options {
-		option(s)
+		option(c)
 	}
 
-	return s
+	db, err := c.connectToDB(c.config)
+
+	if err != nil {
+		fmt.Println("Error connecting to database:", err)
+		os.Exit(1)
+	}
+
+	c.dbQueries = sqlc.New(db)
+	err = database.MigrateDatabase(db)
+
+	if err != nil {
+		fmt.Println("Error migrating database:", err)
+		os.Exit(1)
+	}
+
+	return c
 }
 
 // Optional function to set the config of the Core when creating a new instance.
@@ -94,42 +151,16 @@ func (c *Core) RequireSudo() error {
 	return nil
 }
 
-// Get the commands from the commands.json file.
-func (c *Core) GetCommandsConfig() error {
-	commands, err := c.GetCommands()
-
-	if err != nil {
-		return fmt.Errorf("error getting commands. Did you run init?")
-	}
-
-	c.commands = commands
-
-	return nil
-}
-
-// Get the projects from the projects.json file.
-func (c *Core) GetProjectsConfig() error {
-	projects, err := c.GetProjects()
-
-	if err != nil {
-		return fmt.Errorf("error getting projects. Did you run init?")
-	}
-
-	c.projects = projects
-
-	return nil
-}
-
 // Get all the names of the commands.
 func (c *Core) GetCommandNames() []string {
 	if c.commands == nil {
-		c.GetCommandsConfig()
+		c.FetchCommands()
 	}
 
 	var commandNames []string
 
-	for commandName := range c.commands {
-		commandNames = append(commandNames, commandName)
+	for _, command := range c.commands {
+		commandNames = append(commandNames, command.Name)
 	}
 
 	return commandNames
@@ -138,13 +169,13 @@ func (c *Core) GetCommandNames() []string {
 // Get all the names of the projects.
 func (c *Core) GetProjectNames() []string {
 	if c.projects == nil {
-		c.GetProjectsConfig()
+		c.FetchProjects()
 	}
 
 	var projectNames []string
 
-	for commandName := range c.projects {
-		projectNames = append(projectNames, commandName)
+	for _, project := range c.projects {
+		projectNames = append(projectNames, project.Name)
 	}
 
 	return projectNames
@@ -156,16 +187,20 @@ func (c *Core) GetSigChan() *chan os.Signal {
 }
 
 // Get all the commands that are part of the given project.
-func (c *Core) getCommandsForProject(projectName string) []string {
+func (c *Core) getCommandsForProject(projectName string) []Command {
 	if c.projects == nil {
-		c.GetProjectsConfig()
+		c.FetchProjects()
 	}
 
-	project, ok := c.projects[projectName]
+	index := slices.IndexFunc(c.projects, func(p Project) bool {
+		return p.Name == projectName
+	})
 
-	if !ok {
+	if index == -1 {
 		return nil
 	}
+
+	project := c.projects[index]
 
 	return project.Commands
 }

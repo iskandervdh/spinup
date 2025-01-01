@@ -17,7 +17,7 @@ func (c *Config) restartNginx() error {
 }
 
 // Add a new Nginx configuration file with the given name, domain and port.
-func (c *Config) AddNginxConfig(name string, domain string, port int) error {
+func (c *Config) AddNginxConfig(name string, domain string, port int64) error {
 	config := fmt.Sprintf(`server {
 	listen 80;
 
@@ -79,7 +79,7 @@ func (c *Config) RemoveNginxConfig(name string) error {
 }
 
 // Update a Nginx configuration file with the given name, domain and port.
-func (c *Config) UpdateNginxConfig(name string, domain string, port int) error {
+func (c *Config) UpdateNginxConfig(name string, domain string, port int64) error {
 	err := c.RemoveNginxConfig(name)
 
 	if err != nil {
