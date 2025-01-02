@@ -234,8 +234,8 @@ func (c *CLI) Handle() {
 	} else if os.Args[1] == "init" {
 		c.sendMsg(c.core.Init())
 	} else {
-		c.core.GetCommandsConfig()
-		c.core.GetProjectsConfig()
+		c.core.FetchCommands()
+		c.core.FetchProjects()
 
 		switch os.Args[1] {
 		case "-v", "--version":

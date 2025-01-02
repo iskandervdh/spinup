@@ -5,6 +5,6 @@ import (
 )
 
 func main() {
-	s := cli.New()
-	s.Handle()
+	c := cli.New()
+	c.Handle()
 }

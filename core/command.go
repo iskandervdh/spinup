@@ -1,73 +1,76 @@
 package core
 
 import (
-	"encoding/json"
 	"fmt"
-	"os"
-	"path"
 
 	"github.com/iskandervdh/spinup/common"
-	"github.com/iskandervdh/spinup/config"
+	"github.com/iskandervdh/spinup/database/sqlc"
 )
 
-// Commands is a map of command names to their Commands.
-type Commands map[string]string
+type Command = sqlc.Command
 
-// Get the path to the commands.json file.
-func (c *Core) getCommandsFilePath() string {
-	return path.Join(c.config.GetConfigDir(), config.CommandsFileName)
+type Commands []Command
+
+func (c *Core) FetchCommands() error {
+	commands, err := c.dbQueries.GetCommands(c.dbContext)
+
+	if err != nil {
+		return fmt.Errorf("error getting commands: %s", err)
+	}
+
+	c.commands = commands
+
+	return nil
 }
 
 // Get the commands from the commands.json file.
-func (c *Core) GetCommands() (Commands, error) {
-	commandsFileContent, err := os.ReadFile(c.getCommandsFilePath())
+func (c *Core) GetCommands() ([]Command, error) {
+	if c.commands == nil {
+		err := c.FetchCommands()
 
-	if err != nil {
-		return nil, fmt.Errorf("error reading commands.json file: %s", err)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	var commands Commands
-	err = json.Unmarshal(commandsFileContent, &commands)
-
-	if err != nil {
-		return nil, fmt.Errorf("error parsing commands.json file: %s", err)
-	}
-
-	return commands, nil
+	return c.commands, nil
 }
 
 // Check if a command with the given name exists. Returns the command if it exists.
-func (c *Core) CommandExists(name string) (bool, string) {
+func (c *Core) CommandExists(name string) (bool, Command) {
 	if c.commands == nil {
-		return false, ""
+		err := c.FetchCommands()
+
+		if err != nil {
+			return false, Command{}
+		}
 	}
 
-	command, exists := c.commands[name]
+	command, err := c.dbQueries.GetCommand(c.dbContext, name)
 
-	return exists, command
+	if err != nil {
+		return false, Command{}
+	}
+
+	return true, command
 }
 
 // Add a command with the given name and command string.
 func (c *Core) AddCommand(name string, command string) common.Msg {
 	// Check if already exists
-	for commandName := range c.commands {
-		if commandName == name {
+	for _, command := range c.commands {
+		if command.Name == name {
 			return common.NewErrMsg("command '%s' already exists", name)
 		}
 	}
 
-	c.commands[name] = command
-
-	updatedCommands, err := json.MarshalIndent(c.commands, "", "  ")
-
-	if err != nil {
-		return common.NewErrMsg("error encoding commands to json: %s", err)
-	}
-
-	err = os.WriteFile(c.getCommandsFilePath(), updatedCommands, 0644)
+	err := c.dbQueries.CreateCommand(c.dbContext, sqlc.CreateCommandParams{
+		Name:    name,
+		Command: command,
+	})
 
 	if err != nil {
-		return common.NewErrMsg("error writing commands to file: %s", err)
+		return common.NewErrMsg("error adding command to database: %s", err)
 	}
 
 	return common.NewSuccessMsg("Added command '%s': %s", name, command)
@@ -79,18 +82,10 @@ func (c *Core) RemoveCommand(name string) common.Msg {
 		return common.NewErrMsg("No commands found")
 	}
 
-	delete(c.commands, name)
-
-	updatedCommands, err := json.MarshalIndent(c.commands, "", "  ")
+	err := c.dbQueries.DeleteCommand(c.dbContext, name)
 
 	if err != nil {
-		return common.NewErrMsg("Error encoding commands to json: %s", err)
-	}
-
-	err = os.WriteFile(c.getCommandsFilePath(), updatedCommands, 0644)
-
-	if err != nil {
-		return common.NewErrMsg("Error writing commands to file: %s", err)
+		return common.NewErrMsg("Error deleting command: %s", err)
 	}
 
 	return common.NewSuccessMsg("Removed command '%s'", name)
@@ -102,24 +97,13 @@ func (c *Core) UpdateCommand(name string, command string) common.Msg {
 		return common.NewErrMsg("No commands found")
 	}
 
-	_, exists := c.commands[name]
-
-	if !exists {
-		return common.NewErrMsg("Command '%s' not found", name)
-	}
-
-	c.commands[name] = command
-
-	updatedCommands, err := json.MarshalIndent(c.commands, "", "  ")
+	err := c.dbQueries.UpdateCommand(c.dbContext, sqlc.UpdateCommandParams{
+		Name:    name,
+		Command: command,
+	})
 
 	if err != nil {
-		return common.NewErrMsg("Error encoding commands to json: %s", err)
-	}
-
-	err = os.WriteFile(c.getCommandsFilePath(), updatedCommands, 0644)
-
-	if err != nil {
-		return common.NewErrMsg("Error writing commands to file: %s", err)
+		return common.NewErrMsg("Error updating command: %s", err)
 	}
 
 	return common.NewSuccessMsg("Updated command '%s': %s", name, command)
@@ -131,25 +115,13 @@ func (c *Core) RenameCommand(oldName string, newName string) common.Msg {
 		return common.NewErrMsg("No commands found")
 	}
 
-	command, exists := c.commands[oldName]
-
-	if !exists {
-		return common.NewErrMsg("Command '%s' not found", oldName)
-	}
-
-	c.commands[newName] = command
-	delete(c.commands, oldName)
-
-	updatedCommands, err := json.MarshalIndent(c.commands, "", "  ")
+	err := c.dbQueries.RenameCommand(c.dbContext, sqlc.RenameCommandParams{
+		Name:   newName,
+		Name_2: oldName,
+	})
 
 	if err != nil {
-		return common.NewErrMsg("Error encoding commands to json: %s", err)
-	}
-
-	err = os.WriteFile(c.getCommandsFilePath(), updatedCommands, 0644)
-
-	if err != nil {
-		return common.NewErrMsg("Error writing commands to file: %s", err)
+		return common.NewErrMsg("Error renaming command: %s", err)
 	}
 
 	return common.NewSuccessMsg("Renamed command '%s' to '%s'", oldName, newName)

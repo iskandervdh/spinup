@@ -19,8 +19,8 @@ func (c *CLI) listCommands() {
 
 	fmt.Fprintf(c.out, "%-20s %-30s\n", "Name", "Command")
 
-	for commandName, command := range commands {
-		fmt.Fprintf(c.out, "%-20s %-30s\n", commandName, command)
+	for _, command := range commands {
+		fmt.Fprintf(c.out, "%-20s %-30s\n", command.Name, command.Command)
 	}
 }
 
@@ -82,7 +82,7 @@ func (c *CLI) editCommandInteractive() {
 		return
 	}
 
-	newCommand := c.Input("Edit command:", command)
+	newCommand := c.Input("Edit command:", command.Command)
 
 	if !c.Confirm("Are you sure you want to update command " + name + "?") {
 		return

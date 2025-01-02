@@ -19,12 +19,22 @@ func TestGetCommandNames(t *testing.T) {
 func TestAddCommand(t *testing.T) {
 	c := TestingCore("add_command")
 
-	c.GetCommandsConfig()
+	err := c.FetchCommands()
+
+	if err != nil {
+		t.Error("Error fetching commands:", err)
+		return
+	}
 
 	c.AddCommand("test", "ls")
 
 	// "Refetch" the commands config
-	c.GetCommandsConfig()
+	err = c.FetchCommands()
+
+	if err != nil {
+		t.Error("Error fetching commands:", err)
+		return
+	}
 
 	commandNames := c.GetCommandNames()
 
@@ -42,17 +52,17 @@ func TestAddCommand(t *testing.T) {
 func TestAddCommandDuplicate(t *testing.T) {
 	c := TestingCore("add_command_duplicate")
 
-	c.GetCommandsConfig()
+	c.FetchCommands()
 
 	c.AddCommand("test", "ls")
 
 	// "Refetch" the commands config
-	c.GetCommandsConfig()
+	c.FetchCommands()
 
 	c.AddCommand("test", "ls")
 
 	// "Refetch" the commands config
-	c.GetCommandsConfig()
+	c.FetchCommands()
 
 	commandNames := c.GetCommandNames()
 
@@ -70,13 +80,13 @@ func TestAddCommandDuplicate(t *testing.T) {
 func TestAddMultipleCommands(t *testing.T) {
 	c := TestingCore("add_multiple_commands")
 
-	c.GetCommandsConfig()
+	c.FetchCommands()
 
 	c.AddCommand("test", "ls")
 	c.AddCommand("test2", "ls")
 
 	// "Refetch" the commands config
-	c.GetCommandsConfig()
+	c.FetchCommands()
 
 	commandNames := c.GetCommandNames()
 	sort.Strings(commandNames)
@@ -100,17 +110,17 @@ func TestAddMultipleCommands(t *testing.T) {
 func TestRemoveCommand(t *testing.T) {
 	c := TestingCore("remove_command")
 
-	c.GetCommandsConfig()
+	c.FetchCommands()
 
 	c.AddCommand("test", "ls")
 
 	// "Refetch" the commands config
-	c.GetCommandsConfig()
+	c.FetchCommands()
 
 	c.RemoveCommand("test")
 
 	// "Refetch" the commands config
-	c.GetCommandsConfig()
+	c.FetchCommands()
 
 	commandNames := c.GetCommandNames()
 
@@ -123,12 +133,12 @@ func TestRemoveCommand(t *testing.T) {
 func TestGetCommand(t *testing.T) {
 	c := TestingCore("get_command")
 
-	c.GetCommandsConfig()
+	c.FetchCommands()
 
 	c.AddCommand("test", "ls")
 
 	// "Refetch" the commands config
-	c.GetCommandsConfig()
+	c.FetchCommands()
 
 	exists, command := c.CommandExists("test")
 
@@ -137,7 +147,7 @@ func TestGetCommand(t *testing.T) {
 		return
 	}
 
-	if command != "ls" {
+	if command.Command != "ls" {
 		t.Error("Expected command command to be 'ls', got", command)
 		return
 	}
@@ -146,7 +156,7 @@ func TestGetCommand(t *testing.T) {
 func TestGetCommandNotFound(t *testing.T) {
 	c := TestingCore("get_command_not_found")
 
-	c.GetCommandsConfig()
+	c.FetchCommands()
 
 	exists, _ := c.CommandExists("test")
 
@@ -159,17 +169,17 @@ func TestGetCommandNotFound(t *testing.T) {
 func TestEditCommand(t *testing.T) {
 	c := TestingCore("edit_command")
 
-	c.GetCommandsConfig()
+	c.FetchCommands()
 
 	c.AddCommand("test", "ls")
 
 	// "Refetch" the commands config
-	c.GetCommandsConfig()
+	c.FetchCommands()
 
 	c.UpdateCommand("test", "pwd")
 
 	// "Refetch" the commands config
-	c.GetCommandsConfig()
+	c.FetchCommands()
 
 	exists, command := c.CommandExists("test")
 
@@ -178,7 +188,7 @@ func TestEditCommand(t *testing.T) {
 		return
 	}
 
-	if command != "pwd" {
+	if command.Command != "pwd" {
 		t.Error("Expected command command to be 'pwd', got", command)
 		return
 	}
@@ -187,17 +197,17 @@ func TestEditCommand(t *testing.T) {
 func TestRenameCommand(t *testing.T) {
 	c := TestingCore("rename_command")
 
-	c.GetCommandsConfig()
+	c.FetchCommands()
 
 	c.AddCommand("test", "ls")
 
 	// "Refetch" the commands config
-	c.GetCommandsConfig()
+	c.FetchCommands()
 
 	c.RenameCommand("test", "test2")
 
 	// "Refetch" the commands config
-	c.GetCommandsConfig()
+	c.FetchCommands()
 
 	exists, command := c.CommandExists("test2")
 
@@ -206,7 +216,7 @@ func TestRenameCommand(t *testing.T) {
 		return
 	}
 
-	if command != "ls" {
+	if command.Command != "ls" {
 		t.Error("Expected command command to be 'ls', got", command)
 		return
 	}

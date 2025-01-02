@@ -15,8 +15,7 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-// commandWithName is a struct to hold a command and its name.
-type commandWithName struct {
+type runningCommand struct {
 	command string
 	name    string
 	cmd     *exec.Cmd
@@ -27,8 +26,8 @@ func (c *Core) commandTemplate(command string, project Project) string {
 	command = strings.ReplaceAll(command, "{{port}}", fmt.Sprintf("%d", project.Port))
 	command = strings.ReplaceAll(command, "{{domain}}", project.Domain)
 
-	for key, value := range project.Variables {
-		command = strings.ReplaceAll(command, fmt.Sprintf("{{%s}}", key), value)
+	for _, variable := range project.Variables {
+		command = strings.ReplaceAll(command, fmt.Sprintf("{{%s}}", variable.Name), variable.Value)
 	}
 
 	return command
@@ -48,7 +47,7 @@ func (c *Core) prefixOutput(prefix string, reader io.Reader, writer io.Writer) e
 	return nil
 }
 
-func (c *Core) runCommand(wg *sync.WaitGroup, project Project, command *commandWithName) error {
+func (c *Core) runCommand(wg *sync.WaitGroup, project Project, command *runningCommand) error {
 	defer wg.Done()
 
 	command.cmd = exec.Command(strings.Split(command.command, " ")[0], strings.Split(command.command, " ")[1:]...)
@@ -79,8 +78,8 @@ func (c *Core) runCommand(wg *sync.WaitGroup, project Project, command *commandW
 	go c.prefixOutput(fmt.Sprintf("[%s]", command.name), stderr, c.err)
 
 	// Run the project in the project's directory if it's set
-	if project.Dir != nil {
-		command.cmd.Dir = *project.Dir
+	if project.Dir.Valid {
+		command.cmd.Dir = project.Dir.String
 	}
 
 	err = command.cmd.Start()
@@ -115,30 +114,24 @@ func (c *Core) run(project Project, projectName string) common.Msg {
 
 	c.sendMsg(common.NewInfoMsg("Running project '%s'...", projectName))
 
-	commands := []*commandWithName{}
+	runningCommands := []*runningCommand{}
 
 	// Add all commands to the commands array in a form that includes the command name.
-	for _, commandName := range project.Commands {
-		exists, command := c.CommandExists(commandName)
-
-		if !exists {
-			return common.NewErrMsg("Command '%s' does not exist", commandName)
-		}
-
-		commands = append(
-			commands,
-			&commandWithName{
-				command: c.commandTemplate(command, project),
-				name:    commandName,
+	for _, command := range project.Commands {
+		runningCommands = append(
+			runningCommands,
+			&runningCommand{
+				command: c.commandTemplate(command.Command, project),
+				name:    command.Name,
 			})
 	}
 
-	if len(commands) == 0 {
+	if len(runningCommands) == 0 {
 		return common.NewErrMsg("No commands found")
 	}
 
-	for _, command := range commands {
-		go c.runCommand(&wg, project, command)
+	for _, runningCommand := range runningCommands {
+		go c.runCommand(&wg, project, runningCommand)
 	}
 
 	go func() {
@@ -147,18 +140,18 @@ func (c *Core) run(project Project, projectName string) common.Msg {
 		c.sendMsg(common.NewInfoMsg("\nGracefully stopping project '%s'...", projectName))
 
 		// Send terminate signal to all running commands
-		for _, command := range commands {
-			if command.cmd.Process != nil {
+		for _, runningCommand := range runningCommands {
+			if runningCommand.cmd.Process != nil {
 				var err error
 
 				if common.IsWindows() {
-					err = command.cmd.Process.Kill() // Use Kill on Windows
+					err = runningCommand.cmd.Process.Kill() // Use Kill on Windows
 				} else {
-					err = syscall.Kill(-command.cmd.Process.Pid, syscall.SIGTERM) // Send SIGTERM to the process group on Unix
+					err = syscall.Kill(-runningCommand.cmd.Process.Pid, syscall.SIGTERM) // Send SIGTERM to the process group on Unix
 				}
 
 				if err != nil {
-					c.sendMsg(common.NewErrMsg("Failed to send SIGTERM to command '%s': %s", command.name, err))
+					c.sendMsg(common.NewErrMsg("Failed to send SIGTERM to command '%s': %s", runningCommand.name, err))
 				}
 			}
 		}
