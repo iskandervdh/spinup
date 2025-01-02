@@ -30,7 +30,6 @@ type Project struct {
 
 type ProjectCommand struct {
 	ProjectID int64
-	Foreign   interface{}
 	CommandID int64
 }
 

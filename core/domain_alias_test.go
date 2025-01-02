@@ -4,6 +4,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/iskandervdh/spinup/common"
 	"github.com/iskandervdh/spinup/config"
 )
 
@@ -89,7 +90,27 @@ func TestRemoveDomainAlias(t *testing.T) {
 	c.FetchProjects()
 
 	c.AddProject("test", "test.local", 1234, []string{})
-	c.AddDomainAlias("test", "test.test")
+
+	err := c.FetchProjects()
+
+	if err != nil {
+		t.Error("Expected to fetch projects, got", err)
+		return
+	}
+
+	msg := c.AddDomainAlias("test", "test.test")
+
+	if _, ok := msg.(*common.ErrMsg); ok {
+		t.Error("Expected to add domain alias, got: ", msg.GetText())
+		return
+	}
+
+	msg = c.AddDomainAlias("test", "test.tst")
+
+	if _, ok := msg.(*common.ErrMsg); ok {
+		t.Error("Expected to add domain alias, got: ", msg.GetText())
+		return
+	}
 
 	// "Refetch" the projects from the config file
 	c.FetchProjects()
@@ -106,14 +127,13 @@ func TestRemoveDomainAlias(t *testing.T) {
 		return
 	}
 
-	if project.DomainAliases == nil {
-		t.Error("Expected domain aliases to be initialized")
+	if len(project.DomainAliases) != 1 {
+		t.Error("Expected 1 domain alias, got", len(project.DomainAliases))
 		return
 	}
 
-	if len(project.DomainAliases) != 0 {
-		t.Error("Expected domain aliases to be of length 0, got", project.DomainAliases)
-		return
+	if project.DomainAliases[0].Value != "test.tst" {
+		t.Error("Expected domain alias to be 'test.tst', got", project.DomainAliases[0])
 	}
 
 	// Check if the domain alias is removed from the hosts file
@@ -144,7 +164,11 @@ func TestRemoveDomainAlias(t *testing.T) {
 	}
 
 	hostsContent := string(buf)
-	expected := "\n\n" + config.HostsBeginMarker + "\n127.0.0.1\ttest.local" + config.HostsEndMarker
+	expected := "\n\n" +
+		config.HostsBeginMarker +
+		"\n127.0.0.1\ttest.local" +
+		"\n127.0.0.1\ttest.tst" +
+		config.HostsEndMarker
 
 	if hostsContent != expected {
 		t.Error("Expected hosts file to contain", expected, "got", hostsContent)

@@ -11,7 +11,7 @@ import (
 	"github.com/iskandervdh/spinup/database/sqlc"
 )
 
-// Project is a struct that represents a Project as stored in the projects.json file.
+// Project is a struct that represents a project and its linked structs.
 type Project struct {
 	sqlc.Project
 	Commands      []Command
@@ -21,10 +21,6 @@ type Project struct {
 
 // Projects is a map of project names to their Projects.
 type Projects []Project
-
-func sqlcStructToCoreStruct[T any, U any](sqlcStruct T, convertFunc func(T) U) U {
-	return convertFunc(sqlcStruct)
-}
 
 func (c *Core) getProjectWithInfo(project sqlc.Project) (Project, error) {
 	projectCommands, err := c.dbQueries.GetProjectCommands(c.dbContext, project.ID)
@@ -112,7 +108,7 @@ func (c *Core) AddProject(name string, domain string, port int64, commandNames [
 	c.RequireSudo()
 
 	// Check if commands exist
-	commandIDs := make([]int64, len(commandNames))
+	commandIDs := make([]int64, 0, len(commandNames))
 
 	for _, commandName := range commandNames {
 		exists, command := c.CommandExists(commandName)

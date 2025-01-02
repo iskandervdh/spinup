@@ -4,7 +4,7 @@ FROM projects
 WHERE name = ? LIMIT 1;
 
 -- name: GetProjects :many
-SELECT id, name, domain, port, dir
+SELECT *
 FROM projects;
 
 -- name: GetProjectCommands :many

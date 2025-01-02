@@ -128,6 +128,38 @@ func TestAddProjectWithCommands(t *testing.T) {
 	}
 }
 
+func TestRemoveCommandFromProject(t *testing.T) {
+	c := TestingCore("remove_command_from_project")
+
+	// Fetch the commands and projects from their config files
+	c.FetchCommands()
+	c.FetchProjects()
+
+	c.AddCommand("ls", "ls")
+	c.AddCommand("pwd", "pwd")
+
+	c.AddProject("test", "test.local", 1234, []string{"ls", "pwd"})
+
+	// "Refetch" the projects from the config file
+	c.FetchProjects()
+
+	c.RemoveCommandFromProject("test", "ls")
+
+	// "Refetch" the projects from the config file
+	c.FetchProjects()
+
+	commands := c.getCommandsForProject("test")
+
+	if len(commands) != 1 {
+		t.Error("Expected 1 command, got", len(commands))
+		return
+	}
+
+	if commands[0].Command != "pwd" {
+		t.Error("Expected command to be 'pwd', got", commands[0])
+	}
+}
+
 func TestRemoveProject(t *testing.T) {
 	c := TestingCore("remove_project")
 
