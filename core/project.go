@@ -73,7 +73,7 @@ func (c *Core) FetchProjects() error {
 	return nil
 }
 
-// Get the projects from the projects.json file.
+// Get the projects from the database.
 func (c *Core) GetProjects() (Projects, error) {
 	if c.projects == nil {
 		err := c.FetchProjects()

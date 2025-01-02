@@ -14,9 +14,6 @@ var AppCommand = "spinup-app"
 //go:embed .version
 var Version string
 
-var CommandsFileName = "commands.json"
-var ProjectsFileName = "projects.json"
-
 var nginxConfigDir = "/etc/nginx/conf.d"
 var hostsFile = "/etc/hosts"
 var hostsBackupDir = "/etc/hosts_bak"

@@ -90,7 +90,7 @@ To add a project you can use the following command:
 spinup project add <name> <domain> <port> [commands...]
 ```
 
-This will create a configuration for the project in the `projects.json` file in your `.config/spinup` folder.
+This will create a configuration for the project in the sqlite database for spinup located in your `.config/spinup` folder.
 
 Example:
 

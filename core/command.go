@@ -23,7 +23,7 @@ func (c *Core) FetchCommands() error {
 	return nil
 }
 
-// Get the commands from the commands.json file.
+// Get the commands from the database.
 func (c *Core) GetCommands() ([]Command, error) {
 	if c.commands == nil {
 		err := c.FetchCommands()
