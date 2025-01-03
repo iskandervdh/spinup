@@ -137,6 +137,44 @@ func TestQuestion(t *testing.T) {
 	}
 }
 
+func TestQuestionArgumentLengthMismatch(t *testing.T) {
+	r, w := io.Pipe()
+
+	output := &bytes.Buffer{}
+	c := New(WithIn(r), WithOut(output))
+
+	go func() {
+		defer w.Close()
+
+		w.Write([]byte(" "))
+		w.Write([]byte("j"))
+		w.Write([]byte(" "))
+		w.Write([]byte(" "))
+		w.Write([]byte("j"))
+		w.Write([]byte("k"))
+		w.Write([]byte("j"))
+		w.Write([]byte(" "))
+		w.Write([]byte("enter"))
+	}()
+
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("Question arguments mismatch did not panic")
+			return
+		}
+	}()
+
+	_, err, exited := c.Question("test?", []string{"a", "b", "c"}, []bool{true, false})
+
+	if err == nil {
+		t.Errorf("expected error, got nil")
+	}
+
+	if !exited {
+		t.Errorf("expected exited to be true, got false")
+	}
+}
+
 func TestSelection(t *testing.T) {
 	r, w := io.Pipe()
 
