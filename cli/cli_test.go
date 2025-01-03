@@ -5,6 +5,9 @@ import (
 	"io"
 	"os"
 	"testing"
+
+	"github.com/iskandervdh/spinup/common"
+	"github.com/iskandervdh/spinup/core"
 )
 
 // func TestDoneMsg(t *testing.T) {
@@ -46,6 +49,38 @@ func TestWithOut(t *testing.T) {
 
 	if c.out != w {
 		t.Errorf("Expected %v, got %v", w, c.out)
+	}
+}
+
+func TestWithCore(t *testing.T) {
+	co := core.New()
+	c := New(WithCore(co))
+
+	if c.core != co {
+		t.Errorf("Expected %v, got %v", co, c.core)
+	}
+}
+
+func TestMsgPrint(t *testing.T) {
+	w := bytes.NewBuffer(nil)
+	c := New(WithOut(w))
+
+	c.MsgPrint(common.NewSuccessMsg("test"))
+
+	if w.String() != "test\n" {
+		t.Errorf("Expected %s, got %s", "test\n", w.String())
+	}
+}
+
+func TestSendMsg(t *testing.T) {
+	c := New()
+
+	c.sendMsg(common.NewSuccessMsg("test"))
+
+	msg := <-*c.msgChan
+
+	if msg.GetText() != "test" {
+		t.Errorf("Expected %s, got %s", "test", msg.GetText())
 	}
 }
 
