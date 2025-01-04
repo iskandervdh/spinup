@@ -8,8 +8,6 @@ import (
 	"strings"
 	"sync"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/iskandervdh/spinup/cli/components"
 	"github.com/iskandervdh/spinup/common"
 	"github.com/iskandervdh/spinup/config"
 	"github.com/iskandervdh/spinup/core"
@@ -21,6 +19,7 @@ import (
 type CLI struct {
 	in  io.Reader
 	out io.Writer
+	err io.Writer
 
 	core      *core.Core
 	msgChan   *chan common.Msg
@@ -33,8 +32,10 @@ func New(options ...func(*CLI)) *CLI {
 	msgChanWg := sync.WaitGroup{}
 
 	c := &CLI{
-		in:        os.Stdin,
-		out:       os.Stdout,
+		in:  os.Stdin,
+		out: os.Stdout,
+		err: os.Stderr,
+
 		core:      core.New(core.WithMsgChan(&msgChan)),
 		msgChan:   &msgChan,
 		msgChanWg: &msgChanWg,
@@ -71,6 +72,12 @@ func WithOut(out io.Writer) func(*CLI) {
 	}
 }
 
+func WithErr(err io.Writer) func(*CLI) {
+	return func(c *CLI) {
+		c.err = err
+	}
+}
+
 // Optional function to set the core of the CLI when creating a new instance.
 func WithCore(core *core.Core) func(*CLI) {
 	return func(c *CLI) {
@@ -86,112 +93,6 @@ func (c *CLI) ClearTerminal() {
 // Send a message to the message channel.
 func (c *CLI) sendMsg(msg common.Msg) {
 	*c.msgChan <- msg
-}
-
-// CLI handling of Question component.
-func (c *CLI) Question(prompt string, options []string, defaultSelected []bool) ([]string, error, bool) {
-	q := components.NewQuestion(prompt, options, defaultSelected)
-
-	p := tea.NewProgram(q, tea.WithInput(c.in), tea.WithOutput(c.out))
-
-	m, err := p.Run()
-
-	if err != nil {
-		return nil, err, false
-	}
-
-	r := m.(components.Question)
-
-	if r.GetExited() {
-		return nil, nil, true
-	}
-
-	return r.GetSelected(), nil, false
-}
-
-// CLI handling of Selection component.
-func (c *CLI) Selection(prompt string, options []string) (string, error, bool) {
-	s := components.NewSelection(prompt, options)
-
-	p := tea.NewProgram(s, tea.WithInput(c.in), tea.WithOutput(c.out))
-	m, err := p.Run()
-
-	if err != nil {
-		return "", err, false
-	}
-
-	r := m.(components.Selection)
-
-	if r.GetExited() {
-		return "", nil, true
-	}
-
-	return r.GetValue(), nil, false
-}
-
-// CLI handling of Input component.
-func (c *CLI) Input(prompt string, defaultValue string) string {
-	i := components.NewInput(prompt, defaultValue)
-
-	p := tea.NewProgram(i, tea.WithInput(c.in), tea.WithOutput(c.out))
-	m, err := p.Run()
-
-	if err != nil {
-		c.ErrorPrint(err)
-		os.Exit(1)
-	}
-
-	r := m.(components.Input)
-
-	if r.GetExited() {
-		os.Exit(0)
-	}
-
-	return r.GetValue()
-}
-
-// CLI handling of Confirm component.
-func (c *CLI) Confirm(prompt string) bool {
-	conf := components.NewConfirm(prompt)
-
-	p := tea.NewProgram(conf, tea.WithInput(c.in), tea.WithOutput(c.out))
-	m, err := p.Run()
-
-	if err != nil {
-		c.ErrorPrint(err)
-		os.Exit(1)
-	}
-
-	r := m.(components.Confirm)
-
-	if r.GetExited() {
-		os.Exit(0)
-	}
-
-	switch strings.ToLower(r.GetValue()) {
-	case "y", "yes":
-		return true
-	}
-
-	return false
-}
-
-// CLI handling of Loading component.
-func (c *CLI) Loading(loadingText string, f func() common.Msg) common.Msg {
-	l := components.NewLoading(loadingText)
-
-	p := tea.NewProgram(l)
-
-	go func() {
-		msg := f()
-		p.Send(msg)
-	}()
-
-	if _, err := p.Run(); err != nil {
-		return common.NewErrMsg("Error starting program: %v", err)
-	}
-
-	return nil
 }
 
 func (c *CLI) sendHelpMsg() {

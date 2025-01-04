@@ -38,12 +38,12 @@ func (c *CLI) WarningPrintf(format string, a ...any) {
 
 // Print the given arguments as error text.
 func (c *CLI) ErrorPrint(a ...any) {
-	fmt.Fprint(c.out, common.ErrorText(fmt.Sprint(a...)))
+	fmt.Fprint(c.err, common.ErrorText(fmt.Sprint(a...)))
 }
 
 // Print the given arguments as formatted error text.
 func (c *CLI) ErrorPrintf(format string, a ...any) {
-	fmt.Fprint(c.out, common.ErrorText(fmt.Sprintf(format, a...)))
+	fmt.Fprint(c.err, common.ErrorText(fmt.Sprintf(format, a...)))
 }
 
 // Print the given message based on its type.
