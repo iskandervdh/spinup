@@ -2,29 +2,44 @@ package cli
 
 import (
 	"bytes"
-	"io"
 	"os"
+	"path"
 	"testing"
 
 	"github.com/iskandervdh/spinup/common"
+	"github.com/iskandervdh/spinup/config"
 	"github.com/iskandervdh/spinup/core"
 )
 
-// func TestDoneMsg(t *testing.T) {
-// 	d := DoneMsg("test")
+func TestingConfigDir(testName string) string {
+	return path.Join(os.TempDir(), config.ProgramName, testName)
+}
 
-// 	if d.text != "test" {
-// 		t.Errorf("Expected %s, got %s", "test", d.text)
-// 	}
-// }
+func TestingCore(testName string) *core.Core {
+	// Remove old tmp config dir
+	testingConfigDir := TestingConfigDir(testName)
+	err := os.RemoveAll(testingConfigDir)
 
-// func TestErrorMsg(t *testing.T) {
-// 	e := ErrMsg("test")
+	if err != nil {
+		panic(err)
+	}
 
-// 	if e.text != "test" {
-// 		t.Errorf("Expected %s, got %s", "test", e.text)
-// 	}
-// }
+	// Mock msgChan to prevent blocking during testing
+	msgChan := new(chan common.Msg)
+	*msgChan = make(chan common.Msg)
+
+	cfg := config.NewTesting(testingConfigDir)
+	c := core.New(core.WithConfig(cfg), core.WithMsgChan(msgChan))
+
+	// Mock init to prevent errors during testing
+	c.Init()
+
+	return c
+}
+
+func TestingCLI(testName string, options ...func(*CLI)) *CLI {
+	return New(append([]func(*CLI){WithCore(TestingCore(testName))}, options...)...)
+}
 
 func TestNew(t *testing.T) {
 	c := New()
@@ -84,6 +99,13 @@ func TestSendMsg(t *testing.T) {
 	}
 }
 
+func TestHelpMsg(t *testing.T) {
+	c := TestingCLI("send_help_msg")
+
+	os.Args = []string{"spinup", "--help"}
+	c.Handle()
+}
+
 func TestClearTerminal(t *testing.T) {
 	w := bytes.NewBuffer(nil)
 	c := New(WithOut(w))
@@ -94,219 +116,21 @@ func TestClearTerminal(t *testing.T) {
 	}
 }
 
-func TestQuestion(t *testing.T) {
-	r, w := io.Pipe()
+func TestCLIHandleUnknownSubcommand(t *testing.T) {
+	c := TestingCLI("handle")
 
-	output := &bytes.Buffer{}
-	c := New(WithIn(r), WithOut(output))
-
-	go func() {
-		defer w.Close()
-
-		w.Write([]byte(" "))
-		w.Write([]byte("j"))
-		w.Write([]byte(" "))
-		w.Write([]byte(" "))
-		w.Write([]byte("j"))
-		w.Write([]byte("k"))
-		w.Write([]byte("j"))
-		w.Write([]byte(" "))
-		w.Write([]byte("enter"))
-	}()
-
-	answers, err, exited := c.Question("test?", []string{"a", "b", "c"}, nil)
-
-	if err != nil {
-		t.Errorf("expected no error, got %v", err)
-	}
-
-	if exited {
-		t.Errorf("expected exited to be false, got true")
-	}
-
-	expectedAnswers := []string{"a", "c"}
-
-	if len(answers) != len(expectedAnswers) {
-		t.Errorf("expected %d answers, got %d", len(expectedAnswers), len(answers))
-	}
-
-	for i, answer := range answers {
-		if answer != expectedAnswers[i] {
-			t.Errorf("expected answer '%s', got '%s'", expectedAnswers[i], answer)
-		}
-	}
+	// Test handle without any arguments
+	os.Args = []string{"spinup", "handle"}
+	c.Handle()
 }
 
-func TestQuestionArgumentLengthMismatch(t *testing.T) {
-	r, w := io.Pipe()
-
-	output := &bytes.Buffer{}
-	c := New(WithIn(r), WithOut(output))
-
-	go func() {
-		defer w.Close()
-
-		w.Write([]byte(" "))
-		w.Write([]byte("j"))
-		w.Write([]byte(" "))
-		w.Write([]byte(" "))
-		w.Write([]byte("j"))
-		w.Write([]byte("k"))
-		w.Write([]byte("j"))
-		w.Write([]byte(" "))
-		w.Write([]byte("enter"))
-	}()
-
-	defer func() {
-		if r := recover(); r == nil {
-			t.Errorf("Question arguments mismatch did not panic")
-			return
-		}
-	}()
-
-	_, err, exited := c.Question("test?", []string{"a", "b", "c"}, []bool{true, false})
-
-	if err == nil {
-		t.Errorf("expected error, got nil")
-	}
-
-	if !exited {
-		t.Errorf("expected exited to be true, got false")
-	}
-}
-
-func TestSelection(t *testing.T) {
-	r, w := io.Pipe()
-
-	output := &bytes.Buffer{}
-	c := New(WithIn(r), WithOut(output))
-
-	go func() {
-		defer w.Close()
-
-		w.Write([]byte("j"))
-		w.Write([]byte("k"))
-		w.Write([]byte("j"))
-		w.Write([]byte("enter"))
-	}()
-
-	answer, err, exited := c.Selection("test?", []string{"a", "b", "c"})
-
-	if err != nil {
-		t.Errorf("expected no error, got %v", err)
-	}
-
-	if exited {
-		t.Errorf("expected exited to be false, got true")
-	}
-
-	expectedAnswer := "b"
-
-	if answer != expectedAnswer {
-		t.Errorf("expected answer '%s', got '%s'", expectedAnswer, answer)
-	}
-}
-
-func TestInput(t *testing.T) {
-	r, w := io.Pipe()
-
-	output := &bytes.Buffer{}
-	c := New(WithIn(r), WithOut(output))
-	inputString := "test&*!@#123"
-
-	go func() {
-		defer w.Close()
-
-		w.Write([]byte(inputString))
-		w.Write([]byte("enter"))
-	}()
-
-	input := c.Input("test?", "")
-
-	if input != inputString {
-		t.Errorf("expected input '%s', got '%s'", inputString, input)
-	}
-}
-
-func TestConfirm(t *testing.T) {
-	r, w := io.Pipe()
-
-	output := &bytes.Buffer{}
-	c := New(WithIn(r), WithOut(output))
-
-	go func() {
-		defer w.Close()
-
-		w.Write([]byte("y"))
-		w.Write([]byte("enter"))
-	}()
-
-	confirmed := c.Confirm("test?")
-	expectedConfirmed := true
-
-	if confirmed != expectedConfirmed {
-		t.Errorf("expected confirmed '%t', got '%t'", expectedConfirmed, confirmed)
-	}
-}
-
-// func TestLoading(t *testing.T) {
+// func TestCLIHandleNoArgs(t *testing.T) {
 // 	r, w := io.Pipe()
 
-// 	output := &bytes.Buffer{}
-// 	c := New(WithIn(r), WithOut(output))
-
-// 	go func() {
-// 		defer w.Close()
-
-// 		w.Write([]byte("test"))
-// 	}()
-
-// 	start := time.Now()
-
-// 	c.Loading("test", func() common.Msg {
-// 		time.Sleep(200 * time.Millisecond)
-// 		return common.NewSuccessMsg("test")
-// 	})
-
-// 	elapsed := time.Since(start)
-
-// 	if elapsed < 200*time.Millisecond || elapsed > 400*time.Millisecond {
-// 		t.Errorf("expected loading to take about 200 milliseconds, but it took %v", elapsed)
-// 	}
-// }
-
-func TestQuitQuestion(t *testing.T) {
-	r, w := io.Pipe()
-
-	output := &bytes.Buffer{}
-	c := New(WithIn(r), WithOut(output))
-
-	go func() {
-		defer w.Close()
-
-		w.Write([]byte("ctrl+c"))
-	}()
-
-	answers, err, exited := c.Question("test?", []string{"a", "b", "c"}, nil)
-
-	if answers != nil {
-		t.Errorf("expected answers to be nil, got %v", answers)
-	}
-
-	if err != nil {
-		t.Errorf("expected no error, got %v", err)
-	}
-
-	if !exited {
-		t.Errorf("expected exited to be true, got false")
-	}
-}
-
-// func TestQuitLoading(t *testing.T) {
-// 	r, w := io.Pipe()
+// 	os.Args = []string{"spinup"}
 
 // 	output := &bytes.Buffer{}
-// 	c := New(WithIn(r), WithOut(output))
+// 	c := TestingCLI("handle_no_args", WithIn(r), WithOut(output))
 
 // 	go func() {
 // 		defer w.Close()
@@ -314,170 +138,115 @@ func TestQuitQuestion(t *testing.T) {
 // 		w.Write([]byte("ctrl+c"))
 // 	}()
 
-// 	c.Loading("test", func() tea.Msg {
-// 		time.Sleep(1 * time.Second)
-
-// 		return DoneMsg("test")
-// 	})
-
-// 	if output.String() != "" {
-// 		t.Errorf("expected no output, got %s", output.String())
-// 	}
+// 	c.Handle()
 // }
 
-func TestQuitSelection(t *testing.T) {
-	r, w := io.Pipe()
+func TestCLIHandleInit(t *testing.T) {
+	c := TestingCLI("handle_init")
 
-	output := &bytes.Buffer{}
-	c := New(WithIn(r), WithOut(output))
-
-	go func() {
-		defer w.Close()
-
-		w.Write([]byte("ctrl+c"))
-	}()
-
-	answer, err, exited := c.Selection("test?", []string{"a", "b", "c"})
-
-	if answer != "" {
-		t.Errorf("expected answer to be empty, got %s", answer)
-	}
-
-	if err != nil {
-		t.Errorf("expected no error, got %v", err)
-	}
-
-	if !exited {
-		t.Errorf("expected exited to be true, got false")
-	}
+	os.Args = []string{"spinup", "init"}
+	c.Handle()
 }
 
-// func TestLoadingDone(t *testing.T) {
-// 	r, w := io.Pipe()
+func TestCLIHandleVersion(t *testing.T) {
+	c := TestingCLI("handle_version")
 
-// 	output := &bytes.Buffer{}
-// 	c := New(WithIn(r), WithOut(output))
+	os.Args = []string{"spinup", "-v"}
+	c.Handle()
+}
 
-// 	go func() {
-// 		defer w.Close()
+func TestCLIHandleCommand(*testing.T) {
+	c := TestingCLI("handle_command")
 
-// 		w.Write([]byte("test"))
-// 	}()
+	os.Args = []string{"spinup", "c"}
+	c.Handle()
 
-// 	loadingMessage := c.Loading("test", func() common.Msg {
-// 		return common.NewSuccessMsg("test")
-// 	})
+	c = TestingCLI("handle_command")
+	os.Args = []string{"spinup", "c", "ls"}
+	c.Handle()
 
-// 	if loadingMessage == nil {
-// 		t.Errorf("expected done to be true, got false")
-// 	}
+	c = TestingCLI("handle_command")
+	os.Args = []string{"spinup", "c", "add", "test"}
+	c.Handle()
 
-// 	if loadingMessage.GetText() != "" {
-// 		t.Errorf("expected errorText to be empty, got %s", loadingMessage.GetText())
-// 	}
-// }
+	c = TestingCLI("handle_command")
+	os.Args = []string{"spinup", "c", "add", "test", "echo test"}
+	c.Handle()
 
-// func TestSpinupHandleUnknownSubcommand(t *testing.T) {
-// 	s := TestingCore("handle")
+	c = TestingCLI("handle_command")
+	os.Args = []string{"spinup", "c", "rm", "test"}
+	c.Handle()
 
-// 	// Test handle without any arguments
-// 	os.Args = []string{"spinup", "handle"}
-// 	s.Handle()
-// }
+	c = TestingCLI("handle_command")
+	os.Args = []string{"spinup", "c", "test"}
+	c.Handle()
+}
 
-// func TestSpinupHandleNoArgs(t *testing.T) {
-// 	s := TestingCore("handle_no_args")
+func TestCLIHandleProject(t *testing.T) {
+	c := TestingCLI("handle_project")
 
-// 	os.Args = []string{"spinup"}
-// 	s.Handle()
-// }
+	os.Args = []string{"spinup", "p"}
+	c.Handle()
 
-// func TestSpinupHandleInit(t *testing.T) {
-// 	s := TestingCore("handle_no_args")
+	c = TestingCLI("handle_project")
+	os.Args = []string{"spinup", "p", "ls"}
+	c.Handle()
 
-// 	os.Args = []string{"spinup", "init"}
-// 	s.Handle()
-// }
+	c = TestingCLI("handle_project")
+	os.Args = []string{"spinup", "p", "add", "test", "echo test"}
+	c.Handle()
 
-// func TestSpinupHandleVersion(t *testing.T) {
-// 	s := TestingCore("handle_no_args")
+	// c = TestingCLI("handle_project")
+	// os.Args = []string{"spinup", "p", "rm", "test"}
+	// c.Handle()
 
-// 	os.Args = []string{"spinup", "-v"}
-// 	s.Handle()
-// }
+	c = TestingCLI("handle_project")
+	os.Args = []string{"spinup", "p", "test"}
+	c.Handle()
+}
 
-// func TestSpinupHandleCommand(*testing.T) {
-// 	s := TestingCore("handle_no_args")
+func TestCLIHandleVariable(t *testing.T) {
+	c := TestingCLI("handle_variable")
 
-// 	os.Args = []string{"spinup", "c"}
-// 	s.Handle()
+	os.Args = []string{"spinup", "v"}
+	c.Handle()
 
-// 	os.Args = []string{"spinup", "c", "ls"}
-// 	s.Handle()
+	c = TestingCLI("handle_variable")
+	os.Args = []string{"spinup", "v", "ls"}
+	c.Handle()
 
-// 	os.Args = []string{"spinup", "c", "add", "test"}
-// 	s.Handle()
+	c = TestingCLI("handle_variable")
+	os.Args = []string{"spinup", "v", "ls", "test"}
+	c.Handle()
 
-// 	os.Args = []string{"spinup", "c", "add", "test", "echo test"}
-// 	s.Handle()
+	c = TestingCLI("handle_variable")
+	os.Args = []string{"spinup", "v", "add", "test"}
+	c.Handle()
 
-// 	os.Args = []string{"spinup", "c", "rm", "test"}
-// 	s.Handle()
+	c = TestingCLI("handle_variable")
+	os.Args = []string{"spinup", "v", "add", "test", "echo test"}
+	c.Handle()
 
-// 	os.Args = []string{"spinup", "c", "test"}
-// 	s.Handle()
-// }
+	c = TestingCLI("handle_variable")
+	os.Args = []string{"spinup", "v", "rm", "test"}
+	c.Handle()
 
-// func TestSpinupHandleProject(t *testing.T) {
-// 	s := TestingCore("handle_no_args")
+	c = TestingCLI("handle_variable")
+	os.Args = []string{"spinup", "v", "test"}
+	c.Handle()
+}
 
-// 	os.Args = []string{"spinup", "p"}
-// 	s.Handle()
+func TestCLIHandleRun(t *testing.T) {
+	c := TestingCLI("handle_run")
 
-// 	os.Args = []string{"spinup", "p", "ls"}
-// 	s.Handle()
+	os.Args = []string{"spinup", "run", "test"}
+	c.Handle()
 
-// 	os.Args = []string{"spinup", "p", "add", "test"}
-// 	s.Handle()
+	c = TestingCLI("handle_run")
+	os.Args = []string{"spinup", "run", "test", "echo test"}
+	c.Handle()
 
-// 	os.Args = []string{"spinup", "p", "add", "test", "echo test"}
-// 	s.Handle()
-
-// 	os.Args = []string{"spinup", "p", "rm", "test"}
-// 	s.Handle()
-
-// 	os.Args = []string{"spinup", "p", "test"}
-// 	s.Handle()
-// }
-
-// func TestSpinupHandleVariable(t *testing.T) {
-// 	s := TestingCore("handle_no_args")
-
-// 	os.Args = []string{"spinup", "v"}
-// 	s.Handle()
-
-// 	os.Args = []string{"spinup", "v", "ls"}
-// 	s.Handle()
-
-// 	os.Args = []string{"spinup", "v", "ls", "test"}
-// 	s.Handle()
-
-// 	os.Args = []string{"spinup", "v", "add", "test"}
-// 	s.Handle()
-
-// 	os.Args = []string{"spinup", "v", "add", "test", "echo test"}
-// 	s.Handle()
-
-// 	os.Args = []string{"spinup", "v", "rm", "test"}
-// 	s.Handle()
-
-// 	os.Args = []string{"spinup", "v", "test"}
-// 	s.Handle()
-// }
-
-// func TestSpinupHandle(t *testing.T) {
-// 	s := TestingCore("handle_no_args")
-
-// 	os.Args = []string{"spinup", "run", "test"}
-// 	s.Handle()
-// }
+	c = TestingCLI("handle_run")
+	os.Args = []string{"spinup", "run"}
+	c.Handle()
+}

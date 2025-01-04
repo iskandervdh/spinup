@@ -32,49 +32,57 @@ func NewLoading(loadingText string) Loading {
 	}
 }
 
-func (m Loading) Init() tea.Cmd {
-	return m.spinner.Tick
+func (l Loading) Init() tea.Cmd {
+	return l.spinner.Tick
 }
 
-func (m Loading) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (l Loading) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-
 	case tea.KeyMsg:
 		if msg.String() == "ctrl+c" {
-			return m, tea.Quit
+			l.done = true
+			return l, tea.Quit
 		}
 
 	case spinner.TickMsg:
-		if m.done {
-			return m, tea.Quit
+		if l.done {
+			return l, tea.Quit
 		}
 
 		var cmd tea.Cmd
-		m.spinner, cmd = m.spinner.Update(msg)
-		return m, cmd
+		l.spinner, cmd = l.spinner.Update(msg)
+		return l, cmd
 
-	case common.SuccessMsg:
-		m.done = true
-		m.successText = msg.GetText()
-		return m, tea.Quit
+	case *common.SuccessMsg:
+		l.done = true
+		l.successText = msg.GetText()
+		return l, tea.Quit
 
-	case common.ErrMsg:
-		m.done = true
-		m.errorText = msg.GetText()
-		return m, tea.Quit
+	case *common.ErrMsg:
+		l.done = true
+		l.errorText = msg.GetText()
+		return l, tea.Quit
 	}
 
-	return m, nil
+	return l, nil
 }
 
-func (m Loading) View() string {
-	if m.errorText != "" {
-		return common.ErrorText(m.errorText)
+func (l Loading) View() string {
+	if l.errorText != "" {
+		return common.ErrorText(l.errorText)
 	}
 
-	if m.done {
-		return common.SuccessText(m.successText)
+	if l.done {
+		return common.SuccessText(l.successText)
 	}
 
-	return fmt.Sprintf("\n    %s %s\n", m.spinner.View(), m.loadingText)
+	return fmt.Sprintf("\n    %s %s\n", l.spinner.View(), l.loadingText)
+}
+
+func (l Loading) GetErrorText() string {
+	return l.errorText
+}
+
+func (l Loading) GetSuccessText() string {
+	return l.successText
 }
