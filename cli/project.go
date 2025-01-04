@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/iskandervdh/spinup/common"
-	"github.com/iskandervdh/spinup/config"
 	"github.com/iskandervdh/spinup/core"
 )
 
@@ -184,7 +183,7 @@ func (c *CLI) editProjectInteractive() {
 // Handle the project subcommand.
 func (c *CLI) handleProject() {
 	if len(os.Args) < 3 {
-		c.sendMsg(common.NewRegularMsg("Usage: %s project <add|remove|edit|rename|add-command|remove-command|set-dir|get-dir|list> [args...]\n", config.ProgramName))
+		c.sendMsg(common.NewRegularMsg("Usage: %s project <add|remove|edit|rename|add-command|remove-command|set-dir|get-dir|list> [args...]\n", common.ProgramName))
 		return
 	}
 
@@ -198,7 +197,7 @@ func (c *CLI) handleProject() {
 		}
 
 		if len(os.Args) < 6 {
-			c.sendMsg(common.NewRegularMsg("Usage: %s project add <name> <domain> <port> [command names...]\n", config.ProgramName))
+			c.sendMsg(common.NewRegularMsg("Usage: %s project add <name> <domain> <port> [command names...]\n", common.ProgramName))
 			return
 		}
 
@@ -217,7 +216,7 @@ func (c *CLI) handleProject() {
 		}
 
 		if len(os.Args) != 4 {
-			c.sendMsg(common.NewRegularMsg("Usage: %s project remove|rm <name>\n", config.ProgramName))
+			c.sendMsg(common.NewRegularMsg("Usage: %s project remove|rm <name>\n", common.ProgramName))
 			return
 		}
 
@@ -229,7 +228,7 @@ func (c *CLI) handleProject() {
 		}
 
 		if len(os.Args) < 6 {
-			c.sendMsg(common.NewRegularMsg("Usage: %s project edit <name> <domain> <port> [command names...]\n", config.ProgramName))
+			c.sendMsg(common.NewRegularMsg("Usage: %s project edit <name> <domain> <port> [command names...]\n", common.ProgramName))
 			return
 		}
 
@@ -243,28 +242,28 @@ func (c *CLI) handleProject() {
 		c.editProject(os.Args[3], os.Args[4], port, os.Args[6:])
 	case "rename", "mv":
 		if len(os.Args) < 5 {
-			c.sendMsg(common.NewRegularMsg("Usage: %s project rename|mv <old-name> <new-name>\n", config.ProgramName))
+			c.sendMsg(common.NewRegularMsg("Usage: %s project rename|mv <old-name> <new-name>\n", common.ProgramName))
 			return
 		}
 
 		c.sendMsg(c.core.RenameProject(os.Args[3], os.Args[4]))
 	case "add-command", "ac":
 		if len(os.Args) < 5 {
-			c.sendMsg(common.NewRegularMsg("Usage: %s project add-command|ac <project> <command>\n", config.ProgramName))
+			c.sendMsg(common.NewRegularMsg("Usage: %s project add-command|ac <project> <command>\n", common.ProgramName))
 			return
 		}
 
 		c.sendMsg(c.core.AddCommandToProject(os.Args[3], os.Args[4]))
 	case "remove-command", "rc":
 		if len(os.Args) < 5 {
-			c.sendMsg(common.NewRegularMsg("Usage: %s project remove-command|rc <project> <command>\n", config.ProgramName))
+			c.sendMsg(common.NewRegularMsg("Usage: %s project remove-command|rc <project> <command>\n", common.ProgramName))
 			return
 		}
 
 		c.sendMsg(c.core.RemoveCommandFromProject(os.Args[3], os.Args[4]))
 	case "set-dir", "sd":
 		if len(os.Args) < 4 {
-			c.sendMsg(common.NewRegularMsg("Usage: %s project set-dir|sd <project> [dir]\n", config.ProgramName))
+			c.sendMsg(common.NewRegularMsg("Usage: %s project set-dir|sd <project> [dir]\n", common.ProgramName))
 			return
 		}
 
@@ -276,7 +275,7 @@ func (c *CLI) handleProject() {
 		c.sendMsg(c.core.SetProjectDir(os.Args[3], nil))
 	case "get-dir", "gd":
 		if len(os.Args) != 4 {
-			c.sendMsg(common.NewRegularMsg("Usage: %s project get-dir|gd <project>\n", config.ProgramName))
+			c.sendMsg(common.NewRegularMsg("Usage: %s project get-dir|gd <project>\n", common.ProgramName))
 			return
 		}
 

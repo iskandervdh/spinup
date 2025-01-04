@@ -12,7 +12,7 @@ func IsWindows() bool {
 }
 
 func AppInstalled() bool {
-	_, err := exec.LookPath(config.AppCommand)
+	_, err := exec.LookPath(AppCommand)
 
 	return err == nil
 }

@@ -4,13 +4,13 @@ import (
 	"os"
 	"testing"
 
-	"github.com/iskandervdh/spinup/config"
+	"github.com/iskandervdh/spinup/common"
 )
 
 func TestHandleCommandTooFewArguments(t *testing.T) {
 	c := New()
 
-	os.Args = []string{config.ProgramName, "command"}
+	os.Args = []string{common.ProgramName, "command"}
 
 	c.Handle()
 }
@@ -18,11 +18,11 @@ func TestHandleCommandTooFewArguments(t *testing.T) {
 func TestHandleCommandLs(t *testing.T) {
 	c := New()
 
-	os.Args = []string{config.ProgramName, "command", "list"}
+	os.Args = []string{common.ProgramName, "command", "list"}
 	c.Handle()
 
 	c = New()
 
-	os.Args = []string{config.ProgramName, "c", "ls"}
+	os.Args = []string{common.ProgramName, "c", "ls"}
 	c.Handle()
 }

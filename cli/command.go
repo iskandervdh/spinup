@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/iskandervdh/spinup/common"
-	"github.com/iskandervdh/spinup/config"
 )
 
 // Print a list of all commands to the output of the CLI.
@@ -110,7 +109,7 @@ func (c *CLI) handleCommand() {
 		}
 
 		if len(os.Args) < 5 {
-			c.sendMsg(common.NewRegularMsg("Usage: %s command|c add <name> <command>\n", config.ProgramName))
+			c.sendMsg(common.NewRegularMsg("Usage: %s command|c add <name> <command>\n", common.ProgramName))
 			return
 		}
 
@@ -122,7 +121,7 @@ func (c *CLI) handleCommand() {
 		}
 
 		if len(os.Args) < 4 {
-			c.sendMsg(common.NewRegularMsg("Usage: %s command|c remove|rm <name>\n", config.ProgramName))
+			c.sendMsg(common.NewRegularMsg("Usage: %s command|c remove|rm <name>\n", common.ProgramName))
 			return
 		}
 
@@ -134,14 +133,14 @@ func (c *CLI) handleCommand() {
 		}
 
 		if len(os.Args) < 5 {
-			c.sendMsg(common.NewRegularMsg("Usage: %s command|c edit|e <name> <command>\n", config.ProgramName))
+			c.sendMsg(common.NewRegularMsg("Usage: %s command|c edit|e <name> <command>\n", common.ProgramName))
 			return
 		}
 
 		c.sendMsg(c.core.UpdateCommand(os.Args[3], os.Args[4]))
 	case "rename", "mv":
 		if len(os.Args) < 5 {
-			c.sendMsg(common.NewRegularMsg("Usage: %s command|c rename|mv <old-name> <new-name>\n", config.ProgramName))
+			c.sendMsg(common.NewRegularMsg("Usage: %s command|c rename|mv <old-name> <new-name>\n", common.ProgramName))
 			return
 		}
 

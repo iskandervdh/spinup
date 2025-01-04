@@ -9,7 +9,6 @@ import (
 	"sync"
 
 	"github.com/iskandervdh/spinup/common"
-	"github.com/iskandervdh/spinup/config"
 	"github.com/iskandervdh/spinup/core"
 )
 
@@ -96,12 +95,12 @@ func (c *CLI) sendMsg(msg common.Msg) {
 }
 
 func (c *CLI) sendHelpMsg() {
-	c.sendMsg(common.NewRegularMsg("Usage: %s <command|project|variable|run|init> [args...]\n", config.ProgramName))
+	c.sendMsg(common.NewRegularMsg("Usage: %s <command|project|variable|run|init> [args...]\n", common.ProgramName))
 }
 
 func (c *CLI) launchApp() {
 	c.sendMsg(common.NewRegularMsg("Launching app...\n"))
-	cmd := exec.Command(config.AppCommand)
+	cmd := exec.Command(common.AppCommand)
 
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
@@ -140,7 +139,7 @@ func (c *CLI) Handle() {
 
 		switch os.Args[1] {
 		case "-v", "--version":
-			fmt.Printf("%s %s\n", config.ProgramName, strings.TrimSpace(config.Version))
+			fmt.Printf("%s %s\n", common.ProgramName, strings.TrimSpace(common.Version))
 		case "-h", "--help":
 			c.sendHelpMsg()
 		case "command", "c":
@@ -153,7 +152,7 @@ func (c *CLI) Handle() {
 			c.handleDomainAlias()
 		case "run":
 			if len(os.Args) < 3 {
-				c.sendMsg(common.NewRegularMsg("Usage: %s run <project>\n", config.ProgramName))
+				c.sendMsg(common.NewRegularMsg("Usage: %s run <project>\n", common.ProgramName))
 				break
 			}
 

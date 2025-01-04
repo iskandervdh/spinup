@@ -5,11 +5,13 @@ import (
 	"os"
 	"strings"
 	"time"
+
+	"github.com/iskandervdh/spinup/common"
 )
 
 // Markers that indicate the beginning and end of the custom hosts section.
-var HostsBeginMarker = fmt.Sprintf("### BEGIN_%s_HOSTS", strings.ToUpper(ProgramName))
-var HostsEndMarker = fmt.Sprintf("\n### END_%s_HOSTS", strings.ToUpper(ProgramName))
+var HostsBeginMarker = fmt.Sprintf("### BEGIN_%s_HOSTS", strings.ToUpper(common.ProgramName))
+var HostsEndMarker = fmt.Sprintf("\n### END_%s_HOSTS", strings.ToUpper(common.ProgramName))
 
 // Backup the hosts file with a timestamp so in case of an error the original file can be restored.
 func (c *Config) backupHosts() error {
@@ -45,7 +47,7 @@ func (c *Config) getHostsContent() (string, int, int, error) {
 	endIndex := strings.Index(hostsContent, HostsEndMarker)
 
 	if beginIndex == -1 || endIndex == -1 || beginIndex >= endIndex {
-		return "", beginIndex, endIndex, fmt.Errorf("%s hosts section not found", ProgramName)
+		return "", beginIndex, endIndex, fmt.Errorf("%s hosts section not found", common.ProgramName)
 	}
 
 	return hostsContent, beginIndex, endIndex, nil

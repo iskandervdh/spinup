@@ -6,13 +6,9 @@ import (
 	"os"
 	"os/exec"
 	"path"
+
+	"github.com/iskandervdh/spinup/common"
 )
-
-var ProgramName = "spinup"
-var AppCommand = "spinup-app"
-
-//go:embed .version
-var Version string
 
 var nginxConfigDir = "/etc/nginx/conf.d"
 var hostsFile = "/etc/hosts"
@@ -36,7 +32,7 @@ func GetDefaultConfigDirPath() (string, error) {
 		return "", fmt.Errorf("could not get home directory of current user")
 	}
 
-	return path.Join(home, ".config", ProgramName), nil
+	return path.Join(home, ".config", common.ProgramName), nil
 }
 
 // Create a new Config instance with the default configuration.

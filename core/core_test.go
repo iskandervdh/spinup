@@ -10,7 +10,7 @@ import (
 )
 
 func TestingConfigDir(testName string) string {
-	return path.Join(os.TempDir(), config.ProgramName, testName)
+	return path.Join(os.TempDir(), common.ProgramName, testName)
 }
 
 func TestingCore(testName string) *Core {

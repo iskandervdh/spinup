@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/iskandervdh/spinup/common"
-	"github.com/iskandervdh/spinup/config"
 )
 
 // Print a list of all variables for a project to the output of the CLI.
@@ -28,14 +27,14 @@ func (c *CLI) listVariables(name string) error {
 // Handle the variable command.
 func (c *CLI) handleVariable() {
 	if len(os.Args) < 3 {
-		c.sendMsg(common.NewRegularMsg("Usage: %s variable <add|remove|list> [args...]\n", config.ProgramName))
+		c.sendMsg(common.NewRegularMsg("Usage: %s variable <add|remove|list> [args...]\n", common.ProgramName))
 		return
 	}
 
 	switch os.Args[2] {
 	case "list", "ls":
 		if len(os.Args) < 4 {
-			c.sendMsg(common.NewRegularMsg("Usage: %s variable list|ls <project>\n", config.ProgramName))
+			c.sendMsg(common.NewRegularMsg("Usage: %s variable list|ls <project>\n", common.ProgramName))
 			return
 		}
 
@@ -46,14 +45,14 @@ func (c *CLI) handleVariable() {
 		}
 	case "add":
 		if len(os.Args) < 6 {
-			c.sendMsg(common.NewRegularMsg("Usage: %s variable add <project> <key> <value>\n", config.ProgramName))
+			c.sendMsg(common.NewRegularMsg("Usage: %s variable add <project> <key> <value>\n", common.ProgramName))
 			return
 		}
 
 		c.core.AddVariable(os.Args[3], os.Args[4], os.Args[5])
 	case "remove", "rm":
 		if len(os.Args) < 5 {
-			c.sendMsg(common.NewRegularMsg("Usage: %s variable remove|rm <project> <key>\n", config.ProgramName))
+			c.sendMsg(common.NewRegularMsg("Usage: %s variable remove|rm <project> <key>\n", common.ProgramName))
 			return
 		}
 

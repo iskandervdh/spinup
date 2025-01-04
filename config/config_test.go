@@ -4,10 +4,12 @@ import (
 	"os"
 	"path"
 	"testing"
+
+	"github.com/iskandervdh/spinup/common"
 )
 
 func TestingConfigDir(testName string) string {
-	return path.Join(os.TempDir(), ProgramName, testName)
+	return path.Join(os.TempDir(), common.ProgramName, testName)
 }
 
 func TestingConfig(testName string) *Config {
