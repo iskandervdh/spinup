@@ -32,6 +32,10 @@ func GetDefaultConfigDirPath() (string, error) {
 		return "", fmt.Errorf("could not get home directory of current user")
 	}
 
+	if common.IsWindows() {
+		return path.Join(home, "AppData", "Roaming", common.ProgramName), nil
+	}
+
 	return path.Join(home, ".config", common.ProgramName), nil
 }
 
