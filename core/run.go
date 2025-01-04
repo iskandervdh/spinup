@@ -12,7 +12,6 @@ import (
 	"syscall"
 
 	"github.com/iskandervdh/spinup/common"
-	"golang.org/x/sys/unix"
 )
 
 type runningCommand struct {
@@ -53,11 +52,7 @@ func (c *Core) runCommand(wg *sync.WaitGroup, project Project, command *runningC
 	command.cmd = exec.Command(strings.Split(command.command, " ")[0], strings.Split(command.command, " ")[1:]...)
 
 	// Set process group ID to create a new process group
-	if common.IsWindows() {
-		command.cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
-	} else {
-		command.cmd.SysProcAttr = &unix.SysProcAttr{Setpgid: true}
-	}
+	command.cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 
 	// Force color output
 	command.cmd.Env = append(os.Environ(), "FORCE_COLOR=1")

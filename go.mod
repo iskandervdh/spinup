@@ -10,7 +10,6 @@ require (
 	github.com/charmbracelet/lipgloss v1.0.0
 	github.com/golang-migrate/migrate/v4 v4.18.1
 	github.com/mattn/go-sqlite3 v1.14.24
-	golang.org/x/sys v0.28.0
 )
 
 require (
@@ -30,5 +29,6 @@ require (
 	github.com/rivo/uniseg v0.4.7 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	golang.org/x/sync v0.10.0 // indirect
+	golang.org/x/sys v0.28.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
 )
