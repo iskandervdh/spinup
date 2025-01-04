@@ -10,6 +10,12 @@ func TestIsWindows(t *testing.T) {
 	}
 }
 
+func TestIsMacOS(t *testing.T) {
+	if IsMacOS() != false {
+		t.Error("Expected false, got true")
+	}
+}
+
 func TestAppInstalled(t *testing.T) {
 	AppInstalled()
 }

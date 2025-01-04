@@ -3,12 +3,14 @@ package common
 import (
 	"os/exec"
 	"runtime"
-
-	"github.com/iskandervdh/spinup/config"
 )
 
 func IsWindows() bool {
 	return runtime.GOOS == "windows"
+}
+
+func IsMacOS() bool {
+	return runtime.GOOS == "darwin"
 }
 
 func AppInstalled() bool {
