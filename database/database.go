@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"embed"
 	"fmt"
-	"log"
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/sqlite3"
@@ -20,27 +19,25 @@ func MigrateDatabase(db *sql.DB) error {
 	})
 
 	if err != nil {
-		fmt.Println("Something went wrong with getting the database driver:", err)
-		return err
+		return fmt.Errorf("something went wrong with getting the database driver: %s", err)
 	}
 
 	migrations, err := iofs.New(migrationsFS, "migrations")
 
 	if err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("something went wrong with getting the migrations: %s", err)
 	}
 
 	m, err := migrate.NewWithInstance("iofs", migrations, "sqlite3", driver)
 
 	if err != nil {
-		fmt.Println("Something went wrong with initializing the migrator:", err)
-		return err
+		return fmt.Errorf("something went wrong with initializing the migrator: %s", err)
 	}
 
 	err = m.Up()
 
 	if err != nil && err != migrate.ErrNoChange {
-		fmt.Println("Something went wrong with migrating:", err)
+		return fmt.Errorf("something went wrong with migrating: %s", err)
 	}
 
 	return nil
