@@ -67,6 +67,15 @@ func TestWithOut(t *testing.T) {
 	}
 }
 
+func TestWithErr(t *testing.T) {
+	w := bytes.NewBuffer(nil)
+	c := New(WithErr(w))
+
+	if c.err != w {
+		t.Errorf("Expected %v, got %v", w, c.err)
+	}
+}
+
 func TestWithCore(t *testing.T) {
 	co := core.New()
 	c := New(WithCore(co))
@@ -78,7 +87,7 @@ func TestWithCore(t *testing.T) {
 
 func TestMsgPrint(t *testing.T) {
 	w := bytes.NewBuffer(nil)
-	c := New(WithOut(w))
+	c := New(WithOut(w), WithErr(w))
 
 	c.MsgPrint(common.NewSuccessMsg("test"))
 
@@ -108,7 +117,7 @@ func TestHelpMsg(t *testing.T) {
 
 func TestClearTerminal(t *testing.T) {
 	w := bytes.NewBuffer(nil)
-	c := New(WithOut(w))
+	c := New(WithOut(w), WithErr(w))
 	c.ClearTerminal()
 
 	if w.String() != "\033[H\033[2J" {
@@ -130,7 +139,7 @@ func TestCLIHandleUnknownSubcommand(t *testing.T) {
 // 	os.Args = []string{"spinup"}
 
 // 	output := &bytes.Buffer{}
-// 	c := TestingCLI("handle_no_args", WithIn(r), WithOut(output))
+// 	c := TestingCLI("handle_no_args", WithIn(r), WithOut(output), WithErr(output))
 
 // 	go func() {
 // 		defer w.Close()

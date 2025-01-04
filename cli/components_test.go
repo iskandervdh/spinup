@@ -15,7 +15,7 @@ func TestQuestion(t *testing.T) {
 	r, w := io.Pipe()
 
 	output := &bytes.Buffer{}
-	c := New(WithIn(r), WithOut(output))
+	c := New(WithIn(r), WithOut(output), WithErr(output))
 
 	go func() {
 		defer w.Close()
@@ -58,7 +58,7 @@ func TestQuestionArgumentLengthMismatch(t *testing.T) {
 	r, w := io.Pipe()
 
 	output := &bytes.Buffer{}
-	c := New(WithIn(r), WithOut(output))
+	c := New(WithIn(r), WithOut(output), WithErr(output))
 
 	go func() {
 		defer w.Close()
@@ -96,7 +96,7 @@ func TestSelection(t *testing.T) {
 	r, w := io.Pipe()
 
 	output := &bytes.Buffer{}
-	c := New(WithIn(r), WithOut(output))
+	c := New(WithIn(r), WithOut(output), WithErr(output))
 
 	go func() {
 		defer w.Close()
@@ -128,7 +128,7 @@ func TestInput(t *testing.T) {
 	r, w := io.Pipe()
 
 	output := &bytes.Buffer{}
-	c := New(WithIn(r), WithOut(output))
+	c := New(WithIn(r), WithOut(output), WithErr(output))
 	inputString := "test&*!@#123"
 
 	go func() {
@@ -149,7 +149,7 @@ func TestInputWithDefault(t *testing.T) {
 	r, w := io.Pipe()
 
 	output := &bytes.Buffer{}
-	c := New(WithIn(r), WithOut(output))
+	c := New(WithIn(r), WithOut(output), WithErr(output))
 	inputString := "test&*!@#123"
 
 	go func() {
@@ -169,7 +169,7 @@ func TestInputBackspace(t *testing.T) {
 	r, w := io.Pipe()
 
 	output := &bytes.Buffer{}
-	c := New(WithIn(r), WithOut(output))
+	c := New(WithIn(r), WithOut(output), WithErr(output))
 
 	go func() {
 		defer w.Close()
@@ -189,7 +189,7 @@ func TestInputDelete(t *testing.T) {
 	r, w := io.Pipe()
 
 	output := &bytes.Buffer{}
-	c := New(WithIn(r), WithOut(output))
+	c := New(WithIn(r), WithOut(output), WithErr(output))
 
 	go func() {
 		defer w.Close()
@@ -210,7 +210,7 @@ func TestInputLeftRight(t *testing.T) {
 	r, w := io.Pipe()
 
 	output := &bytes.Buffer{}
-	c := New(WithIn(r), WithOut(output))
+	c := New(WithIn(r), WithOut(output), WithErr(output))
 
 	go func() {
 		defer w.Close()
@@ -235,7 +235,7 @@ func TestInputCtrlC(t *testing.T) {
 	r, w := io.Pipe()
 
 	output := &bytes.Buffer{}
-	c := New(WithIn(r), WithOut(output))
+	c := New(WithIn(r), WithOut(output), WithErr(output))
 
 	go func() {
 		defer w.Close()
@@ -260,7 +260,7 @@ func TestInputInsertBetween(t *testing.T) {
 	r, w := io.Pipe()
 
 	output := &bytes.Buffer{}
-	c := New(WithIn(r), WithOut(output))
+	c := New(WithIn(r), WithOut(output), WithErr(output))
 
 	go func() {
 		defer w.Close()
@@ -283,7 +283,7 @@ func TestInputIllegalButtons(t *testing.T) {
 	r, w := io.Pipe()
 
 	output := &bytes.Buffer{}
-	c := New(WithIn(r), WithOut(output))
+	c := New(WithIn(r), WithOut(output), WithErr(output))
 
 	go func() {
 		defer w.Close()
@@ -308,7 +308,7 @@ func TestConfirm(t *testing.T) {
 	r, w := io.Pipe()
 
 	output := &bytes.Buffer{}
-	c := New(WithIn(r), WithOut(output))
+	c := New(WithIn(r), WithOut(output), WithErr(output))
 
 	go func() {
 		defer w.Close()
@@ -329,7 +329,7 @@ func TestConfirmAction(t *testing.T) {
 	r, w := io.Pipe()
 
 	output := &bytes.Buffer{}
-	c := New(WithIn(r), WithOut(output))
+	c := New(WithIn(r), WithOut(output), WithErr(output))
 
 	go func() {
 		defer w.Close()
@@ -357,7 +357,7 @@ func TestConfirmCtrlC(t *testing.T) {
 	r, w := io.Pipe()
 
 	output := &bytes.Buffer{}
-	c := New(WithIn(r), WithOut(output))
+	c := New(WithIn(r), WithOut(output), WithErr(output))
 
 	go func() {
 		defer w.Close()
@@ -403,7 +403,7 @@ func TestQuitQuestion(t *testing.T) {
 	r, w := io.Pipe()
 
 	output := &bytes.Buffer{}
-	c := New(WithIn(r), WithOut(output))
+	c := New(WithIn(r), WithOut(output), WithErr(output))
 
 	go func() {
 		defer w.Close()
@@ -430,7 +430,7 @@ func TestQuitLoading(t *testing.T) {
 	r, w := io.Pipe()
 
 	output := &bytes.Buffer{}
-	c := TestingCLI("loading_quit", WithIn(r), WithOut(output))
+	c := TestingCLI("loading_quit", WithIn(r), WithOut(output), WithErr(output))
 
 	go func() {
 		defer w.Close()
@@ -453,7 +453,7 @@ func TestQuitSelection(t *testing.T) {
 	r, w := io.Pipe()
 
 	output := &bytes.Buffer{}
-	c := New(WithIn(r), WithOut(output))
+	c := New(WithIn(r), WithOut(output), WithErr(output))
 
 	go func() {
 		defer w.Close()
@@ -480,7 +480,7 @@ func TestLoadingDone(t *testing.T) {
 	r, w := io.Pipe()
 
 	output := &bytes.Buffer{}
-	c := TestingCLI("loading_done", WithIn(r), WithOut(output))
+	c := TestingCLI("loading_done", WithIn(r), WithOut(output), WithErr(output))
 
 	go func() {
 		defer w.Close()

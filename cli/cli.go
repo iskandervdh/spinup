@@ -19,6 +19,7 @@ import (
 type CLI struct {
 	in  io.Reader
 	out io.Writer
+	err io.Writer
 
 	core      *core.Core
 	msgChan   *chan common.Msg
@@ -31,8 +32,10 @@ func New(options ...func(*CLI)) *CLI {
 	msgChanWg := sync.WaitGroup{}
 
 	c := &CLI{
-		in:        os.Stdin,
-		out:       os.Stdout,
+		in:  os.Stdin,
+		out: os.Stdout,
+		err: os.Stderr,
+
 		core:      core.New(core.WithMsgChan(&msgChan)),
 		msgChan:   &msgChan,
 		msgChanWg: &msgChanWg,
@@ -66,6 +69,12 @@ func WithIn(in io.Reader) func(*CLI) {
 func WithOut(out io.Writer) func(*CLI) {
 	return func(c *CLI) {
 		c.out = out
+	}
+}
+
+func WithErr(err io.Writer) func(*CLI) {
+	return func(c *CLI) {
+		c.err = err
 	}
 }
 
