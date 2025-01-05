@@ -36,7 +36,7 @@ export function SettingsPage() {
           <h2 className="text-xl font-bold text-primary">Info</h2>
 
           <div className="grid max-w-6xl grid-cols-[16rem,auto]">
-            <div>Spinup Core version</div>
+            <div>Spinup version</div>
             <div>{spinupVersion}</div>
           </div>
         </div>
