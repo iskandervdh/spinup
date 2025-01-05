@@ -350,7 +350,7 @@ func (c *Core) RemoveCommandFromProject(projectName string, commandName string) 
 		return common.NewErrMsg("Error removing command from project: %s", err)
 	}
 
-	return common.NewInfoMsg("Command '%s' not found in project '%s'. Nothing to remove.", commandName, projectName)
+	return common.NewInfoMsg("Removed command '%s' from project '%s'", commandName, projectName)
 }
 
 // Set the directory for the project with the given name.
