@@ -259,8 +259,8 @@ func (c *Core) UpdateProject(name string, domain string, port int64, commandName
 		Domain: domain,
 		Port:   port,
 		Dir: sql.NullString{
-			String: "",
-			Valid:  false,
+			String: project.Dir.String,
+			Valid:  project.Dir.Valid,
 		},
 	})
 
