@@ -352,14 +352,7 @@ func TestRenameProject(t *testing.T) {
 	}
 
 	hostsContent := string(buf)
-	expected := fmt.Sprintf("%s%s%s%s%s%s",
-		"\n",
-		"\n",
-		config.HostsBeginMarker,
-		"\n",
-		"127.0.0.1\ttest.local",
-		config.HostsEndMarker,
-	)
+	expected := "\n\n" + config.HostsBeginMarker + "\n127.0.0.1\ttest.local" + config.HostsEndMarker
 
 	if hostsContent != expected {
 		t.Error("Expected hosts file to contain", expected, "got", hostsContent)
