@@ -111,7 +111,7 @@ func TestSendMsg(t *testing.T) {
 func TestHelpMsg(t *testing.T) {
 	c := TestingCLI("send_help_msg")
 
-	os.Args = []string{"spinup", "--help"}
+	os.Args = []string{common.ProgramName, "--help"}
 	c.Handle()
 }
 
@@ -129,14 +129,14 @@ func TestCLIHandleUnknownSubcommand(t *testing.T) {
 	c := TestingCLI("handle")
 
 	// Test handle without any arguments
-	os.Args = []string{"spinup", "handle"}
+	os.Args = []string{common.ProgramName, "handle"}
 	c.Handle()
 }
 
 // func TestCLIHandleNoArgs(t *testing.T) {
 // 	r, w := io.Pipe()
 
-// 	os.Args = []string{"spinup"}
+// 	os.Args = []string{common.ProgramName}
 
 // 	output := &bytes.Buffer{}
 // 	c := TestingCLI("handle_no_args", WithIn(r), WithOut(output), WithErr(output))
@@ -153,109 +153,109 @@ func TestCLIHandleUnknownSubcommand(t *testing.T) {
 func TestCLIHandleInit(t *testing.T) {
 	c := TestingCLI("handle_init")
 
-	os.Args = []string{"spinup", "init"}
+	os.Args = []string{common.ProgramName, "init"}
 	c.Handle()
 }
 
 func TestCLIHandleVersion(t *testing.T) {
 	c := TestingCLI("handle_version")
 
-	os.Args = []string{"spinup", "-v"}
+	os.Args = []string{common.ProgramName, "-v"}
 	c.Handle()
 }
 
 func TestCLIHandleCommand(*testing.T) {
 	c := TestingCLI("handle_command")
 
-	os.Args = []string{"spinup", "c"}
+	os.Args = []string{common.ProgramName, "c"}
 	c.Handle()
 
 	c = TestingCLI("handle_command")
-	os.Args = []string{"spinup", "c", "ls"}
+	os.Args = []string{common.ProgramName, "c", "ls"}
 	c.Handle()
 
 	c = TestingCLI("handle_command")
-	os.Args = []string{"spinup", "c", "add", "test"}
+	os.Args = []string{common.ProgramName, "c", "add", "test"}
 	c.Handle()
 
 	c = TestingCLI("handle_command")
-	os.Args = []string{"spinup", "c", "add", "test", "echo test"}
+	os.Args = []string{common.ProgramName, "c", "add", "test", "echo test"}
 	c.Handle()
 
 	c = TestingCLI("handle_command")
-	os.Args = []string{"spinup", "c", "rm", "test"}
+	os.Args = []string{common.ProgramName, "c", "rm", "test"}
 	c.Handle()
 
 	c = TestingCLI("handle_command")
-	os.Args = []string{"spinup", "c", "test"}
+	os.Args = []string{common.ProgramName, "c", "test"}
 	c.Handle()
 }
 
 func TestCLIHandleProject(t *testing.T) {
 	c := TestingCLI("handle_project")
 
-	os.Args = []string{"spinup", "p"}
+	os.Args = []string{common.ProgramName, "p"}
 	c.Handle()
 
 	c = TestingCLI("handle_project")
-	os.Args = []string{"spinup", "p", "ls"}
+	os.Args = []string{common.ProgramName, "p", "ls"}
 	c.Handle()
 
 	c = TestingCLI("handle_project")
-	os.Args = []string{"spinup", "p", "add", "test", "echo test"}
+	os.Args = []string{common.ProgramName, "p", "add", "test", "echo test"}
 	c.Handle()
 
 	// c = TestingCLI("handle_project")
-	// os.Args = []string{"spinup", "p", "rm", "test"}
+	// os.Args = []string{common.ProgramName, "p", "rm", "test"}
 	// c.Handle()
 
 	c = TestingCLI("handle_project")
-	os.Args = []string{"spinup", "p", "test"}
+	os.Args = []string{common.ProgramName, "p", "test"}
 	c.Handle()
 }
 
 func TestCLIHandleVariable(t *testing.T) {
 	c := TestingCLI("handle_variable")
 
-	os.Args = []string{"spinup", "v"}
+	os.Args = []string{common.ProgramName, "v"}
 	c.Handle()
 
 	c = TestingCLI("handle_variable")
-	os.Args = []string{"spinup", "v", "ls"}
+	os.Args = []string{common.ProgramName, "v", "ls"}
 	c.Handle()
 
 	c = TestingCLI("handle_variable")
-	os.Args = []string{"spinup", "v", "ls", "test"}
+	os.Args = []string{common.ProgramName, "v", "ls", "test"}
 	c.Handle()
 
 	c = TestingCLI("handle_variable")
-	os.Args = []string{"spinup", "v", "add", "test"}
+	os.Args = []string{common.ProgramName, "v", "add", "test"}
 	c.Handle()
 
 	c = TestingCLI("handle_variable")
-	os.Args = []string{"spinup", "v", "add", "test", "echo test"}
+	os.Args = []string{common.ProgramName, "v", "add", "test", "echo test"}
 	c.Handle()
 
 	c = TestingCLI("handle_variable")
-	os.Args = []string{"spinup", "v", "rm", "test"}
+	os.Args = []string{common.ProgramName, "v", "rm", "test"}
 	c.Handle()
 
 	c = TestingCLI("handle_variable")
-	os.Args = []string{"spinup", "v", "test"}
+	os.Args = []string{common.ProgramName, "v", "test"}
 	c.Handle()
 }
 
 func TestCLIHandleRun(t *testing.T) {
 	c := TestingCLI("handle_run")
 
-	os.Args = []string{"spinup", "run", "test"}
+	os.Args = []string{common.ProgramName, "run", "test"}
 	c.Handle()
 
 	c = TestingCLI("handle_run")
-	os.Args = []string{"spinup", "run", "test", "echo test"}
+	os.Args = []string{common.ProgramName, "run", "test", "echo test"}
 	c.Handle()
 
 	c = TestingCLI("handle_run")
-	os.Args = []string{"spinup", "run"}
+	os.Args = []string{common.ProgramName, "run"}
 	c.Handle()
 }

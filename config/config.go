@@ -80,7 +80,7 @@ func (c *Config) GetConfigDir() string {
 
 // Returns the path of the sqlite3 database file.
 func (c *Config) GetDatabasePath() string {
-	return path.Join(c.configDir, "spinup.sqlite3")
+	return path.Join(c.configDir, common.ProgramName+".sqlite3")
 }
 
 // Returns the path to the nginx configuration directory.
