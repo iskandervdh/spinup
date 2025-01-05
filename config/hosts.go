@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -16,15 +17,15 @@ var HostsEndMarker = fmt.Sprintf("\n### END_%s_HOSTS", strings.ToUpper(common.Pr
 // Backup the hosts file with a timestamp so in case of an error the original file can be restored.
 func (c *Config) backupHosts() error {
 	// Create a directory to store the backups if it doesn't exist
-	err := c.withSudo("mkdir", "-p", c.hostsBackupDir).Run()
+	err := c.createHostsBackupDir()
 
 	if err != nil {
 		return err
 	}
 
 	// Backup the hosts file with a timestamp
-	fileName := fmt.Sprintf("%s/hosts_%s.bak", c.hostsBackupDir, time.Now().Format("2006-01-02_15:04:05"))
-	err = c.withSudo("cp", c.hostsFile, fileName).Run()
+	fileName := filepath.Join(c.hostsBackupDir, fmt.Sprintf("hosts_%s.bak", time.Now().Format("2006-01-02_15-04-05")))
+	err = c.copyFile(c.hostsFile, fileName)
 
 	if err != nil {
 		return err
@@ -84,16 +85,7 @@ func (c *Config) AddDomain(domain string) error {
 		return err
 	}
 
-	saveNewHosts := c.withSudo("tee", c.hostsFile)
-	saveNewHosts.Stdin = strings.NewReader(newHostsContent)
-
-	err = saveNewHosts.Run()
-
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return c.writeToFile(c.hostsFile, newHostsContent)
 }
 
 // Remove a domain from the custom hosts section.
@@ -117,16 +109,8 @@ func (c *Config) RemoveDomain(domain string) error {
 	newHostsContent := hostsContent[:beginIndex+len(HostsBeginMarker)] + customHosts + hostsContent[endIndex:]
 
 	c.backupHosts()
-	saveNewHosts := c.withSudo("tee", c.hostsFile)
-	saveNewHosts.Stdin = strings.NewReader(newHostsContent)
 
-	err = saveNewHosts.Run()
-
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return c.writeToFile(c.hostsFile, newHostsContent)
 }
 
 // Update a domain in the custom hosts section.
@@ -154,12 +138,8 @@ func (c *Config) UpdateHost(oldDomain string, newDomain string) error {
 	newHostsContent := hostsContent[:beginIndex+len(HostsBeginMarker)] + customHosts + hostsContent[endIndex:]
 
 	c.backupHosts()
-	saveNewHosts := c.withSudo("tee", c.hostsFile)
-	saveNewHosts.Stdin = strings.NewReader(newHostsContent)
 
-	saveNewHosts.Run()
-
-	return nil
+	return c.writeToFile(c.hostsFile, newHostsContent)
 }
 
 // Initialize the custom hosts section in the hosts file
@@ -210,10 +190,7 @@ func (c *Config) InitHosts() error {
 		return err
 	}
 
-	saveNewHosts := c.withSudo("tee", c.hostsFile)
-	saveNewHosts.Stdin = strings.NewReader(hostsContent)
-
-	err = saveNewHosts.Run()
+	err = c.writeToFile(c.hostsFile, hostsContent)
 
 	if err != nil {
 		return err
