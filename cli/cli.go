@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"strings"
 	"sync"
 
@@ -98,40 +97,12 @@ func (c *CLI) sendHelpMsg() {
 	c.sendMsg(common.NewRegularMsg("Usage: %s <command|project|variable|run|init> [args...]\n", common.ProgramName))
 }
 
-func (c *CLI) launchApp() {
-	c.sendMsg(common.NewRegularMsg("Launching app...\n"))
-	cmd := exec.Command(common.AppCommand)
-
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	err := cmd.Start()
-
-	if err != nil {
-		panic(err)
-	}
-
-	err = cmd.Wait()
-
-	if err != nil {
-		panic(err)
-	}
-}
-
 // Function to be called after the CLI has been initialized.
 //
 // It will handle the arguments passed to the CLI and
 // execute the appropriate function based on the arguments.
 func (c *CLI) Handle() {
-	if len(os.Args) == 1 {
-		if common.AppInstalled() {
-			c.launchApp()
-		} else {
-			c.sendMsg(common.NewInfoMsg("App not installed. You can download it from https://github.com/iskandervdh/spinup-app/releases"))
-			c.sendHelpMsg()
-		}
-	} else if os.Args[1] == "init" {
+	if os.Args[1] == "init" {
 		c.sendMsg(c.core.Init())
 	} else {
 		c.core.FetchCommands()

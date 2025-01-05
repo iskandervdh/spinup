@@ -1,0 +1,10 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: 'Azeret';
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('./assets/fonts/AzeretMono.ttf') format('truetype');
+}

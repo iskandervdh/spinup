@@ -1,0 +1,171 @@
+name: Build release
+
+on:
+  push:
+    tags:
+      - '*'
+
+permissions:
+  contents: write
+  discussions: write
+
+env:
+  NODE_OPTIONS: '--max-old-space-size=4096'
+
+  BUILD: 'true'
+  WORKING_DIRECTORY: '.'
+  WEBVIEW2: 'browser'
+
+jobs:
+  build:
+    strategy:
+    # Failure in one platform build won't impact the others
+      fail-fast: false
+      matrix:
+        build:
+          - name: 'spinup'
+            platform:  'linux/amd64'
+            os: 'ubuntu-22.04'
+          # - name: 'spinup'
+          #   platform:  'darwin/universal'
+          #   os: 'macos-latest'
+          - name: 'Spinup'
+            platform:  'windows/amd64'
+            os: 'windows-latest'
+
+    runs-on: ${{ matrix.build.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      # Setup and configure GoLang
+      - name: Setup GoLang
+        uses: actions/setup-go@v4
+        with:
+          check-latest: true
+          go-version: '1.23'
+      - run: go version
+        shell: bash
+
+      # Setup pnpm
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+          run_install: false
+
+      # Setup and configure NodeJS
+      - name: Setup NodeJS
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+          cache-dependency-path: './frontend/pnpm-lock.yaml'
+
+      # install Wails
+      - name: Install Wails
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
+        shell: bash
+      - name: Update Ubuntu package list
+        if: runner.os == 'Linux'
+        run: sudo apt-get update
+        shell: bash
+      - name: Install Ubuntu Wails deps
+        if: runner.os == 'Linux'
+        uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libgtk-3-0 libwebkit2gtk-4.0-dev libwebkit2gtk-4.1-dev gcc-aarch64-linux-gnu
+      # - name: Install macOS Wails deps
+      #   if: runner.os == 'macOS'
+      #   run: brew install mitchellh/gon/gon
+      #   shell: bash
+
+      # Building step
+      - name: Build Linux App
+        if: runner.os == 'Linux'
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: |
+          SPINUP_VERSION=$(cat ./app/.version | sed 's/^v//')
+          sed -i "s/{{version}}/${SPINUP_VERSION}/g" wails.json
+
+          wails build --platform ${{ matrix.build.platform }} -webview2 ${{ env.WEBVIEW2 }} -o ${{ matrix.build.name }}-${SPINUP_VERSION}-webkit2-40 -tags webkit2_40
+          wails build --platform ${{ matrix.build.platform }} -webview2 ${{ env.WEBVIEW2 }} -o ${{ matrix.build.name }}-${SPINUP_VERSION}-webkit2-41 -tags webkit2_41
+        shell: bash
+      # - name: Build macOs App
+      #   if: runner.os == 'macOS'
+      #   working-directory: ${{ env.WORKING_DIRECTORY }}
+      #   run: wails build --platform ${{ matrix.build.platform }} -webview2 ${{ env.WEBVIEW2 }} -o ${{ matrix.build.name }}
+      #   shell: bash
+      # - name: Build Windows App
+      #   if: runner.os == 'Windows' && inputs.nsis == 'false'
+      #   working-directory: ${{ env.WORKING_DIRECTORY }}
+      #   run: wails build --platform ${{ matrix.build.platform }} -webview2 ${{ env.WEBVIEW2 }} -o ${{ matrix.build.name }}
+      #   shell: bash
+      - name: Build Windows App + Installer
+        if: runner.os == 'Windows'
+        # && inputs.nsis == 'true'
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: |
+          SPINUP_VERSION=$(cat ./app/.version | sed 's/^v//')
+          sed -i "s/{{version}}/${SPINUP_VERSION}/g" wails.json
+
+          wails build --platform ${{ matrix.build.platform }} -webview2 ${{ env.WEBVIEW2 }} -nsis -o ${{ matrix.build.name }}
+        shell: bash
+
+      # Add permissions to the binary
+      - name: Add Linux perms
+        if: runner.os == 'Linux'
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: chmod +x build/bin/*
+        shell: bash
+      # - name: Add macOS perms
+      #   if: runner.os == 'macOS'
+      #   working-directory: ${{ env.WORKING_DIRECTORY }}
+      #   run: chmod +x build/bin/*/Contents/MacOS/*
+      #   shell: bash
+
+      # Package as .deb for Ubuntu
+      - name: Package as .deb for Ubuntu
+        if: runner.os == 'Linux'
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: |
+          SPINUP_VERSION=$(cat ./app/.version | sed 's/^v//')
+
+          for webkit_version in 40 41; do
+            mkdir -p deb/spinup-${SPINUP_VERSION}-webkit2-${webkit_version}/DEBIAN
+            mkdir -p deb/spinup-${SPINUP_VERSION}-webkit2-${webkit_version}/usr/share/spinup/bin
+            cp build/bin/spinup-${SPINUP_VERSION}-webkit2-${webkit_version} deb/spinup-${SPINUP_VERSION}-webkit2-${webkit_version}/usr/share/spinup/bin/spinup
+            cp build/DEBIAN/* deb/spinup-${SPINUP_VERSION}-webkit2-${webkit_version}/DEBIAN
+            cp -r build/share deb/spinup-${SPINUP_VERSION}-webkit2-${webkit_version}/usr
+
+            echo -e "\nVersion: $SPINUP_VERSION" >> deb/spinup-${SPINUP_VERSION}-webkit2-${webkit_version}/DEBIAN/control
+
+            if [ "$webkit_version" -eq "40" ]; then
+              echo "Depends: libgtk-3-0, libwebkit2gtk-4.0-dev" >> deb/spinup-${SPINUP_VERSION}-webkit2-${webkit_version}/DEBIAN/control
+            else
+              echo "Depends: libgtk-3-0, libwebkit2gtk-4.1-dev" >> deb/spinup-${SPINUP_VERSION}-webkit2-${webkit_version}/DEBIAN/control
+            fi
+
+            sudo chown -R root:root deb/spinup-${SPINUP_VERSION}-webkit2-${webkit_version}
+
+            dpkg-deb --build deb/spinup-${SPINUP_VERSION}-webkit2-${webkit_version}
+          done
+        shell: bash
+
+      # Upload build assets
+      - uses: actions/upload-artifact@v3
+        with:
+          name: Wails Build ${{ runner.os }} ${{ matrix.build.name }}
+          path: |
+            */bin/
+            *\bin\*
+            */spinup-*.deb
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            */bin/*
+            */spinup-*.deb

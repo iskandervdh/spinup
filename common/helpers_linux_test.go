@@ -15,7 +15,3 @@ func TestIsMacOS(t *testing.T) {
 		t.Error("Expected false, got true")
 	}
 }
-
-func TestAppInstalled(t *testing.T) {
-	AppInstalled()
-}

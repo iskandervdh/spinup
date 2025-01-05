@@ -1,0 +1,69 @@
+name: Pull Request
+
+on:
+  pull_request:
+    branches:
+      - main
+
+env:
+  NODE_OPTIONS: '--max-old-space-size=4096'
+
+  BUILD: 'true'
+  WORKING_DIRECTORY: '.'
+  WEBVIEW2: 'browser'
+
+jobs:
+  build:
+    runs-on:  'ubuntu-22.04'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      # Setup and configure GoLang
+      - name: Setup Golang
+        uses: actions/setup-go@v4
+        with:
+          check-latest: true
+          go-version: '1.23'
+
+      # Setup pnpm
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+          run_install: false
+
+      # Setup and configure NodeJS
+      - name: Setup NodeJS
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          # cache: 'pnpm'
+          # cache-dependency-path: './frontend/pnpm-lock.yaml'
+
+      # install Wails
+      - name: Install Wails
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
+        shell: bash
+      - name: Update package list
+        run: sudo apt-get update
+        shell: bash
+      - name: Install Wails deps
+        uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libgtk-3-0 libwebkit2gtk-4.0-dev libwebkit2gtk-4.1-dev gcc-aarch64-linux-gnu
+
+      # Building step
+      - name: Build App
+        if: runner.os == 'Linux'
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: |
+          wails build --platform linux/amd64 -webview2 ${{ env.WEBVIEW2 }} -o pr-webkit2-40 -tags webkit2_40
+          wails build --platform linux/amd64 -webview2 ${{ env.WEBVIEW2 }} -o pr-webkit2-41 -tags webkit2_41
+        shell: bash
+
+      # Run tests
+      - name: Run tests
+        run: ./run-tests.sh

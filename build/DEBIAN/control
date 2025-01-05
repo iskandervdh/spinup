@@ -1,0 +1,6 @@
+Package: spinup
+Section: devel
+Priority: optional
+Architecture: amd64
+Maintainer: iskandervdh
+Description: Quickly spin up your multi command projects.
