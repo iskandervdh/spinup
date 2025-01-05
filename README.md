@@ -165,6 +165,6 @@ This will run the commands defined in the configuration for the project.
 - [x] Add tests.
 - [x] Better solution for showing what commands are available.
 - [x] Make adding domain aliases possible.
-- [ ] Adding certificates to enable https for the project.
+- [x] GUI -> [Spinup App](https://github.com/iskandervdh/spinup-app)
 - [ ] Add option to set the path of the nginx folder to use.
-- [ ] GUI?
+- [ ] Adding certificates to enable https for the project.
