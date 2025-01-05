@@ -195,7 +195,7 @@ func (c *Config) InitHosts() error {
 	}
 
 	hostsContent = strings.TrimSpace(hostsContent)
-	hostsContent += "\n" + "\n"
+	hostsContent += "\n\n"
 	hostsContent += HostsBeginMarker
 	hostsContent += HostsEndMarker
 
