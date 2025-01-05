@@ -66,7 +66,7 @@ func (c *Config) AddNginxConfig(name string, domain string, port int64) error {
 // Remove a Nginx configuration file with the given name.
 func (c *Config) RemoveNginxConfig(name string) error {
 	nginxConfigFilePath := fmt.Sprintf("%s/%s.conf", c.nginxConfigDir, name)
-	err := c.withSudo("rm", nginxConfigFilePath).Run()
+	err := c.removeFile(nginxConfigFilePath)
 
 	if err != nil {
 		return err
@@ -95,7 +95,7 @@ func (c *Config) RenameNginxConfig(oldName string, newName string) error {
 	oldNginxConfigFilePath := fmt.Sprintf("%s/%s.conf", c.nginxConfigDir, oldName)
 	newNginxConfigFilePath := fmt.Sprintf("%s/%s.conf", c.nginxConfigDir, newName)
 
-	err := c.withSudo("mv", oldNginxConfigFilePath, newNginxConfigFilePath).Run()
+	err := c.moveFile(oldNginxConfigFilePath, newNginxConfigFilePath)
 
 	if err != nil {
 		return err
@@ -195,7 +195,7 @@ func (c *Config) InitNginx() error {
 		}
 	}
 
-	if common.IsWindows() {
+	if common.IsWindows() && !c.IsTesting() {
 		fmt.Printf(
 			"\n!!! Please add the following include directive to http section of your nginx.conf file located at %s like this:\n",
 			filepath.Join(c.nginxConfigDir, "..", "nginx.conf"),

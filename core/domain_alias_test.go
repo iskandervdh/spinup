@@ -2,6 +2,7 @@ package core
 
 import (
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/iskandervdh/spinup/common"
@@ -75,6 +76,10 @@ func TestAddDomainAlias(t *testing.T) {
 
 	hostsContent := string(buf)
 	expected := "\n\n" + config.HostsBeginMarker + "\n127.0.0.1\ttest.local\n127.0.0.1\ttest.test" + config.HostsEndMarker
+
+	if common.IsWindows() {
+		hostsContent = strings.ReplaceAll(hostsContent, "\u0000", "")
+	}
 
 	if hostsContent != expected {
 		t.Error("Expected hosts file to contain", expected, "got", hostsContent)
@@ -169,6 +174,10 @@ func TestRemoveDomainAlias(t *testing.T) {
 		"\n127.0.0.1\ttest.local" +
 		"\n127.0.0.1\ttest.tst" +
 		config.HostsEndMarker
+
+	if common.IsWindows() {
+		hostsContent = strings.ReplaceAll(hostsContent, "\u0000", "")
+	}
 
 	if hostsContent != expected {
 		t.Error("Expected hosts file to contain", expected, "got", hostsContent)

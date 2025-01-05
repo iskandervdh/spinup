@@ -1,9 +1,12 @@
 package core
 
 import (
+	"fmt"
 	"os"
+	"strings"
 	"testing"
 
+	"github.com/iskandervdh/spinup/common"
 	"github.com/iskandervdh/spinup/config"
 )
 
@@ -79,6 +82,10 @@ func TestAddProject(t *testing.T) {
 
 	hostsContent := string(buf)
 	expected := "\n\n" + config.HostsBeginMarker + "\n127.0.0.1\ttest.local" + config.HostsEndMarker
+
+	if common.IsWindows() {
+		hostsContent = strings.ReplaceAll(hostsContent, "\u0000", "")
+	}
 
 	if hostsContent != expected {
 		t.Error("Expected hosts file to contain", expected, "got", hostsContent)
@@ -267,6 +274,10 @@ func TestEditProject(t *testing.T) {
 	hostsContent := string(buf)
 	expected := "\n\n" + config.HostsBeginMarker + "\n127.0.0.1\texample.local" + config.HostsEndMarker
 
+	if common.IsWindows() {
+		hostsContent = strings.ReplaceAll(hostsContent, "\u0000", "")
+	}
+
 	if hostsContent != expected {
 		t.Error("Expected hosts file to contain", expected, "got", hostsContent)
 		return
@@ -285,7 +296,9 @@ func TestRenameProject(t *testing.T) {
 	// "Refetch" the projects from the config file
 	c.FetchProjects()
 
-	c.RenameProject("test", "example")
+	msg := c.RenameProject("test", "example")
+
+	fmt.Println(msg)
 
 	// "Refetch" the projects from the config file
 	c.FetchProjects()
@@ -339,7 +352,14 @@ func TestRenameProject(t *testing.T) {
 	}
 
 	hostsContent := string(buf)
-	expected := "\n\n" + config.HostsBeginMarker + "\n127.0.0.1\ttest.local" + config.HostsEndMarker
+	expected := fmt.Sprintf("%s%s%s%s%s%s",
+		"\n",
+		"\n",
+		config.HostsBeginMarker,
+		"\n",
+		"127.0.0.1\ttest.local",
+		config.HostsEndMarker,
+	)
 
 	if hostsContent != expected {
 		t.Error("Expected hosts file to contain", expected, "got", hostsContent)
