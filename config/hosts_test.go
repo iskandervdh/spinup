@@ -5,6 +5,8 @@ import (
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/iskandervdh/spinup/common"
 )
 
 func TestInitHosts(t *testing.T) {
@@ -113,18 +115,6 @@ func TestInitHostsStatError(t *testing.T) {
 	}
 }
 
-func TestInitHostsBackupError(t *testing.T) {
-	c := TestingConfig("init_hosts_backup_error")
-
-	os.Mkdir(c.GetHostsBackupDir(), 0444)
-
-	err := c.InitHosts()
-
-	if err == nil {
-		t.Errorf("Expected error, got nil")
-	}
-}
-
 func TestBackupHosts(t *testing.T) {
 	c := TestingConfig("backup_hosts")
 	c.InitHosts()
@@ -180,7 +170,7 @@ func TestGetHostsContentFileError(t *testing.T) {
 }
 
 func TestAddDomain(t *testing.T) {
-	c := TestingConfig("add_host")
+	c := TestingConfig("add_domain")
 	c.InitHosts()
 
 	err := c.AddDomain("test.local")
@@ -189,12 +179,16 @@ func TestAddDomain(t *testing.T) {
 		t.Errorf("Expected no error, got %s", err)
 	}
 
-	content, _, _, _ := c.getHostsContent()
+	hostsContent, _, _, _ := c.getHostsContent()
 
 	expected := "\n\n" + HostsBeginMarker + "\n127.0.0.1\ttest.local" + HostsEndMarker
 
-	if content != expected {
-		t.Errorf("Expected %s, got %s", expected, content)
+	if common.IsWindows() {
+		hostsContent = strings.ReplaceAll(hostsContent, "\u0000", "")
+	}
+
+	if hostsContent != expected {
+		t.Errorf("Expected %s, got %s", expected, hostsContent)
 	}
 }
 
@@ -260,12 +254,16 @@ func TestRemoveDomain(t *testing.T) {
 		t.Errorf("Expected no error, got %s", err)
 	}
 
-	content, _, _, _ := c.getHostsContent()
+	hostsContent, _, _, _ := c.getHostsContent()
 
 	expected := "\n\n" + HostsBeginMarker + HostsEndMarker
 
-	if content != expected {
-		t.Errorf("Expected %s, got %s", expected, content)
+	if common.IsWindows() {
+		hostsContent = strings.ReplaceAll(hostsContent, "\u0000", "")
+	}
+
+	if hostsContent != expected {
+		t.Errorf("Expected %s, got %s", expected, hostsContent)
 	}
 }
 

@@ -44,6 +44,11 @@ func (c *Config) getHostsContent() (string, int, int, error) {
 
 	hostsContent := string(hosts)
 
+	if common.IsWindows() {
+		hostsContent = strings.ReplaceAll(hostsContent, "\u0000", "")
+		hostsContent = strings.ReplaceAll(hostsContent, "\r\n", "\n")
+	}
+
 	beginIndex := strings.Index(hostsContent, HostsBeginMarker)
 	endIndex := strings.Index(hostsContent, HostsEndMarker)
 
@@ -69,12 +74,12 @@ func (c *Config) AddDomain(domain string) error {
 	customHosts := hostsContent[beginIndex+len(HostsBeginMarker) : endIndex]
 
 	// Check if host already exists
-	if strings.Contains(customHosts, fmt.Sprintf("\n127.0.0.1\t%s", domain)) {
+	if strings.Contains(customHosts, fmt.Sprintf("%s127.0.0.1\t%s", "\n", domain)) {
 		return fmt.Errorf("domain %s already exists", domain)
 	}
 
 	// Add domain to hosts file
-	customHosts += fmt.Sprintf("\n127.0.0.1\t%s", domain)
+	customHosts += fmt.Sprintf("%s127.0.0.1\t%s", "\n", domain)
 
 	// Save hosts file
 	newHostsContent := hostsContent[:beginIndex+len(HostsBeginMarker)] + customHosts + hostsContent[endIndex:]
@@ -103,7 +108,12 @@ func (c *Config) RemoveDomain(domain string) error {
 	customHosts := hostsContent[beginIndex+len(HostsBeginMarker) : endIndex]
 
 	// Remove domain to hosts file
-	customHosts = strings.Replace(customHosts, fmt.Sprintf("\n127.0.0.1\t%s", domain), "", -1)
+	customHosts = strings.Replace(
+		customHosts,
+		fmt.Sprintf("%s127.0.0.1\t%s", "\n", domain),
+		"",
+		-1,
+	)
 
 	// Save hosts file
 	newHostsContent := hostsContent[:beginIndex+len(HostsBeginMarker)] + customHosts + hostsContent[endIndex:]
@@ -132,7 +142,12 @@ func (c *Config) UpdateHost(oldDomain string, newDomain string) error {
 	customHosts := hostsContent[beginIndex+len(HostsBeginMarker) : endIndex]
 
 	// Update domain in hosts file
-	customHosts = strings.Replace(customHosts, fmt.Sprintf("\n127.0.0.1\t%s", oldDomain), fmt.Sprintf("\n127.0.0.1\t%s", newDomain), -1)
+	customHosts = strings.Replace(
+		customHosts,
+		fmt.Sprintf("%s127.0.0.1\t%s", "\n", oldDomain),
+		fmt.Sprintf("%s127.0.0.1\t%s", "\n", newDomain),
+		-1,
+	)
 
 	// Save hosts file
 	newHostsContent := hostsContent[:beginIndex+len(HostsBeginMarker)] + customHosts + hostsContent[endIndex:]
@@ -175,12 +190,12 @@ func (c *Config) InitHosts() error {
 	hostsContent, beginIndex, endIndex, _ := c.getHostsContent()
 
 	if beginIndex != -1 && endIndex != -1 {
-		fmt.Println("Hosts file already initialized\nSkipping initialization...")
+		fmt.Printf("Hosts file already initialized%sSkipping initialization...%s", "\n", "\n")
 		return nil
 	}
 
 	hostsContent = strings.TrimSpace(hostsContent)
-	hostsContent += "\n\n"
+	hostsContent += "\n" + "\n"
 	hostsContent += HostsBeginMarker
 	hostsContent += HostsEndMarker
 

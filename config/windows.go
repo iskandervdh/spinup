@@ -64,7 +64,7 @@ func (c *Config) copyFile(from string, to string) error {
 }
 
 func (c *Config) writeToFile(filePath string, contents string) error {
-	f, err := os.OpenFile(filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	f, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
 
 	if err != nil {
 		return err
@@ -77,4 +77,12 @@ func (c *Config) writeToFile(filePath string, contents string) error {
 	}
 
 	return f.Close()
+}
+
+func (c *Config) moveFile(oldFilePath string, newFilePath string) error {
+	return os.Rename(oldFilePath, newFilePath)
+}
+
+func (c *Config) removeFile(filePath string) error {
+	return os.Remove(filePath)
 }

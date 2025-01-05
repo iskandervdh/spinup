@@ -19,7 +19,7 @@ func TestDomainAlias(t *testing.T) {
 	// 	t.Errorf("Expected usage message, got '%s'", output.String())
 	// }
 
-	c = TestingCLI("domain_alias")
+	c = TestingCLI("domain_alias_no_arg")
 
 	os.Args = []string{common.ProgramName, "da"}
 	c.Handle()

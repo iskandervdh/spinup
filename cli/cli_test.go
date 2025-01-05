@@ -170,23 +170,23 @@ func TestCLIHandleCommand(*testing.T) {
 	os.Args = []string{common.ProgramName, "c"}
 	c.Handle()
 
-	c = TestingCLI("handle_command")
+	c = TestingCLI("handle_command_ls")
 	os.Args = []string{common.ProgramName, "c", "ls"}
 	c.Handle()
 
-	c = TestingCLI("handle_command")
+	c = TestingCLI("handle_command_add")
 	os.Args = []string{common.ProgramName, "c", "add", "test"}
 	c.Handle()
 
-	c = TestingCLI("handle_command")
+	c = TestingCLI("handle_command_add_args")
 	os.Args = []string{common.ProgramName, "c", "add", "test", "echo test"}
 	c.Handle()
 
-	c = TestingCLI("handle_command")
+	c = TestingCLI("handle_command_remove")
 	os.Args = []string{common.ProgramName, "c", "rm", "test"}
 	c.Handle()
 
-	c = TestingCLI("handle_command")
+	c = TestingCLI("handle_command_wrong_arg")
 	os.Args = []string{common.ProgramName, "c", "test"}
 	c.Handle()
 }
@@ -197,11 +197,11 @@ func TestCLIHandleProject(t *testing.T) {
 	os.Args = []string{common.ProgramName, "p"}
 	c.Handle()
 
-	c = TestingCLI("handle_project")
+	c = TestingCLI("handle_project_ls")
 	os.Args = []string{common.ProgramName, "p", "ls"}
 	c.Handle()
 
-	c = TestingCLI("handle_project")
+	c = TestingCLI("handle_project_add")
 	os.Args = []string{common.ProgramName, "p", "add", "test", "echo test"}
 	c.Handle()
 
@@ -209,7 +209,7 @@ func TestCLIHandleProject(t *testing.T) {
 	// os.Args = []string{common.ProgramName, "p", "rm", "test"}
 	// c.Handle()
 
-	c = TestingCLI("handle_project")
+	c = TestingCLI("handle_project_wrong_arg")
 	os.Args = []string{common.ProgramName, "p", "test"}
 	c.Handle()
 }
@@ -220,27 +220,27 @@ func TestCLIHandleVariable(t *testing.T) {
 	os.Args = []string{common.ProgramName, "v"}
 	c.Handle()
 
-	c = TestingCLI("handle_variable")
+	c = TestingCLI("handle_variable_ls")
 	os.Args = []string{common.ProgramName, "v", "ls"}
 	c.Handle()
 
-	c = TestingCLI("handle_variable")
+	c = TestingCLI("handle_variable_ls_project")
 	os.Args = []string{common.ProgramName, "v", "ls", "test"}
 	c.Handle()
 
-	c = TestingCLI("handle_variable")
+	c = TestingCLI("handle_variable_add")
 	os.Args = []string{common.ProgramName, "v", "add", "test"}
 	c.Handle()
 
-	c = TestingCLI("handle_variable")
+	c = TestingCLI("handle_variable_add_with_command")
 	os.Args = []string{common.ProgramName, "v", "add", "test", "echo test"}
 	c.Handle()
 
-	c = TestingCLI("handle_variable")
+	c = TestingCLI("handle_variable_remove")
 	os.Args = []string{common.ProgramName, "v", "rm", "test"}
 	c.Handle()
 
-	c = TestingCLI("handle_variable")
+	c = TestingCLI("handle_variable_wrong_arg")
 	os.Args = []string{common.ProgramName, "v", "test"}
 	c.Handle()
 }
@@ -251,11 +251,11 @@ func TestCLIHandleRun(t *testing.T) {
 	os.Args = []string{common.ProgramName, "run", "test"}
 	c.Handle()
 
-	c = TestingCLI("handle_run")
+	c = TestingCLI("handle_run_wrong_arg")
 	os.Args = []string{common.ProgramName, "run", "test", "echo test"}
 	c.Handle()
 
-	c = TestingCLI("handle_run")
+	c = TestingCLI("handle_run_no_arg")
 	os.Args = []string{common.ProgramName, "run"}
 	c.Handle()
 }

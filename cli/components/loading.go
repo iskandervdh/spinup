@@ -76,7 +76,7 @@ func (l Loading) View() string {
 		return common.SuccessText(l.successText)
 	}
 
-	return fmt.Sprintf("\n    %s %s\n", l.spinner.View(), l.loadingText)
+	return fmt.Sprintf("\n\t%s %s\n", l.spinner.View(), l.loadingText)
 }
 
 func (l Loading) GetErrorText() string {

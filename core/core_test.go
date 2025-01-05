@@ -3,6 +3,7 @@ package core
 import (
 	"os"
 	"path"
+	"strings"
 	"testing"
 
 	"github.com/iskandervdh/spinup/common"
@@ -106,8 +107,14 @@ func TestHostsConfigInit(t *testing.T) {
 		return
 	}
 
-	if string(buf) != expected {
-		t.Error("Expected hosts file to contain", expected, "got", string(buf))
+	hostsContent := string(buf)
+
+	if common.IsWindows() {
+		hostsContent = strings.ReplaceAll(hostsContent, "\u0000", "")
+	}
+
+	if hostsContent != expected {
+		t.Error("Expected hosts file to contain", expected, "got", hostsContent)
 		return
 	}
 }
