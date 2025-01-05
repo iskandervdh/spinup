@@ -51,8 +51,8 @@ func (c *Core) runCommand(wg *sync.WaitGroup, project Project, command *runningC
 
 	command.cmd = exec.Command(strings.Split(command.command, " ")[0], strings.Split(command.command, " ")[1:]...)
 
-	// Set process group ID to create a new process group
-	command.cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	// create a new process group for the command
+	command.cmd.SysProcAttr = createProcessGroup()
 
 	// Force color output
 	command.cmd.Env = append(os.Environ(), "FORCE_COLOR=1")
@@ -137,13 +137,7 @@ func (c *Core) run(project Project, projectName string) common.Msg {
 		// Send terminate signal to all running commands
 		for _, runningCommand := range runningCommands {
 			if runningCommand.cmd.Process != nil {
-				var err error
-
-				if common.IsWindows() {
-					err = runningCommand.cmd.Process.Kill() // Use Kill on Windows
-				} else {
-					err = syscall.Kill(-runningCommand.cmd.Process.Pid, syscall.SIGTERM) // Send SIGTERM to the process group on Unix
-				}
+				err := killProcess(runningCommand.cmd.Process)
 
 				if err != nil {
 					c.sendMsg(common.NewErrMsg("Failed to send SIGTERM to command '%s': %s", runningCommand.name, err))

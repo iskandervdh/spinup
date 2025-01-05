@@ -10,10 +10,6 @@ import (
 	"github.com/iskandervdh/spinup/common"
 )
 
-var nginxConfigDir = "/etc/nginx/conf.d"
-var hostsFile = "/etc/hosts"
-var hostsBackupDir = "/etc/hosts_bak"
-
 // Config contains all configuration options for the application.
 type Config struct {
 	configDir      string
@@ -70,7 +66,7 @@ func NewTesting(testingConfigDir string) *Config {
 
 // Add sudo to a command if not in testing mode.
 func (c *Config) withSudo(name string, args ...string) *exec.Cmd {
-	if c.IsTesting() {
+	if c.IsTesting() || common.IsWindows() {
 		return exec.Command(name, args...)
 	}
 

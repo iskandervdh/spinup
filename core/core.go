@@ -138,7 +138,7 @@ func (c *Core) GetConfig() *config.Config {
 //
 // It returns an error if the user does not have sudo permissions.
 func (c *Core) RequireSudo() error {
-	if c.config.IsTesting() {
+	if c.config.IsTesting() || common.IsWindows() {
 		return nil
 	}
 

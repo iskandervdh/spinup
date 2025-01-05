@@ -4,8 +4,11 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 	"strings"
+
+	"github.com/iskandervdh/spinup/common"
 )
 
 // Regex to match the server_name directive in a Nginx config file.
@@ -41,15 +44,13 @@ func (c *Config) AddNginxConfig(name string, domain string, port int64) error {
 		return fmt.Errorf("failed to check if config file exists: %v", err)
 	}
 
-	err := c.withSudo("touch", nginxConfigFilePath).Run()
+	// err := c.withSudo("touch", nginxConfigFilePath).Run()
 
-	if err != nil {
-		return err
-	}
+	// if err != nil {
+	// 	return err
+	// }
 
-	createCommand := c.withSudo("tee", nginxConfigFilePath)
-	createCommand.Stdin = strings.NewReader(config)
-	err = createCommand.Run()
+	err := c.writeToFile(nginxConfigFilePath, config)
 
 	if err != nil {
 		return err
@@ -132,9 +133,7 @@ func (c *Config) NginxAddDomainAlias(name string, domainAlias string) error {
 	newServerName := fmt.Sprintf("server_name %s %s;", serverName, domainAlias)
 	updatedConfig := strings.ReplaceAll(string(content), fmt.Sprintf("server_name %s;", serverName), newServerName)
 
-	updateCommand := c.withSudo("tee", nginxConfigFilePath)
-	updateCommand.Stdin = strings.NewReader(updatedConfig)
-	err = updateCommand.Run()
+	err = c.writeToFile(nginxConfigFilePath, updatedConfig)
 
 	if err != nil {
 		return err
@@ -173,9 +172,7 @@ func (c *Config) NginxRemoveDomainAlias(name string, domainAlias string) error {
 	newServerName := fmt.Sprintf("server_name %s;", updatedServerName)
 	updatedConfig := strings.ReplaceAll(string(content), fmt.Sprintf("server_name %s;", serverName), newServerName)
 
-	updateCommand := c.withSudo("tee", nginxConfigFilePath)
-	updateCommand.Stdin = strings.NewReader(updatedConfig)
-	err = updateCommand.Run()
+	err = c.writeToFile(nginxConfigFilePath, updatedConfig)
 
 	if err != nil {
 		return err
@@ -196,6 +193,14 @@ func (c *Config) InitNginx() error {
 		if err != nil {
 			return err
 		}
+	}
+
+	if common.IsWindows() {
+		fmt.Printf(
+			"\n!!! Please add the following include directive to http section of your nginx.conf file located at %s like this:\n",
+			filepath.Join(c.nginxConfigDir, "..", "nginx.conf"),
+		)
+		fmt.Printf("\nhttp {\n\t...\n\n\t%s\n}\n", "include \"C:/nginx/conf/conf.d/*.conf\";")
 	}
 
 	return nil
