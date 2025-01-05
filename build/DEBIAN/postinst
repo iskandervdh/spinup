@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+# Remove the old symlink if it exists and create a new one
+rm -f /usr/bin/spinup
+ln -s /usr/share/spinup/bin/spinup /usr/bin/spinup

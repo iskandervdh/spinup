@@ -1,7 +1,6 @@
 package common
 
 import (
-	"os/exec"
 	"runtime"
 )
 
@@ -11,10 +10,4 @@ func IsWindows() bool {
 
 func IsMacOS() bool {
 	return runtime.GOOS == "darwin"
-}
-
-func AppInstalled() bool {
-	_, err := exec.LookPath(AppCommand)
-
-	return err == nil
 }

@@ -1,0 +1,22 @@
+{
+  "$schema": "https://wails.io/schemas/config.v2.json",
+  "name": "Spinup",
+  "outputfilename": "spinup",
+  "frontend:install": "pnpm install",
+  "frontend:build": "pnpm run build",
+  "frontend:dev:watcher": "pnpm run dev",
+  "frontend:dev:serverUrl": "auto",
+
+  "author": {
+    "name": "Iskander",
+    "email": "iskandervdh@gmail.com"
+  },
+
+  "Info": {
+    "companyName": "Spinup",
+    "productName": "Spinup",
+    "productVersion": "{{version}}",
+    "copyright": "MIT",
+    "comments": "Quickly spin up your multi command projects."
+  }
+}
