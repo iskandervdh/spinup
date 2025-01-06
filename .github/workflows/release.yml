@@ -105,7 +105,7 @@ jobs:
           SPINUP_VERSION=$(cat ./common/.version | sed 's/^v//')
           sed -i "s/{{version}}/${SPINUP_VERSION}/g" wails.json
 
-          wails build --platform ${{ matrix.build.platform }} -webview2 ${{ env.WEBVIEW2 }} -nsis -o ${{ matrix.build.name }}
+          wails build --platform ${{ matrix.build.platform }} -webview2 ${{ env.WEBVIEW2 }} -nsis -o ${{ matrix.build.name }}-${SPINUP_VERSION}
         shell: bash
 
       # Add permissions to the binary
@@ -127,24 +127,24 @@ jobs:
         run: |
           SPINUP_VERSION=$(cat ./common/.version | sed 's/^v//')
 
-          for webkit_version in 40 41; do
-            mkdir -p deb/spinup-${SPINUP_VERSION}-webkit2-${webkit_version}/DEBIAN
-            mkdir -p deb/spinup-${SPINUP_VERSION}-webkit2-${webkit_version}/usr/share/spinup/bin
-            cp build/bin/spinup-${SPINUP_VERSION}-webkit2-${webkit_version} deb/spinup-${SPINUP_VERSION}-webkit2-${webkit_version}/usr/share/spinup/bin/spinup
-            cp build/DEBIAN/* deb/spinup-${SPINUP_VERSION}-webkit2-${webkit_version}/DEBIAN
-            cp -r build/share deb/spinup-${SPINUP_VERSION}-webkit2-${webkit_version}/usr
+          for os_version in "" "-ubuntu24.04"; do
+            mkdir -p deb/spinup-${SPINUP_VERSION}${os_version}/DEBIAN
+            mkdir -p deb/spinup-${SPINUP_VERSION}${os_version}/usr/share/spinup/bin
+            cp build/bin/spinup-${SPINUP_VERSION}${os_version} deb/spinup-${SPINUP_VERSION}${os_version}/usr/share/spinup/bin/spinup
+            cp build/DEBIAN/* deb/spinup-${SPINUP_VERSION}${os_version}/DEBIAN
+            cp -r build/share deb/spinup-${SPINUP_VERSION}${os_version}/usr
 
-            echo -e "\nVersion: $SPINUP_VERSION" >> deb/spinup-${SPINUP_VERSION}-webkit2-${webkit_version}/DEBIAN/control
+            echo -e "\nVersion: $SPINUP_VERSION" >> deb/spinup-${SPINUP_VERSION}${os_version}/DEBIAN/control
 
             if [ "$webkit_version" -eq "40" ]; then
-              echo "Depends: libgtk-3-0, libwebkit2gtk-4.0-dev" >> deb/spinup-${SPINUP_VERSION}-webkit2-${webkit_version}/DEBIAN/control
+              echo "Depends: libgtk-3-0, libwebkit2gtk-4.0-dev" >> deb/spinup-${SPINUP_VERSION}${os_version}/DEBIAN/control
             else
-              echo "Depends: libgtk-3-0, libwebkit2gtk-4.1-dev" >> deb/spinup-${SPINUP_VERSION}-webkit2-${webkit_version}/DEBIAN/control
+              echo "Depends: libgtk-3-0, libwebkit2gtk-4.1-dev" >> deb/spinup-${SPINUP_VERSION}${os_version}/DEBIAN/control
             fi
 
-            sudo chown -R root:root deb/spinup-${SPINUP_VERSION}-webkit2-${webkit_version}
+            sudo chown -R root:root deb/spinup-${SPINUP_VERSION}${os_version}
 
-            dpkg-deb --build deb/spinup-${SPINUP_VERSION}-webkit2-${webkit_version}
+            dpkg-deb --build deb/spinup-${SPINUP_VERSION}${os_version}
           done
         shell: bash
 
@@ -153,7 +153,7 @@ jobs:
         with:
           name: Wails Build ${{ runner.os }} ${{ matrix.build.name }}
           path: |
-            */bin/
+            */bin/*.exe
             *\bin\*.exe
             */spinup-*.deb
       - name: Release
@@ -161,5 +161,5 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         with:
           files: |
-            */bin/*
+            */bin/*.exe
             */spinup-*.deb
