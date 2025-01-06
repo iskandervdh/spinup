@@ -90,8 +90,8 @@ jobs:
           SPINUP_VERSION=$(cat ./common/.version | sed 's/^v//')
           sed -i "s/{{version}}/${SPINUP_VERSION}/g" wails.json
 
-          wails build --platform ${{ matrix.build.platform }} -webview2 ${{ env.WEBVIEW2 }} -o ${{ matrix.build.name }}-${SPINUP_VERSION}-webkit2-40 -tags webkit2_40
-          wails build --platform ${{ matrix.build.platform }} -webview2 ${{ env.WEBVIEW2 }} -o ${{ matrix.build.name }}-${SPINUP_VERSION}-webkit2-41 -tags webkit2_41
+          wails build --platform ${{ matrix.build.platform }} -webview2 ${{ env.WEBVIEW2 }} -o ${{ matrix.build.name }}-${SPINUP_VERSION} -tags webkit2_40
+          wails build --platform ${{ matrix.build.platform }} -webview2 ${{ env.WEBVIEW2 }} -o ${{ matrix.build.name }}-${SPINUP_VERSION}-ubuntu24.04 -tags webkit2_41
         shell: bash
       # - name: Build macOs App
       #   if: runner.os == 'macOS'
