@@ -12,11 +12,7 @@ To run spinup you need to have go installed on your system. You can download it 
 
 ### Installation
 
-To install spinup you can use the following command:
-
-```bash
-go install github.com/iskandervdh/spinup
-```
+Download an installer from the releases and run it.
 
 Afterwards you can initialize spinup using the following command:
 
@@ -155,16 +151,3 @@ spinup run <project>
 ```
 
 This will run the commands defined in the configuration for the project.
-
-## Possible future features
-
-- [x] Commands to add/remove commands from a project.
-- [x] Add option to set the path of the project to use so it can be run anywhere.
-- [x] Don't require `concurrently` to be installed.
-- [x] Use interactive CLI.
-- [x] Add tests.
-- [x] Better solution for showing what commands are available.
-- [x] Make adding domain aliases possible.
-- [x] GUI
-- [ ] Add option to set the path of the nginx folder to use.
-- [ ] Adding certificates to enable https for the project.
