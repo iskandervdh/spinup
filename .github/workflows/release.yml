@@ -76,7 +76,7 @@ jobs:
         if: runner.os == 'Linux'
         uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libgtk-3-0 libwebkit2gtk-4.0-dev libwebkit2gtk-4.1-dev gcc-aarch64-linux-gnu
+          packages: libgtk-3-0 libwebkit2gtk-4.0-dev libwebkit2gtk-4.1-dev gcc-aarch64-linux-gnu rpm
       - name: Install macOS Wails deps
         if: runner.os == 'macOS'
         run: brew install mitchellh/gon/gon
@@ -153,6 +153,30 @@ jobs:
         if: runner.os == 'macOS'
         working-directory: ${{ env.WORKING_DIRECTORY }}
         run: bash ./scripts/release/package-zip.sh
+
+      # Package as .rpm for RPM based distros
+      - name: Package as .rpm for RPM based distros
+        if: runner.os == 'Linux'
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: |
+          SPINUP_VERSION=$(cat ./common/.version | sed 's/^v//')
+
+          sed -i "s/{{version}}/${SPINUP_VERSION}/g" build/rpmbuild/SPECS/spinup.spec
+
+          cp build/bin/spinup-${SPINUP_VERSION}-webkit2-41 build/rpmbuild/SOURCES/spinup-${SPINUP_VERSION}
+          sudo chown -R root:root build/rpmbuild/SOURCES/spinup-${SPINUP_VERSION}
+
+          cd build/rpmbuild/SOURCES
+          tar --create --file spinup-${SPINUP_VERSION}.tar.gz spinup-${SPINUP_VERSION}
+          cd ../../..
+
+          rm -rf ~/rpmbuild
+          cp -r build/rpmbuild ~/
+
+          rpmbuild -bb ~/rpmbuild/SPECS/spinup.spec
+
+          cp ~/rpmbuild/RPMS/x86_64/spinup-${SPINUP_VERSION}-1.x86_64.rpm .
+        shell: bash
 
       # Upload build assets
       - uses: actions/upload-artifact@v4
