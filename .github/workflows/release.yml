@@ -40,9 +40,9 @@ jobs:
         with:
           submodules: recursive
 
-      # Setup and configure GoLang
-      - name: Setup GoLang
-        uses: actions/setup-go@v4
+      # Setup and configure Go
+      - name: Setup Go
+        uses: actions/setup-go@v5
         with:
           check-latest: true
           go-version: '1.23'
@@ -149,15 +149,15 @@ jobs:
         shell: bash
 
       # Upload build assets
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
-          name: Wails Build ${{ runner.os }} ${{ matrix.build.name }}
+          name: ${{ matrix.build.name }} (${{ runner.os }})
           path: |
             */bin/*.exe
             *\bin\*.exe
             */spinup-*.deb
       - name: Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
           files: |
