@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { PageTitle } from '../components/page-title';
+import { PageTitle } from '~/components/page-title';
 import { GetSpinupVersion } from 'wjs/go/app/App';
 import { Select } from '~/components/select';
 

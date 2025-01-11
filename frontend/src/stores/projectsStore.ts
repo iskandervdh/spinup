@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Projects } from '../types';
+import { Projects } from '~/types';
 import {
   GetProjects,
   RunProject,

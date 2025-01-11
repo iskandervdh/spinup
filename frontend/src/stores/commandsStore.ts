@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Commands } from '../types';
+import { Commands } from '~/types';
 import { AddCommand, GetCommands, RemoveCommand, UpdateCommand } from 'wjs/go/app/App';
 
 interface CommandsState {

@@ -10,10 +10,10 @@ import {
   FolderIcon,
   InformationCircleIcon,
 } from '@heroicons/react/20/solid';
-import { GetProjects } from '../../wailsjs/go/app/App';
+import { GetProjects } from 'wjs/go/app/App';
 import { useCallback, useEffect, useMemo } from 'react';
-import { PageTitle } from '../components/page-title';
-import { useProjectsStore } from '../stores/projectsStore';
+import { PageTitle } from '~/components/page-title';
+import { useProjectsStore } from '~/stores/projectsStore';
 import { BrowserOpenURL } from 'wjs/runtime/runtime';
 import { Button } from '~/components/button';
 import { Page, usePageStore } from '~/stores/pageStore';

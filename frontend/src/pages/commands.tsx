@@ -1,6 +1,6 @@
 import { useCallback, useEffect } from 'react';
-import { PageTitle } from '../components/page-title';
-import { GetCommands } from '../../wailsjs/go/app/App';
+import { PageTitle } from '~/components/page-title';
+import { GetCommands } from 'wjs/go/app/App';
 import { useCommandsStore } from '~/stores/commandsStore';
 import { Button } from '~/components/button';
 import { ArrowPathIcon, InformationCircleIcon, PencilSquareIcon, PlusIcon, TrashIcon } from '@heroicons/react/20/solid';

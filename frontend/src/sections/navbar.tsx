@@ -1,5 +1,5 @@
-import icon from '../assets/images/icon-transparent.png';
-import { DEFAULT_PAGE, NAV_PAGES, Page, usePageStore } from '../stores/pageStore';
+import icon from '~/assets/images/icon-transparent.png';
+import { DEFAULT_PAGE, NAV_PAGES, Page, usePageStore } from '~/stores/pageStore';
 
 function NavbarItem({ page }: { page: Page }) {
   const { currentPage, setCurrentPage } = usePageStore();
