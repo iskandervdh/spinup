@@ -1,4 +1,4 @@
-import logo from '../assets/images/icon.svg';
+import icon from '../assets/images/icon-transparent.png';
 import { DEFAULT_PAGE, NAV_PAGES, Page, usePageStore } from '../stores/pageStore';
 
 function NavbarItem({ page }: { page: Page }) {
@@ -23,7 +23,7 @@ export function Navbar() {
   return (
     <div className="flex items-center h-20 gap-8 px-6 border-b select-none min-h-20 border-primary/50 overflow-clip">
       <img
-        src={logo}
+        src={icon}
         id="logo"
         alt="logo"
         className="w-12 h-12 cursor-pointer"

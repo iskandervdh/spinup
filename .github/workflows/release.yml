@@ -120,6 +120,18 @@ jobs:
       #   run: chmod +x build/bin/*/Contents/MacOS/*
       #   shell: bash
 
+      # Generate icons for Linux and macOS
+      - name: Generate icons
+        if: runner.os == 'Linux' || runner.os == 'macOS'
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: bash ./generate-icons.sh
+        shell: bash
+        cache:
+          key: ${{ runner.os }}-icons-${{ hashFiles('images/icon-large.png') }}
+          paths:
+            - build/share/icons
+            - build/share/pixmaps
+
       # Package as .deb for Ubuntu
       - name: Package as .deb for Ubuntu
         if: runner.os == 'Linux'
