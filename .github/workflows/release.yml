@@ -88,7 +88,7 @@ jobs:
         working-directory: ${{ env.WORKING_DIRECTORY }}
         run: |
           SPINUP_VERSION=$(cat ./common/.version | sed 's/^v//')
-          sed -i "s/{{version}}/${SPINUP_VERSION}/g" wails.json
+          sed -i.bak "s/{{version}}/${SPINUP_VERSION}/g" wails.json && rm wails.json.bak
 
           wails build --platform ${{ matrix.build.platform }} -webview2 ${{ env.WEBVIEW2 }} -o ${{ matrix.build.name }}-${SPINUP_VERSION} -tags webkit2_40
           wails build --platform ${{ matrix.build.platform }} -webview2 ${{ env.WEBVIEW2 }} -o ${{ matrix.build.name }}-${SPINUP_VERSION}-ubuntu24.04 -tags webkit2_41
@@ -96,7 +96,11 @@ jobs:
       - name: Build macOs App
         if: runner.os == 'macOS'
         working-directory: ${{ env.WORKING_DIRECTORY }}
-        run: wails build --platform ${{ matrix.build.platform }} -webview2 ${{ env.WEBVIEW2 }} -o ${{ matrix.build.name }}
+        run: |
+          SPINUP_VERSION=$(cat ./common/.version | sed 's/^v//')
+          sed -i.bak "s/{{version}}/${SPINUP_VERSION}/g" wails.json && rm wails.json.bak
+
+          wails build --platform ${{ matrix.build.platform }} -webview2 ${{ env.WEBVIEW2 }} -o ${{ matrix.build.name }}-${SPINUP_VERSION}
         shell: bash
       - name: Build Windows App + Installer
         if: runner.os == 'Windows'
@@ -171,7 +175,7 @@ jobs:
         with:
           name: ${{ matrix.build.name }} (${{ runner.os }})
           path: |
-            */bin/*
+            */bin/*/Contents/MacOS/*
             */bin/*.exe
             *\bin\*.exe
             */spinup-*.deb
@@ -180,6 +184,6 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         with:
           files: |
-            */bin/*
+            */bin/*/Contents/MacOS/*
             */bin/*.exe
             */spinup-*.deb
