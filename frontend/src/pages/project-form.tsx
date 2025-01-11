@@ -84,14 +84,21 @@ export function ProjectFormPage() {
           <label htmlFor="name" className="w-min">
             Name
           </label>
-          <Input id="name" name="name" type="text" value={name} onChange={(e) => setName(e.target.value)} />
+          <Input id="name" name="name" type="text" required value={name} onChange={(e) => setName(e.target.value)} />
         </div>
 
         <div className="flex flex-col gap-2">
           <label htmlFor="domain" className="w-min">
             Domain
           </label>
-          <Input id="domain" name="domain" type="text" value={domain} onChange={(e) => setDomain(e.target.value)} />
+          <Input
+            id="domain"
+            name="domain"
+            type="text"
+            required
+            value={domain}
+            onChange={(e) => setDomain(e.target.value)}
+          />
         </div>
 
         <div className="flex flex-col gap-2">
@@ -102,6 +109,7 @@ export function ProjectFormPage() {
             id="port"
             name="port"
             type="number"
+            required
             min={1}
             max={65536}
             value={port}

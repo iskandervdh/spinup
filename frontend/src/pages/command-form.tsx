@@ -72,14 +72,21 @@ export function CommandFormPage() {
           <label htmlFor="name" className="w-min">
             Name
           </label>
-          <Input id="name" name="name" type="text" value={name} onChange={(e) => setName(e.target.value)} />
+          <Input id="name" name="name" type="text" required value={name} onChange={(e) => setName(e.target.value)} />
         </div>
 
         <div className="flex flex-col gap-2">
           <label htmlFor="command" className="w-min">
             Command
           </label>
-          <Input id="command" name="command" type="text" value={command} onChange={(e) => setCommand(e.target.value)} />
+          <Input
+            id="command"
+            name="command"
+            type="text"
+            required
+            value={command}
+            onChange={(e) => setCommand(e.target.value)}
+          />
         </div>
 
         <Button type="submit" className="mt-2">
