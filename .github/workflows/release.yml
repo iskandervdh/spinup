@@ -26,9 +26,9 @@ jobs:
           - name: 'spinup'
             platform:  'linux/amd64'
             os: 'ubuntu-22.04'
-          # - name: 'spinup'
-          #   platform:  'darwin/universal'
-          #   os: 'macos-latest'
+          - name: 'spinup'
+            platform:  'darwin/universal'
+            os: 'macos-latest'
           - name: 'Spinup'
             platform:  'windows/amd64'
             os: 'windows-latest'
@@ -77,10 +77,10 @@ jobs:
         uses: awalsh128/cache-apt-pkgs-action@latest
         with:
           packages: libgtk-3-0 libwebkit2gtk-4.0-dev libwebkit2gtk-4.1-dev gcc-aarch64-linux-gnu
-      # - name: Install macOS Wails deps
-      #   if: runner.os == 'macOS'
-      #   run: brew install mitchellh/gon/gon
-      #   shell: bash
+      - name: Install macOS Wails deps
+        if: runner.os == 'macOS'
+        run: brew install mitchellh/gon/gon
+        shell: bash
 
       # Building step
       - name: Build Linux App
@@ -93,11 +93,11 @@ jobs:
           wails build --platform ${{ matrix.build.platform }} -webview2 ${{ env.WEBVIEW2 }} -o ${{ matrix.build.name }}-${SPINUP_VERSION} -tags webkit2_40
           wails build --platform ${{ matrix.build.platform }} -webview2 ${{ env.WEBVIEW2 }} -o ${{ matrix.build.name }}-${SPINUP_VERSION}-ubuntu24.04 -tags webkit2_41
         shell: bash
-      # - name: Build macOs App
-      #   if: runner.os == 'macOS'
-      #   working-directory: ${{ env.WORKING_DIRECTORY }}
-      #   run: wails build --platform ${{ matrix.build.platform }} -webview2 ${{ env.WEBVIEW2 }} -o ${{ matrix.build.name }}
-      #   shell: bash
+      - name: Build macOs App
+        if: runner.os == 'macOS'
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: wails build --platform ${{ matrix.build.platform }} -webview2 ${{ env.WEBVIEW2 }} -o ${{ matrix.build.name }}
+        shell: bash
       - name: Build Windows App + Installer
         if: runner.os == 'Windows'
         working-directory: ${{ env.WORKING_DIRECTORY }}
@@ -114,11 +114,11 @@ jobs:
         working-directory: ${{ env.WORKING_DIRECTORY }}
         run: chmod +x build/bin/*
         shell: bash
-      # - name: Add macOS perms
-      #   if: runner.os == 'macOS'
-      #   working-directory: ${{ env.WORKING_DIRECTORY }}
-      #   run: chmod +x build/bin/*/Contents/MacOS/*
-      #   shell: bash
+      - name: Add macOS perms
+        if: runner.os == 'macOS'
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: chmod +x build/bin/*/Contents/MacOS/*
+        shell: bash
 
       # Generate icons for Linux and macOS
       - name: Load cached icons
@@ -130,7 +130,6 @@ jobs:
           path: |
             build/share/icons
             build/share/pixmaps
-
       - name: Generate icons
         if: (runner.os == 'Linux' || runner.os == 'macOS') && steps.cache-icons.outputs.cache-hit != 'true'
         working-directory: ${{ env.WORKING_DIRECTORY }}
@@ -170,6 +169,7 @@ jobs:
         with:
           name: ${{ matrix.build.name }} (${{ runner.os }})
           path: |
+            */bin/*
             */bin/*.exe
             *\bin\*.exe
             */spinup-*.deb
@@ -178,5 +178,6 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         with:
           files: |
+            */bin/*
             */bin/*.exe
             */spinup-*.deb
