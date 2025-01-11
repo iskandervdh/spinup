@@ -122,7 +122,8 @@ jobs:
 
       # Generate icons for Linux and macOS
       - name: Load cached icons
-        if: runner.os == 'Linux' || runner.os == 'macOS'
+        # if: runner.os == 'Linux' || runner.os == 'macOS'
+        if: runner.os == 'Linux'
         id: cache-icons
         uses: actions/cache@v4
         with:
@@ -131,7 +132,8 @@ jobs:
             build/share/icons
             build/share/pixmaps
       - name: Generate icons
-        if: (runner.os == 'Linux' || runner.os == 'macOS') && steps.cache-icons.outputs.cache-hit != 'true'
+        # if: (runner.os == 'Linux' || runner.os == 'macOS') && steps.cache-icons.outputs.cache-hit != 'true'
+        if: runner.os == 'Linux' && steps.cache-icons.outputs.cache-hit != 'true'
         working-directory: ${{ env.WORKING_DIRECTORY }}
         run: bash ./generate-icons.sh
         shell: bash
