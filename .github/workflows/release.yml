@@ -121,16 +121,21 @@ jobs:
       #   shell: bash
 
       # Generate icons for Linux and macOS
-      - name: Generate icons
+      - name: Load cached icons
         if: runner.os == 'Linux' || runner.os == 'macOS'
+        id: cache-icons
+        uses: actions/cache@v4
+        with:
+          key: ${{ runner.os }}-icons-${{ hashFiles('images/icon-large.png') }}
+          path: |
+            build/share/icons
+            build/share/pixmaps
+
+      - name: Generate icons
+        if: (runner.os == 'Linux' || runner.os == 'macOS') && steps.cache-icons.outputs.cache-hit != 'true'
         working-directory: ${{ env.WORKING_DIRECTORY }}
         run: bash ./generate-icons.sh
         shell: bash
-        cache:
-          key: ${{ runner.os }}-icons-${{ hashFiles('images/icon-large.png') }}
-          paths:
-            - build/share/icons
-            - build/share/pixmaps
 
       # Package as .deb for Ubuntu
       - name: Package as .deb for Ubuntu
