@@ -5,14 +5,19 @@ import { useCommandsStore } from '~/stores/commandsStore';
 import { useProjectsStore } from '~/stores/projectsStore';
 import { GetCommands } from 'wjs/go/app/App';
 import { Button } from '~/components/button';
-import { Page, usePageStore } from '~/stores/pageStore';
 import { SelectMultiple } from '~/components/select-multiple';
 import toast from 'react-hot-toast';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
+
+export const Route = createFileRoute('/project-form')({
+  component: ProjectFormPage,
+});
 
 export function ProjectFormPage() {
+  const navigate = useNavigate();
+
   const { commands, setCommands } = useCommandsStore();
   const { projects, projectFormSubmit, editingProject } = useProjectsStore();
-  const { setCurrentPage } = usePageStore();
 
   const [name, setName] = useState('');
   const [domain, setDomain] = useState('');
@@ -50,7 +55,7 @@ export function ProjectFormPage() {
             ),
         })
         .then(() => {
-          setCurrentPage(Page.Projects);
+          navigate({ to: '/projects' });
         });
     },
     [name, domain, port, commandNames, editingProject, projectFormSubmit]

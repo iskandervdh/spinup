@@ -8,6 +8,14 @@ import (
 )
 
 func (a *App) GetCommands() []core.Command {
+	err := a.core.FetchCommands()
+
+	if err != nil {
+		fmt.Println("Error getting commands config:", err)
+
+		return nil
+	}
+
 	commands, err := a.core.GetCommands()
 
 	if err != nil {

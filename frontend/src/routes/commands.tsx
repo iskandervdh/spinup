@@ -1,18 +1,25 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { PageTitle } from '~/components/page-title';
 import { GetCommands } from 'wjs/go/app/App';
 import { useCommandsStore } from '~/stores/commandsStore';
 import { Button } from '~/components/button';
 import { ArrowPathIcon, InformationCircleIcon, PlusIcon } from '@heroicons/react/20/solid';
-import { Page, usePageStore } from '~/stores/pageStore';
 import { CommandInfo } from '~/sections/command-info';
+import { createFileRoute, Link } from '@tanstack/react-router';
 
-export function CommandsPage() {
-  const { setCurrentPage } = usePageStore();
+export const Route = createFileRoute('/commands')({
+  component: Commands,
+});
+
+function Commands() {
   const { commands, setCommands, setEditingCommand } = useCommandsStore();
 
-  useEffect(() => {
+  const fetchCommands = useCallback(() => {
     GetCommands().then((commands) => setCommands(commands || []));
+  }, [setCommands]);
+
+  useEffect(() => {
+    fetchCommands();
   }, []);
 
   return (
@@ -21,21 +28,15 @@ export function CommandsPage() {
         <PageTitle>Commands</PageTitle>
 
         <div className="flex gap-2">
-          <Button onClick={() => GetCommands().then(setCommands)} size={'icon-lg'} title="Refresh commands">
+          <Button onClick={fetchCommands} size="icon-lg" title="Refresh commands">
             <ArrowPathIcon width={24} height={24} className="text-current" />
           </Button>
 
-          <Button
-            onClick={() => {
-              setEditingCommand(null);
-              setCurrentPage(Page.CommandForm);
-            }}
-            size={'icon-lg'}
-            variant={'success'}
-            title="Add command"
-          >
-            <PlusIcon width={24} height={24} className="text-current" />
-          </Button>
+          <Link to="/command-form" onClick={() => setEditingCommand(null)}>
+            <Button size="icon-lg" variant="success" title="Add command">
+              <PlusIcon width={24} height={24} className="text-current" />
+            </Button>
+          </Link>
         </div>
       </div>
 
@@ -49,16 +50,11 @@ export function CommandsPage() {
               </div>
 
               <div>
-                <Button
-                  onClick={() => {
-                    setEditingCommand(null);
-                    setCurrentPage(Page.CommandForm);
-                  }}
-                  size={'xs'}
-                  variant={'success'}
-                >
-                  Add a command
-                </Button>
+                <Link to="/command-form" onClick={() => setEditingCommand(null)}>
+                  <Button size="xs" variant="success">
+                    Add a command
+                  </Button>
+                </Link>
               </div>
             </div>
           ) : (

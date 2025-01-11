@@ -3,12 +3,17 @@ import { Input } from '~/components/input';
 import { PageTitle } from '~/components/page-title';
 import { useCommandsStore } from '~/stores/commandsStore';
 import { Button } from '~/components/button';
-import { Page, usePageStore } from '~/stores/pageStore';
 import toast from 'react-hot-toast';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
 
-export function CommandFormPage() {
+export const Route = createFileRoute('/command-form')({
+  component: CommandForm,
+});
+
+function CommandForm() {
+  const navigate = useNavigate();
+
   const { commands, commandFormSubmit, editingCommand, setEditingCommand } = useCommandsStore();
-  const { setCurrentPage } = usePageStore();
 
   const [name, setName] = useState('');
   const [command, setCommand] = useState('');
@@ -44,7 +49,7 @@ export function CommandFormPage() {
             ),
         })
         .then(() => {
-          setCurrentPage(Page.Commands);
+          navigate({ to: '/commands' });
         });
     },
     [name, command, editingCommand, commandFormSubmit]

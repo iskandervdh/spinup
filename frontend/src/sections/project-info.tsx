@@ -7,15 +7,17 @@ import {
   StopIcon,
   TrashIcon,
 } from '@heroicons/react/20/solid';
+import { useNavigate } from '@tanstack/react-router';
 import { useCallback, useMemo } from 'react';
 import toast from 'react-hot-toast';
 import { core } from 'wjs/go/models';
 import { BrowserOpenURL } from 'wjs/runtime/runtime';
 import { Button } from '~/components/button';
-import { Page, usePageStore } from '~/stores/pageStore';
 import { useProjectsStore } from '~/stores/projectsStore';
 
 export function ProjectInfo({ project }: { project: core.Project }) {
+  const navigate = useNavigate();
+
   const {
     runningProjects,
     runProject,
@@ -25,7 +27,6 @@ export function ProjectInfo({ project }: { project: core.Project }) {
     setCurrentProject,
     setEditingProject,
   } = useProjectsStore();
-  const { setCurrentPage } = usePageStore();
 
   const isRunning = useMemo(() => runningProjects.includes(project.Name), [runningProjects]);
   const commands = useMemo(() => project.Commands?.map((c) => c.Name).join(', '), [project.Commands]);
@@ -74,8 +75,8 @@ export function ProjectInfo({ project }: { project: core.Project }) {
 
   const edit = useCallback(() => {
     setEditingProject(project.Name);
-    setCurrentPage(Page.ProjectForm);
-  }, [project.Name, setEditingProject, setCurrentPage]);
+    navigate({ to: '/project-form' });
+  }, [project.Name, setEditingProject]);
 
   const remove = useCallback(async () => {
     if (confirm(`Are you sure you want to remove project "${project.Name}"?`)) {
@@ -109,16 +110,16 @@ export function ProjectInfo({ project }: { project: core.Project }) {
         <div className="flex items-center gap-2">
           <h3 className="pr-2 text-xl font-bold text-primary">{project.Name}</h3>
 
-          <Button onClick={edit} size={'xs'} title="Edit project">
+          <Button onClick={edit} size="xs" title="Edit project">
             <PencilSquareIcon width={16} height={16} className="text-current" />
           </Button>
 
           {isRunning ? (
-            <Button onClick={showLogs} size={'icon'} variant={'info'} title="Show logs">
+            <Button onClick={showLogs} size="icon" variant="info" title="Show logs">
               <DocumentTextIcon width={16} height={16} className="text-current" />
             </Button>
           ) : (
-            <Button onClick={remove} size={'icon'} variant={'error'} title="Remove project">
+            <Button onClick={remove} size="icon" variant="error" title="Remove project">
               <TrashIcon width={16} height={16} className="text-current" />
             </Button>
           )}
@@ -152,17 +153,17 @@ export function ProjectInfo({ project }: { project: core.Project }) {
         <div>Directory</div>
         {project.Dir.Valid ? (
           <div className="flex items-center gap-2 py-1">
-            <Button onClick={openProjectDir} size={'xs'} title="Open project directory">
+            <Button onClick={openProjectDir} size="xs" title="Open project directory">
               <FolderIcon width={16} height={16} className="text-current" />
             </Button>
 
-            <Button onClick={openSelectProjectDir} size={'xs'} title="Change project directory">
+            <Button onClick={openSelectProjectDir} size="xs" title="Change project directory">
               <PencilSquareIcon width={16} height={16} className="text-current" />
             </Button>
           </div>
         ) : (
           <div className="w-full py-2 min-w-32 max-w-64">
-            <Button onClick={openSelectProjectDir} size={'xs'} title="Select project directory">
+            <Button onClick={openSelectProjectDir} size="xs" title="Select project directory">
               Select directory
             </Button>
           </div>

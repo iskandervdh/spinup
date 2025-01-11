@@ -2,8 +2,13 @@ import { useEffect, useState } from 'react';
 import { PageTitle } from '~/components/page-title';
 import { GetSpinupVersion } from 'wjs/go/app/App';
 import { Select } from '~/components/select';
+import { createFileRoute } from '@tanstack/react-router';
 
-export function SettingsPage() {
+export const Route = createFileRoute('/settings')({
+  component: Settings,
+});
+
+function Settings() {
   const [spinupVersion, setSpinupVersion] = useState<string | null>(null);
 
   useEffect(() => {

@@ -11,6 +11,7 @@ import (
 
 func (a *App) GetProjects() []core.Project {
 	err := a.core.FetchCommands()
+
 	if err != nil {
 		fmt.Println("Error getting commands config:", err)
 	}
