@@ -28,7 +28,7 @@ export function CommandFormPage() {
         .promise(commandFormSubmit(name, command), {
           loading: editingCommand ? 'Saving command...' : 'Creating command...',
           success: editingCommand ? <b>Command saved</b> : <b>Command created</b>,
-          error: (err) =>
+          error: (err: any) =>
             editingCommand ? (
               <b>
                 Failed to save command:

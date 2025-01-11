@@ -34,7 +34,7 @@ export function ProjectFormPage() {
         .promise(projectFormSubmit(name, domain, port, commandNames), {
           loading: editingProject ? 'Saving project...' : 'Creating project...',
           success: editingProject ? <b>Project saved</b> : <b>Project created</b>,
-          error: (err) =>
+          error: (err: any) =>
             editingProject ? (
               <b>
                 Failed to save project:

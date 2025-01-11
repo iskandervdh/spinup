@@ -21,7 +21,7 @@ export const NAV_PAGES = [Page.Projects, Page.Commands, Page.Settings] as const;
 interface PageState {
   currentPage: Page;
   setCurrentPage: (page: Page) => void;
-  getPageComponent: (currentPage: Page) => () => JSX.Element;
+  getPageComponent: (currentPage: Page) => () => React.JSX.Element;
 }
 
 export const usePageStore = create<PageState>((set) => ({
