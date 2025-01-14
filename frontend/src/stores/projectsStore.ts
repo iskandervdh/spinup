@@ -21,7 +21,7 @@ interface ProjectsState {
   runProject: (projectName: string) => Promise<void>;
   stopProject: (projectName: string) => Promise<void>;
   selectProjectDir: (projectName: string, defaultDir: string | undefined) => Promise<void>;
-  projectFormSubmit: (projectName: string, domain: string, port: number, commandNames: string[]) => Promise<void>;
+  projectFormSubmit: (projectName: string, port: number, commandNames: string[]) => Promise<void>;
   removeProject: (projectName: string) => Promise<void>;
 
   currentProject: string | null;
@@ -52,12 +52,12 @@ export const useProjectsStore = create<ProjectsState>((set, get) => ({
     const projects = await GetProjects();
     set(() => ({ projects }));
   },
-  async projectFormSubmit(projectName, domain, port, commandNames) {
+  async projectFormSubmit(projectName, port, commandNames) {
     if (get().editingProject === projectName) {
-      await UpdateProject(projectName, domain, port, commandNames);
+      await UpdateProject(projectName, port, commandNames);
       set(() => ({ editingProject: null }));
     } else {
-      await AddProject(projectName, domain, port, commandNames);
+      await AddProject(projectName, port, commandNames);
     }
 
     const projects = await GetProjects();

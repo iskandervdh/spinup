@@ -14,8 +14,6 @@ import (
 type Config struct {
 	configDir      string
 	nginxConfigDir string
-	hostsFile      string
-	hostsBackupDir string
 
 	testing bool
 }
@@ -46,8 +44,6 @@ func New() (*Config, error) {
 	return &Config{
 		configDir:      configDir,
 		nginxConfigDir: nginxConfigDir,
-		hostsFile:      hostsFile,
-		hostsBackupDir: hostsBackupDir,
 		testing:        false,
 	}, nil
 }
@@ -58,8 +54,6 @@ func NewTesting(testingConfigDir string) *Config {
 	return &Config{
 		configDir:      testingConfigDir,
 		nginxConfigDir: path.Join(testingConfigDir, "/nginx/conf.d"),
-		hostsFile:      path.Join(testingConfigDir, "hosts"),
-		hostsBackupDir: path.Join(testingConfigDir, "hosts_bak"),
 		testing:        true,
 	}
 }
@@ -86,16 +80,6 @@ func (c *Config) GetDatabasePath() string {
 // Returns the path to the nginx configuration directory.
 func (c *Config) GetNginxConfigDir() string {
 	return c.nginxConfigDir
-}
-
-// Returns the path to the hosts file.
-func (c *Config) GetHostsFile() string {
-	return c.hostsFile
-}
-
-// Returns the path to the hosts backup directory.
-func (c *Config) GetHostsBackupDir() string {
-	return c.hostsBackupDir
 }
 
 // Returns whether the application is in testing mode.

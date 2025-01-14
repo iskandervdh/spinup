@@ -159,9 +159,9 @@ jobs:
             echo -e "\nVersion: $SPINUP_VERSION" >> deb/spinup-${SPINUP_VERSION}${os_version}/DEBIAN/control
 
             if [ "$webkit_version" -eq "40" ]; then
-              echo "Depends: libgtk-3-0, libwebkit2gtk-4.0-dev" >> deb/spinup-${SPINUP_VERSION}${os_version}/DEBIAN/control
+              echo "Depends: dnsmasq, libgtk-3-0, libwebkit2gtk-4.0-dev" >> deb/spinup-${SPINUP_VERSION}${os_version}/DEBIAN/control
             else
-              echo "Depends: libgtk-3-0, libwebkit2gtk-4.1-dev" >> deb/spinup-${SPINUP_VERSION}${os_version}/DEBIAN/control
+              echo "Depends: dnsmasq, libgtk-3-0, libwebkit2gtk-4.1-dev" >> deb/spinup-${SPINUP_VERSION}${os_version}/DEBIAN/control
             fi
 
             sudo chown -R root:root deb/spinup-${SPINUP_VERSION}${os_version}

@@ -37,7 +37,7 @@ func (c *CLI) listProjects() {
 		c.sendMsg(
 			common.NewRegularMsg("%-10s %-30s %-10d %-20s\n",
 				project.Name,
-				project.Domain,
+				fmt.Sprintf("%s.%s", project.Name, common.TLD),
 				project.Port,
 				commands,
 			),
@@ -46,18 +46,17 @@ func (c *CLI) listProjects() {
 }
 
 // Add a project and display a loading message.
-func (c *CLI) addProject(name string, domain string, port int64, commandNames []string) {
+func (c *CLI) addProject(name string, port int64, commandNames []string) {
 	c.Loading(fmt.Sprintf("Adding project %s...", name),
 		func() common.Msg {
-			return c.core.AddProject(name, domain, port, commandNames)
+			return c.core.AddProject(name, port, commandNames)
 		},
 	)
 }
 
-// Add a project interactively by asking the user for the name, domain, port and commands.
+// Add a project interactively by asking the user for the name, port and commands.
 func (c *CLI) addProjectInteractive() {
 	name := c.Input("Project name:", "")
-	domain := c.Input("Domain:", "")
 	port := c.Input("Port:", "")
 
 	portInt, err := strconv.ParseInt(port, 10, 64)
@@ -78,7 +77,7 @@ func (c *CLI) addProjectInteractive() {
 		return
 	}
 
-	c.addProject(name, domain, portInt, selectedCommands)
+	c.addProject(name, portInt, selectedCommands)
 }
 
 // Remove a project and display a loading message.
@@ -116,10 +115,10 @@ func (c *CLI) removeProjectInteractive() {
 }
 
 // Edit a project and display a loading message.
-func (c *CLI) editProject(name string, domain string, port int64, commandNames []string) {
+func (c *CLI) editProject(name string, port int64, commandNames []string) {
 	c.Loading(fmt.Sprintf("Updating project %s...", name),
 		func() common.Msg {
-			return c.core.UpdateProject(name, domain, port, commandNames)
+			return c.core.UpdateProject(name, port, commandNames)
 		},
 	)
 }
@@ -149,7 +148,6 @@ func (c *CLI) editProjectInteractive() {
 		return
 	}
 
-	domain := c.Input("Domain:", project.Domain)
 	port := c.Input("Port:", strconv.FormatInt(project.Port, 10))
 
 	portInt, err := strconv.ParseInt(port, 10, 64)
@@ -177,7 +175,7 @@ func (c *CLI) editProjectInteractive() {
 		return
 	}
 
-	c.sendMsg(c.core.UpdateProject(name, domain, portInt, selectedCommands))
+	c.sendMsg(c.core.UpdateProject(name, portInt, selectedCommands))
 }
 
 // Handle the project subcommand.
@@ -196,19 +194,19 @@ func (c *CLI) handleProject() {
 			return
 		}
 
-		if len(os.Args) < 6 {
-			c.sendMsg(common.NewRegularMsg("Usage: %s project add <name> <domain> <port> [command names...]\n", common.ProgramName))
+		if len(os.Args) < 5 {
+			c.sendMsg(common.NewRegularMsg("Usage: %s project add <name> <port> [command names...]\n", common.ProgramName))
 			return
 		}
 
-		port, err := strconv.ParseInt(os.Args[5], 10, 64)
+		port, err := strconv.ParseInt(os.Args[4], 10, 64)
 
 		if err != nil {
 			c.ErrorPrint("Port must be an integer")
 			return
 		}
 
-		c.addProject(os.Args[3], os.Args[4], port, os.Args[6:])
+		c.addProject(os.Args[3], port, os.Args[5:])
 	case "remove", "rm":
 		if len(os.Args) == 3 {
 			c.removeProjectInteractive()
@@ -227,19 +225,19 @@ func (c *CLI) handleProject() {
 			return
 		}
 
-		if len(os.Args) < 6 {
-			c.sendMsg(common.NewRegularMsg("Usage: %s project edit <name> <domain> <port> [command names...]\n", common.ProgramName))
+		if len(os.Args) < 5 {
+			c.sendMsg(common.NewRegularMsg("Usage: %s project edit <name> <port> [command names...]\n", common.ProgramName))
 			return
 		}
 
-		port, err := strconv.ParseInt(os.Args[5], 10, 64)
+		port, err := strconv.ParseInt(os.Args[4], 10, 64)
 
 		if err != nil {
 			c.ErrorPrint("Port must be an integer")
 			return
 		}
 
-		c.editProject(os.Args[3], os.Args[4], port, os.Args[6:])
+		c.editProject(os.Args[3], port, os.Args[5:])
 	case "rename", "mv":
 		if len(os.Args) < 5 {
 			c.sendMsg(common.NewRegularMsg("Usage: %s project rename|mv <old-name> <new-name>\n", common.ProgramName))

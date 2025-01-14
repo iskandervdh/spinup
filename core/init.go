@@ -38,11 +38,6 @@ func (c *Core) Init() common.Msg {
 	}
 
 	c.RequireSudo()
-	err = c.config.InitHosts()
-
-	if err != nil {
-		return common.NewErrMsg("Error initializing hosts file: %v", err)
-	}
 
 	err = c.config.InitNginx()
 

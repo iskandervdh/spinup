@@ -12,26 +12,24 @@ import (
 
 const createProject = `-- name: CreateProject :one
 INSERT INTO projects (
-  name, domain, port
+  name, port
 ) VALUES (
-  ?, ?, ?
+  ?, ?
 )
-RETURNING id, name, domain, port, dir
+RETURNING id, name, port, dir
 `
 
 type CreateProjectParams struct {
-	Name   string
-	Domain string
-	Port   int64
+	Name string
+	Port int64
 }
 
 func (q *Queries) CreateProject(ctx context.Context, arg CreateProjectParams) (Project, error) {
-	row := q.db.QueryRowContext(ctx, createProject, arg.Name, arg.Domain, arg.Port)
+	row := q.db.QueryRowContext(ctx, createProject, arg.Name, arg.Port)
 	var i Project
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
-		&i.Domain,
 		&i.Port,
 		&i.Dir,
 	)
@@ -94,7 +92,7 @@ func (q *Queries) DeleteProject(ctx context.Context, name string) error {
 }
 
 const getProject = `-- name: GetProject :one
-SELECT id, name, domain, port, dir
+SELECT id, name, port, dir
 FROM projects
 WHERE name = ? LIMIT 1
 `
@@ -105,7 +103,6 @@ func (q *Queries) GetProject(ctx context.Context, name string) (Project, error) 
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
-		&i.Domain,
 		&i.Port,
 		&i.Dir,
 	)
@@ -206,7 +203,7 @@ func (q *Queries) GetProjectVariables(ctx context.Context, projectID int64) ([]V
 }
 
 const getProjects = `-- name: GetProjects :many
-SELECT id, name, domain, port, dir
+SELECT id, name, port, dir
 FROM projects
 `
 
@@ -222,7 +219,6 @@ func (q *Queries) GetProjects(ctx context.Context) ([]Project, error) {
 		if err := rows.Scan(
 			&i.ID,
 			&i.Name,
-			&i.Domain,
 			&i.Port,
 			&i.Dir,
 		); err != nil {
@@ -273,23 +269,17 @@ func (q *Queries) SetProjectDir(ctx context.Context, arg SetProjectDirParams) er
 
 const updateProject = `-- name: UpdateProject :exec
 UPDATE projects
-SET domain = ?, port = ?, dir = ?
+SET port = ?, dir = ?
 WHERE name = ?
 `
 
 type UpdateProjectParams struct {
-	Domain string
-	Port   int64
-	Dir    sql.NullString
-	Name   string
+	Port int64
+	Dir  sql.NullString
+	Name string
 }
 
 func (q *Queries) UpdateProject(ctx context.Context, arg UpdateProjectParams) error {
-	_, err := q.db.ExecContext(ctx, updateProject,
-		arg.Domain,
-		arg.Port,
-		arg.Dir,
-		arg.Name,
-	)
+	_, err := q.db.ExecContext(ctx, updateProject, arg.Port, arg.Dir, arg.Name)
 	return err
 }

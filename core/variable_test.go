@@ -12,7 +12,7 @@ func TestListVariablesEmpty(t *testing.T) {
 	c := TestingCore(testName)
 
 	c.FetchProjects()
-	c.AddProject("test", "test.local", 8000, []string{})
+	c.AddProject("test", 8000, []string{})
 
 	// Refetch projects
 	c.FetchProjects()
@@ -50,7 +50,7 @@ func TestListVariablesEmpty(t *testing.T) {
 // 	s := TestingCore(testName)
 
 // 	s.FetchProjects()
-// 	s.AddProject("test", "test.local", 8000, []string{})
+// 	s.AddProject("test", 8000, []string{})
 // 	s.AddVariable("test", "key", "value")
 
 // 	// Refetch projects
@@ -65,7 +65,7 @@ func TestAddVariable(t *testing.T) {
 	s := TestingCore(testName)
 
 	s.FetchProjects()
-	s.AddProject("test", "test.local", 8000, []string{})
+	s.AddProject("test", 8000, []string{})
 
 	// Refetch projects
 	s.FetchProjects()
@@ -123,7 +123,7 @@ func TestAddVariableAlreadyExists(t *testing.T) {
 	s := TestingCore(testName)
 
 	s.FetchProjects()
-	s.AddProject("test", "test.local", 8000, []string{})
+	s.AddProject("test", 8000, []string{})
 	s.AddVariable("test", "key", "value")
 
 	// Refetch projects
@@ -142,7 +142,7 @@ func TestAddVariableErrorWriting(t *testing.T) {
 	s := TestingCore(testName)
 
 	s.FetchProjects()
-	s.AddProject("test", "test.local", 8000, []string{})
+	s.AddProject("test", 8000, []string{})
 
 	// Refetch projects
 	s.FetchProjects()
@@ -163,7 +163,7 @@ func TestRemoveVariable(t *testing.T) {
 	s := TestingCore(testName)
 
 	s.FetchProjects()
-	s.AddProject("test", "test.local", 8000, []string{})
+	s.AddProject("test", 8000, []string{})
 	s.AddVariable("test", "key", "value")
 
 	// Refetch projects

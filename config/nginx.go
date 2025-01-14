@@ -19,12 +19,12 @@ func (c *Config) restartNginx() error {
 	return exec.Command("sudo", "systemctl", "restart", "nginx").Run()
 }
 
-// Add a new Nginx configuration file with the given name, domain and port.
-func (c *Config) AddNginxConfig(name string, domain string, port int64) error {
+// Add a new Nginx configuration file with the given name and port.
+func (c *Config) AddNginxConfig(name string, port int64) error {
 	config := fmt.Sprintf(`server {
 	listen 80;
 
-	server_name %s;
+	server_name %s.test;
 
 	location / {
 		proxy_pass http://127.0.0.1:%d/;
@@ -34,7 +34,7 @@ func (c *Config) AddNginxConfig(name string, domain string, port int64) error {
 		proxy_set_header X-Forwarded-Proto $scheme;
 	}
 }
-`, domain, port)
+`, name, port)
 
 	nginxConfigFilePath := fmt.Sprintf("%s/%s.conf", c.nginxConfigDir, name)
 
@@ -79,15 +79,15 @@ func (c *Config) RemoveNginxConfig(name string) error {
 	return nil
 }
 
-// Update a Nginx configuration file with the given name, domain and port.
-func (c *Config) UpdateNginxConfig(name string, domain string, port int64) error {
+// Update a Nginx configuration file with the given name and port.
+func (c *Config) UpdateNginxConfig(name string, port int64) error {
 	err := c.RemoveNginxConfig(name)
 
 	if err != nil {
 		return err
 	}
 
-	return c.AddNginxConfig(name, domain, port)
+	return c.AddNginxConfig(name, port)
 }
 
 // Rename a Nginx configuration file with the given old and new name.

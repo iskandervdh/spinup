@@ -1,5 +1,24 @@
 #!/usr/bin/env bash
 
+if [ "$(id -u)" -ne 0 ]; then
+    echo "This script must be run as root" >&2
+    exit 1
+fi
+
 # Remove the old symlink if it exists and create a new one
 rm -f /usr/bin/spinup
 ln -s /usr/share/spinup/bin/spinup /usr/bin/spinup
+
+# Create the spinup user if it doesn't exist
+if ! id -u spinup &>/dev/null; then
+    useradd -r -s /bin/false spinup
+fi
+
+# Add the spinup user to the sudo group
+usermod -aG sudo spinup
+
+# Set the correct permissions on the spinup directory
+chown -R spinup:spinup /usr/share/spinup
+
+# Set the correct permissions on the spinup binary
+chown root:spinup /usr/share/spinup/bin/spinup

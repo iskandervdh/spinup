@@ -31,15 +31,3 @@ func TestWithSudo(t *testing.T) {
 		t.Errorf("Expected sudo, got %s", cmd.Args[0])
 	}
 }
-
-func TestInitHostsBackupError(t *testing.T) {
-	c := TestingConfig("init_hosts_backup_error")
-
-	os.Mkdir(c.GetHostsBackupDir(), 0444)
-
-	err := c.InitHosts()
-
-	if err == nil {
-		t.Errorf("Expected error, got nil")
-	}
-}

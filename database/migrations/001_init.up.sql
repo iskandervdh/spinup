@@ -7,7 +7,6 @@ CREATE TABLE commands (
 CREATE TABLE projects (
   id            INTEGER PRIMARY KEY AUTOINCREMENT,
   name          TEXT NOT NULL,
-  domain        TEXT NOT NULL,
   port          INT NOT NULL,
   dir           TEXT
 );

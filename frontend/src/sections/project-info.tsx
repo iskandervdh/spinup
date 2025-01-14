@@ -30,10 +30,10 @@ export function ProjectInfo({ project }: { project: core.Project }) {
 
   const isRunning = useMemo(() => runningProjects.includes(project.Name), [runningProjects]);
   const commands = useMemo(() => project.Commands?.map((c) => c.Name).join(', '), [project.Commands]);
-  const variables = useMemo(
-    () => project.Variables?.map((v) => `${v.Name}=${v.Value}`).join(', '),
-    [project.Variables]
-  );
+  // const variables = useMemo(
+  //   () => project.Variables?.map((v) => `${v.Name}=${v.Value}`).join(', '),
+  //   [project.Variables]
+  // );
   const domainAliases = useMemo(() => project.DomainAliases?.map((da) => da.Value).join(', '), [project.DomainAliases]);
 
   const canRunProject = useMemo(
@@ -46,9 +46,11 @@ export function ProjectInfo({ project }: { project: core.Project }) {
     return '';
   }, [project.Dir, project.Commands]);
 
+  const projectDomain = useMemo(() => `${project.Name}.test`, [project.Name]);
+
   const openProjectInBrowser = useCallback(() => {
-    BrowserOpenURL(`http://${project.Domain}`);
-  }, [project.Domain]);
+    BrowserOpenURL(`http://${projectDomain}`);
+  }, [projectDomain]);
 
   const openProjectDir = useCallback(() => project.Dir.Valid && BrowserOpenURL(project.Dir.String), [project.Dir]);
 
@@ -134,10 +136,10 @@ export function ProjectInfo({ project }: { project: core.Project }) {
             onClick={openProjectInBrowser}
             className="text-sm underline cursor-pointer text-info hover:text-info-dark"
           >
-            {project.Domain}
+            {projectDomain}
           </div>
         ) : (
-          <div className="text-sm">{project.Domain}</div>
+          <div className="text-sm">{projectDomain}</div>
         )}
 
         <div>Port</div>
@@ -169,8 +171,8 @@ export function ProjectInfo({ project }: { project: core.Project }) {
           </div>
         )}
 
-        <div>Variables</div>
-        <div className="text-sm">{variables || '-'}</div>
+        {/* <div>Variables</div>
+        <div className="text-sm">{variables || '-'}</div> */}
 
         <div>Domain aliases</div>
         <div className="text-sm">{domainAliases || '-'}</div>

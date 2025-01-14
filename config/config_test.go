@@ -71,14 +71,6 @@ func TestGetters(t *testing.T) {
 		t.Error("Expected nginx config dir, got empty string")
 	}
 
-	if c.GetHostsFile() == "" {
-		t.Error("Expected hosts file, got empty string")
-	}
-
-	if c.GetHostsBackupDir() == "" {
-		t.Error("Expected hosts backup dir, got empty string")
-	}
-
 	if !c.IsTesting() {
 		t.Error("Expected testing to be false, got true")
 	}

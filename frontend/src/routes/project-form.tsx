@@ -20,7 +20,6 @@ export function ProjectFormPage() {
   const { projects, projectFormSubmit, editingProject } = useProjectsStore();
 
   const [name, setName] = useState('');
-  const [domain, setDomain] = useState('');
   const [port, setPort] = useState(3000);
   const [commandNames, setCommandNames] = useState<string[]>([]);
 
@@ -36,7 +35,7 @@ export function ProjectFormPage() {
       e.preventDefault();
 
       await toast
-        .promise(projectFormSubmit(name, domain, port, commandNames), {
+        .promise(projectFormSubmit(name, port, commandNames), {
           loading: editingProject ? 'Saving project...' : 'Creating project...',
           success: editingProject ? <b>Project saved</b> : <b>Project created</b>,
           error: (err: any) =>
@@ -58,7 +57,7 @@ export function ProjectFormPage() {
           navigate({ to: '/projects' });
         });
     },
-    [name, domain, port, commandNames, editingProject, projectFormSubmit]
+    [name, port, commandNames, editingProject, projectFormSubmit]
   );
 
   useEffect(() => {
@@ -71,12 +70,11 @@ export function ProjectFormPage() {
 
       if (project) {
         setName(editingProject);
-        setDomain(project.Domain);
         setPort(project.Port);
         setCommandNames(project.Commands.map((c) => c.Name));
       }
     }
-  }, [editingProject, setName, setDomain, setPort, setCommandNames]);
+  }, [editingProject, setName, setPort, setCommandNames]);
 
   return (
     <form onSubmit={submit} className="flex flex-col w-full max-w-2xl">
@@ -90,20 +88,6 @@ export function ProjectFormPage() {
             Name
           </label>
           <Input id="name" name="name" type="text" required value={name} onChange={(e) => setName(e.target.value)} />
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <label htmlFor="domain" className="w-min">
-            Domain
-          </label>
-          <Input
-            id="domain"
-            name="domain"
-            type="text"
-            required
-            value={domain}
-            onChange={(e) => setDomain(e.target.value)}
-          />
         </div>
 
         <div className="flex flex-col gap-2">
