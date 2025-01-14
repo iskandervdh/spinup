@@ -26,12 +26,12 @@ jobs:
           - name: 'spinup'
             platform:  'linux/amd64'
             os: 'ubuntu-22.04'
-          - name: 'spinup'
-            platform:  'darwin/universal'
-            os: 'macos-latest'
-          - name: 'Spinup'
-            platform:  'windows/amd64'
-            os: 'windows-latest'
+          # - name: 'spinup'
+          #   platform:  'darwin/universal'
+          #   os: 'macos-latest'
+          # - name: 'Spinup'
+          #   platform:  'windows/amd64'
+          #   os: 'windows-latest'
 
     runs-on: ${{ matrix.build.os }}
     steps:
