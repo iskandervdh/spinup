@@ -133,8 +133,8 @@ jobs:
         with:
           key: ${{ runner.os }}-icons-${{ hashFiles('images/icon-large.png') }}
           path: |
-            build/share/icons
-            build/share/pixmaps
+            build/unix/usr/share/icons
+            build/unix/usr/share/pixmaps
       - name: Generate icons
         # if: (runner.os == 'Linux' || runner.os == 'macOS') && steps.cache-icons.outputs.cache-hit != 'true'
         if: runner.os == 'Linux' && steps.cache-icons.outputs.cache-hit != 'true'
@@ -154,7 +154,7 @@ jobs:
             mkdir -p deb/spinup-${SPINUP_VERSION}${os_version}/usr/share/spinup/bin
             cp build/bin/spinup-${SPINUP_VERSION}${os_version} deb/spinup-${SPINUP_VERSION}${os_version}/usr/share/spinup/bin/spinup
             cp build/DEBIAN/* deb/spinup-${SPINUP_VERSION}${os_version}/DEBIAN
-            cp -r build/share deb/spinup-${SPINUP_VERSION}${os_version}/usr
+            cp -r build/unix/usr deb/spinup-${SPINUP_VERSION}${os_version}
 
             echo -e "\nVersion: $SPINUP_VERSION" >> deb/spinup-${SPINUP_VERSION}${os_version}/DEBIAN/control
 
