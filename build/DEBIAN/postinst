@@ -1,32 +1,85 @@
 #!/usr/bin/env bash
 
+# Make sure the script is being run as root
 if [ "$(id -u)" -ne 0 ]; then
     echo "This script must be run as root" >&2
     exit 1
 fi
 
+# Get the home directory of the user that ran the script
+USER_HOME=$(getent passwd $SUDO_USER | cut -d: -f6)
+
+# Make sure the user's home directory exists
+if [ ! -d "$USER_HOME" ]; then
+    echo "The user's home directory does not exist" >&2
+    exit 1
+fi
+
+#####################
+### General setup ###
+#####################
+
 # Remove the old symlink if it exists and create a new one
 rm -f /usr/bin/spinup
 ln -s /usr/share/spinup/bin/spinup /usr/bin/spinup
 
-# Create the spinup user if it doesn't exist
-if ! id -u spinup &>/dev/null; then
-    useradd -r -s /bin/false spinup
+# Set the correct permissions on the spinup directory
+chown -R root:root /usr/share/spinup
 
-    # Add the spinup user to the sudo group
-    usermod -aG sudo spinup
+###############
+### Dnsmasq ###
+###############
+
+if [ ! -d /etc/dnsmasq.d ]; then
+    # Create the dnsmasq.d directory if it doesn't exist
+    mkdir /etc/dnsmasq.d
 fi
 
-# Set the correct permissions on the spinup directory
-chown -R spinup:spinup /usr/share/spinup
+# Check if the spinup.conf already exists in the dnsmasq.d directory
+if [ ! -f /etc/dnsmasq.d/spinup.conf ]; then
+    # Link the dnsmasq configuration file for spinup to the dnsmasq.d directory if it doesn't exist
+    ln -s /usr/share/spinup/config/dnsmasq.conf /etc/dnsmasq.d/spinup.conf
 
-# Set the correct permissions on the spinup binary
-chown root:spinup /usr/share/spinup/bin/spinup
+    # Restart the dnsmasq service
+    systemctl restart dnsmasq
+fi
 
+#############
+### Nginx ###
+#############
+
+USER_SPINUP_NGINX_DIR="$USER_HOME/.config/spinup/nginx"
+SPINUP_NGINX_DIR="/usr/share/spinup/config/nginx"
+
+# Create the user's spinup nginx directory if it doesn't exist
+mkdir -p $USER_SPINUP_NGINX_DIR
+
+if [ ! -d $SPINUP_NGINX_DIR ]; then
+    # Link the user's spinup nginx directory to the spinup config directory if it doesn't exist
+    ln -s $USER_SPINUP_NGINX_DIR $SPINUP_NGINX_DIR
+fi
+
+# Add the user's spinup nginx directory to the nginx configuration
+if ! grep -q "include ${SPINUP_NGINX_DIR}/\*.conf;" /etc/nginx/nginx.conf; then
+    # Make a backup of the nginx configuration file
+    cp /etc/nginx/nginx.conf /etc/nginx/nginx.conf.bak
+
+    # Add the include directive to the bottom of the http section in the nginx configuration file
+    sed -i '/http {/!b; :a; N; /}/!ba; s/}/    include '"${SPINUP_NGINX_DIR//\//\\/}"'\/\*.conf;\n}/' /etc/nginx/nginx.conf
+fi
+
+# Restart the nginx service
+systemctl restart nginx
+
+###############
+### Sudoers ###
+###############
+
+# Add an include for the sudoers.d directory to the sudoers file if it doesn't already exist
 if ! grep -q "^@includedir /etc/sudoers.d[[:space:]]*$" /etc/sudoers; then
     # Make a backup of the sudoers file
     cp /etc/sudoers /etc/sudoers.bak
 
-    # Add the sudoers.d directory to the sudoers file if it has not been included
+    # Add the include directive to the sudoers file
     echo "@includedir /etc/sudoers.d" | visudo -c -f - &>/dev/null && echo "@includedir /etc/sudoers.d" | EDITOR='tee -a' visudo &>/dev/null
 fi
