@@ -16,7 +16,7 @@ var serverNameRegex = regexp.MustCompile(`server_name\s+(.*);`)
 
 // Reload the Nginx service.
 func (c *Config) reloadNginx() error {
-	return exec.Command("systemctl", "reload", "nginx").Run()
+	return exec.Command("sudo", "systemctl", "reload", "nginx").Run()
 }
 
 // Add a new Nginx configuration file with the given name and port.
