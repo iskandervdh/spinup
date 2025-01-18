@@ -26,9 +26,9 @@ jobs:
           - name: 'spinup'
             platform:  'linux/amd64'
             os: 'ubuntu-22.04'
-          # - name: 'spinup'
-          #   platform:  'darwin/universal'
-          #   os: 'macos-latest'
+          - name: 'spinup'
+            platform:  'darwin/universal'
+            os: 'macos-latest'
           # - name: 'Spinup'
           #   platform:  'windows/amd64'
           #   os: 'windows-latest'
@@ -100,7 +100,7 @@ jobs:
           SPINUP_VERSION=$(cat ./common/.version | sed 's/^v//')
           sed -i.bak "s/{{version}}/${SPINUP_VERSION}/g" wails.json && rm wails.json.bak
 
-          wails build --platform ${{ matrix.build.platform }} -webview2 ${{ env.WEBVIEW2 }} -o ${{ matrix.build.name }}-${SPINUP_VERSION}
+          wails build --platform ${{ matrix.build.platform }} -webview2 ${{ env.WEBVIEW2 }} -o ${{ matrix.build.name }}
         shell: bash
       - name: Build Windows App + Installer
         if: runner.os == 'Windows'
@@ -146,29 +146,13 @@ jobs:
       - name: Package as .deb for Ubuntu
         if: runner.os == 'Linux'
         working-directory: ${{ env.WORKING_DIRECTORY }}
-        run: |
-          SPINUP_VERSION=$(cat ./common/.version | sed 's/^v//')
+        run: bash ./scripts/release/package-deb.sh
 
-          for os_version in "" "-ubuntu24.04"; do
-            mkdir -p deb/spinup-${SPINUP_VERSION}${os_version}/DEBIAN
-            mkdir -p deb/spinup-${SPINUP_VERSION}${os_version}/usr/share/spinup/bin
-            cp build/bin/spinup-${SPINUP_VERSION}${os_version} deb/spinup-${SPINUP_VERSION}${os_version}/usr/share/spinup/bin/spinup
-            cp build/DEBIAN/* deb/spinup-${SPINUP_VERSION}${os_version}/DEBIAN
-            cp -r build/unix/usr deb/spinup-${SPINUP_VERSION}${os_version}
-
-            echo -e "\nVersion: $SPINUP_VERSION" >> deb/spinup-${SPINUP_VERSION}${os_version}/DEBIAN/control
-
-            if [ "$webkit_version" -eq "40" ]; then
-              echo "Depends: dnsmasq, libgtk-3-0, libwebkit2gtk-4.0-dev" >> deb/spinup-${SPINUP_VERSION}${os_version}/DEBIAN/control
-            else
-              echo "Depends: dnsmasq, libgtk-3-0, libwebkit2gtk-4.1-dev" >> deb/spinup-${SPINUP_VERSION}${os_version}/DEBIAN/control
-            fi
-
-            sudo chown -R root:root deb/spinup-${SPINUP_VERSION}${os_version}
-
-            dpkg-deb --build deb/spinup-${SPINUP_VERSION}${os_version}
-          done
-        shell: bash
+      # Package as .dmg for macOS
+      - name: Package as .dmg for macOS
+        if: runner.os == 'macOS'
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: bash ./scripts/release/package-dmg.sh
 
       # Upload build assets
       - uses: actions/upload-artifact@v4
@@ -179,6 +163,8 @@ jobs:
             */bin/*.exe
             *\bin\*.exe
             */spinup-*.deb
+            */bin/*.zip
+            */bin/*.dmg
       - name: Release
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
