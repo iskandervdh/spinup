@@ -139,7 +139,7 @@ jobs:
         # if: (runner.os == 'Linux' || runner.os == 'macOS') && steps.cache-icons.outputs.cache-hit != 'true'
         if: runner.os == 'Linux' && steps.cache-icons.outputs.cache-hit != 'true'
         working-directory: ${{ env.WORKING_DIRECTORY }}
-        run: bash ./generate-icons.sh
+        run: bash ./scripts/generate-icons.sh
         shell: bash
 
       # Package as .deb for Ubuntu
