@@ -173,3 +173,5 @@ jobs:
             */bin/*/Contents/MacOS/*
             */bin/*.exe
             */spinup-*.deb
+            */spinup-*.zip
+            */spinup-*.dmg
