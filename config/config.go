@@ -4,7 +4,6 @@ import (
 	_ "embed"
 	"fmt"
 	"os"
-	"os/exec"
 	"path"
 
 	"github.com/iskandervdh/spinup/common"
@@ -43,7 +42,7 @@ func New() (*Config, error) {
 
 	return &Config{
 		configDir:      configDir,
-		nginxConfigDir: nginxConfigDir,
+		nginxConfigDir: getNginxConfigDir(configDir),
 		testing:        false,
 	}, nil
 }
@@ -53,18 +52,9 @@ func New() (*Config, error) {
 func NewTesting(testingConfigDir string) *Config {
 	return &Config{
 		configDir:      testingConfigDir,
-		nginxConfigDir: path.Join(testingConfigDir, "/nginx/conf.d"),
+		nginxConfigDir: path.Join(testingConfigDir, "/config/nginx/"),
 		testing:        true,
 	}
-}
-
-// Add sudo to a command if not in testing mode.
-func (c *Config) withSudo(name string, args ...string) *exec.Cmd {
-	if c.IsTesting() || common.IsWindows() {
-		return exec.Command(name, args...)
-	}
-
-	return exec.Command("sudo", append([]string{name}, args...)...)
 }
 
 // Returns the path to the configuration directory.
@@ -85,4 +75,20 @@ func (c *Config) GetNginxConfigDir() string {
 // Returns whether the application is in testing mode.
 func (c *Config) IsTesting() bool {
 	return c.testing
+}
+
+func (c *Config) writeToFile(filePath string, contents string) error {
+	f, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
+
+	if err != nil {
+		return err
+	}
+
+	_, err = f.Write([]byte(contents))
+
+	if err != nil {
+		return err
+	}
+
+	return f.Close()
 }

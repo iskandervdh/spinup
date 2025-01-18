@@ -11,8 +11,6 @@ type DomainAlias = sqlc.DomainAlias
 
 // Add a domain alias to the given project.
 func (c *Core) AddDomainAlias(projectName string, domainAlias string) common.Msg {
-	c.RequireSudo()
-
 	if c.projects == nil {
 		return common.NewErrMsg("No projects found")
 	}

@@ -105,8 +105,6 @@ func (c *Core) ProjectExists(name string) (bool, Project) {
 
 // Add a project with the given name, port and command names.
 func (c *Core) AddProject(name string, port int64, commandNames []string) common.Msg {
-	c.RequireSudo()
-
 	// Check if commands exist
 	commandIDs := make([]int64, 0, len(commandNames))
 
@@ -162,8 +160,6 @@ func (c *Core) AddProject(name string, port int64, commandNames []string) common
 
 // Remove the project with the given name.
 func (c *Core) RemoveProject(name string) common.Msg {
-	c.RequireSudo()
-
 	exists, _ := c.ProjectExists(name)
 
 	if !exists {
@@ -183,8 +179,6 @@ func (c *Core) RemoveProject(name string) common.Msg {
 
 // Update the project with the given name to the given port and command names.
 func (c *Core) UpdateProject(name string, port int64, commandNames []string) common.Msg {
-	c.RequireSudo()
-
 	exists, project := c.ProjectExists(name)
 
 	if !exists {
