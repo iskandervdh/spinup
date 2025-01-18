@@ -7,6 +7,8 @@ MAC_OS_FOLDER="./build/MacOS"
 # Define the path to the binary file
 BIN_FILE="./build/bin/spinup/Contents/MacOS/spinup"
 
+ls ./build/bin/
+
 # Create a MacOS directory
 mkdir -p $MAC_OS_FOLDER
 
