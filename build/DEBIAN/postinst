@@ -12,13 +12,21 @@ ln -s /usr/share/spinup/bin/spinup /usr/bin/spinup
 # Create the spinup user if it doesn't exist
 if ! id -u spinup &>/dev/null; then
     useradd -r -s /bin/false spinup
-fi
 
-# Add the spinup user to the sudo group
-usermod -aG sudo spinup
+    # Add the spinup user to the sudo group
+    usermod -aG sudo spinup
+fi
 
 # Set the correct permissions on the spinup directory
 chown -R spinup:spinup /usr/share/spinup
 
 # Set the correct permissions on the spinup binary
 chown root:spinup /usr/share/spinup/bin/spinup
+
+if ! grep -q "^@includedir /etc/sudoers.d[[:space:]]*$" /etc/sudoers; then
+    # Make a backup of the sudoers file
+    cp /etc/sudoers /etc/sudoers.bak
+
+    # Add the sudoers.d directory to the sudoers file if it has not been included
+    echo "@includedir /etc/sudoers.d" | visudo -c -f - &>/dev/null && echo "@includedir /etc/sudoers.d" | EDITOR='tee -a' visudo &>/dev/null
+fi
