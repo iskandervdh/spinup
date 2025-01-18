@@ -148,23 +148,21 @@ jobs:
         working-directory: ${{ env.WORKING_DIRECTORY }}
         run: bash ./scripts/release/package-deb.sh
 
-      # Package as .dmg for macOS
-      - name: Package as .dmg for macOS
+      # Package as .zip for macOS
+      - name: Package as .zip for macOS
         if: runner.os == 'macOS'
         working-directory: ${{ env.WORKING_DIRECTORY }}
-        run: bash ./scripts/release/package-dmg.sh
+        run: bash ./scripts/release/package-zip.sh
 
       # Upload build assets
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.build.name }} (${{ runner.os }})
           path: |
-            */bin/*/Contents/MacOS/*
             */bin/*.exe
             *\bin\*.exe
             */spinup-*.deb
-            */*.zip
-            */*.dmg
+            */spinup-*.zip
       - name: Release
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
@@ -174,4 +172,3 @@ jobs:
             */bin/*.exe
             */spinup-*.deb
             */spinup-*.zip
-            */spinup-*.dmg
