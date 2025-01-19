@@ -162,13 +162,12 @@ jobs:
             */bin/*.exe
             *\bin\*.exe
             */spinup-*.deb
-            */spinup-*.zip
+            *.zip
       - name: Release
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
           files: |
-            */bin/*/Contents/MacOS/*
             */bin/*.exe
             */spinup-*.deb
-            */spinup-*.zip
+            *.zip
