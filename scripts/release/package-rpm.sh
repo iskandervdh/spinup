@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 SPINUP_VERSION=$(cat ./common/.version | sed 's/^v//')
 SOURCES_DIR=./build/rpmbuild/SOURCES

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 SOURCE="./images/icon-large.png"
 SIZES=(1024 512 256 128 64 32 16)
