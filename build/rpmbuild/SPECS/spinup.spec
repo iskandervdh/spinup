@@ -33,6 +33,19 @@ rm -rf %{buildroot}
 /etc/sudoers.d/spinup
 /usr/share/applications/spinup-app.desktop
 /usr/share/spinup/config/dnsmasq.conf
+/usr/share/icons/hicolor/1024x1024/apps/spinup.png
+/usr/share/icons/hicolor/128x128/apps/spinup.png
+/usr/share/icons/hicolor/128x128@2x/apps/spinup.png
+/usr/share/icons/hicolor/16x16/apps/spinup.png
+/usr/share/icons/hicolor/16x16@2x/apps/spinup.png
+/usr/share/icons/hicolor/256x256/apps/spinup.png
+/usr/share/icons/hicolor/256x256@2x/apps/spinup.png
+/usr/share/icons/hicolor/32x32/apps/spinup.png
+/usr/share/icons/hicolor/32x32@2x/apps/spinup.png
+/usr/share/icons/hicolor/512x512/apps/spinup.png
+/usr/share/icons/hicolor/64x64/apps/spinup.png
+/usr/share/icons/hicolor/64x64@2x/apps/spinup.png
+/usr/share/pixmaps/spinup.png
 
 %changelog
 * Sun Jan 19 2025 Iskander <iskandervdh@gmail.com> - 0.13.0
