@@ -19,7 +19,7 @@ cp $BIN_FILE "$MAC_OS_DIR/usr/share/spinup/bin"
 
 # Copy postinstall script to the MacOS directory
 cp "./build/DEBIAN/postinst" $MAC_OS_DIR
-mv "$MAC_OS_DIR/postinst" "$MAC_OS_DIR/post_install.sh"
+mv "$MAC_OS_DIR/postinst" "$MAC_OS_DIR/postinstall.sh"
 
 # Create a zip file containing the contents of the MacOS directory
 (cd $MAC_OS_DIR && zip -r "../../spinup-${SPINUP_VERSION}-macos.zip" .)
