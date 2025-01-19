@@ -168,7 +168,7 @@ jobs:
             */bin/*.exe
             *\bin\*.exe
             */spinup-*.deb
-            */spinup-*.rpm
+            spinup-*.rpm
             spinup-*.zip
       - name: Release
         uses: softprops/action-gh-release@v2
@@ -177,5 +177,5 @@ jobs:
           files: |
             */bin/*.exe
             */spinup-*.deb
-            */spinup-*.rpm
+            spinup-*.rpm
             spinup-*.zip
