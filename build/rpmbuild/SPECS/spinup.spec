@@ -15,16 +15,15 @@ Quickly spin up your multi command projects.
 %setup -q
 
 %install
-rm -rf $RPM_BUILD_ROOT
-mkdir -p $RPM_BUILD_ROOT/%{_bindir}
-cp %{name} $RPM_BUILD_ROOT/%{_bindir}
+mkdir -p %{buildroot}/usr/share/spinup/bin
+cp %{_builddir}/%{name}-%{version}/%{name} %{buildroot}/usr/share/spinup/bin
 
 %clean
-rm -rf $RPM_BUILD_ROOT
+rm -rf %{buildroot}
 
 %files
-%{_bindir}/%{name}
+/usr/share/spinup/bin/%{name}
 
 %changelog
-* Sun Jan 5 2025 Iskander <iskandervdh@gmail.com> - 0.12.0
+* Sun Jan 19 2025 Iskander <iskandervdh@gmail.com> - 0.13.0
 - First version of spinup as an RPM package
