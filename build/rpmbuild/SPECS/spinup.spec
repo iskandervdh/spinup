@@ -6,7 +6,7 @@ License:    MIT
 ExclusiveArch:  x86_64
 
 Source0:    %{name}-%{version}.tar.gz
-Requires:   bash
+Requires:   dnsmasq, libgtk-3-0, libwebkit2gtk-4.0-dev, nginx
 
 %description
 Quickly spin up your multi command projects.
