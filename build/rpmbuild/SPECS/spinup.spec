@@ -1,5 +1,5 @@
 Name:       spinup
-Version:    0.12.0
+Version:    {{version}}
 Release:    1%{?dist}
 Summary:    Quickly spin up your multi command projects.
 License:    MIT
