@@ -6,23 +6,87 @@ Quickly spin up your multi command projects.
 
 ## Installation
 
-### Pre-requisites
+### Requirements
 
-To run spinup you need to have go installed on your system. You can download it from the [official website](https://golang.org/dl/).
+- Nginx
+- Dnsmasq (only for unix based systems)
 
-### Installation
+### Debian based systems
 
-Download an installer from the releases and run it.
-
-Afterwards you can initialize spinup using the following command:
-
+To install the required packages on a debian based system you can use the following command:
 ```bash
-spinup init
+sudo apt install nginx dnsmasq
 ```
 
-This will create a `spinup` folder in your `.config` folder with the configuration files needed to run spinup.
+Download a `.deb` package from the releases. There is a separate version for Ubuntu 24.04 since it uses a different version of the `libwebkit2gtk` package.
 
-## Configuration
+To install the package run the following command where `{{version}}` is the version of the package:
+```bash
+sudo dpkg -i spinup-{{version}}.deb
+```
+
+### RPM based systems
+
+> **Warning**
+>
+> This has not been tested
+
+To install the required packages on a rpm based system you can use the following command:
+```bash
+sudo dnf install nginx dnsmasq
+```
+
+Download the `.rpm` package from the releases.
+
+To install the package run the following command where `{{version}}` is the version of the package:
+```bash
+sudo rpm -i spinup-{{version}}.rpm
+```
+
+### MacOS
+
+> **Warning**
+>
+> This has not been tested
+
+Install the required packages:
+```bash
+brew install nginx dnsmasq
+```
+
+Download the `spinup-{{version}}-macos.zip` archive from the releases and unzip the archive:
+```bash
+unzip spinup-{{version}}-macos.zip
+```
+
+Then move the `usr/share/spinup` folder to `/usr/share/spinup`:
+```bash
+sudo mv -R ./spinup-{{version}}-macos/usr/share/spinup /usr/share
+```
+
+The same for the sudoers file:
+```bash
+sudo mv -R ./spinup-{{version}}-macos/etc/sudoers.d/spinup /etc/sudoers.d/spinup
+```
+
+To complete the installation run the post install script:
+```bash
+sudo ./spinup-{{version}}-macos/postinstall.sh
+```
+
+This will create the required directories and files.
+
+## Running the app
+
+To run the app you can use the following command:
+
+```bash
+spinup
+```
+
+This will start the app where you can add command (templates) and projects.
+
+## CLI
 
 ### Commands
 
@@ -116,7 +180,7 @@ To list all the projects you can use the following command:
 spinup project list|ls
 ```
 
-## Variables
+### Variables
 
 You can add custom variables to the project configuration file. These variables can be used in the command templates.
 
@@ -142,7 +206,7 @@ spinup variable add example loglevel silent
 spinup run example
 ```
 
-## Usage
+### Running a project
 
 To run a project you can use the following command:
 
