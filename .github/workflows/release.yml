@@ -152,7 +152,7 @@ jobs:
       - name: Package as .zip for macOS
         if: runner.os == 'macOS'
         working-directory: ${{ env.WORKING_DIRECTORY }}
-        run: bash ./scripts/release/package-zip.sh
+        run: bash ./scripts/release/package-macos-zip.sh
 
       # Package as .rpm for RPM based distros
       - name: Package as .rpm for RPM based distros
