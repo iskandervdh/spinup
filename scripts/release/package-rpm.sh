@@ -11,6 +11,12 @@ mkdir -p $SOURCES_DIR/spinup-${SPINUP_VERSION}
 cp build/bin/spinup-${SPINUP_VERSION} $SOURCES_DIR/spinup-${SPINUP_VERSION}/
 mv $SOURCES_DIR/spinup-${SPINUP_VERSION}/spinup-${SPINUP_VERSION} $SOURCES_DIR/spinup-${SPINUP_VERSION}/spinup
 
+# Add the contents of the build/unix directory to the rpm sources
+cp -r build/unix/. $SOURCES_DIR/spinup-${SPINUP_VERSION}/
+
+# Add the postinstall script to the rpm sources
+cp build/DEBIAN/postinst $SOURCES_DIR/spinup-${SPINUP_VERSION}/
+
 # Set the permissions for the .rpm package files
 sudo chown -R root:root $SOURCES_DIR/spinup-${SPINUP_VERSION}
 
