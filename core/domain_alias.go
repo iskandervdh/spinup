@@ -11,8 +11,6 @@ type DomainAlias = sqlc.DomainAlias
 
 // Add a domain alias to the given project.
 func (c *Core) AddDomainAlias(projectName string, domainAlias string) common.Msg {
-	c.RequireSudo()
-
 	if c.projects == nil {
 		return common.NewErrMsg("No projects found")
 	}
@@ -24,13 +22,13 @@ func (c *Core) AddDomainAlias(projectName string, domainAlias string) common.Msg
 	}
 
 	// Check if the domain alias is already defined as the domain of the project
-	if project.Domain == domainAlias {
+	if common.GetDomain(project.Name) == domainAlias {
 		return common.NewErrMsg("Domain alias '%s' is already the domain of project '%s'", domainAlias, projectName)
 	}
 
 	for projectName, project := range c.projects {
 		// Check if the domain alias is the domain of another project
-		if project.Domain == domainAlias {
+		if common.GetDomain(project.Name) == domainAlias {
 			return common.NewErrMsg("Domain alias '%s' is already the domain of project '%s'", domainAlias, projectName)
 		}
 
@@ -46,15 +44,6 @@ func (c *Core) AddDomainAlias(projectName string, domainAlias string) common.Msg
 
 	if err != nil {
 		return common.NewErrMsg(fmt.Sprintln("Error trying to add domain alias to nginx config file", err))
-	}
-
-	err = c.config.AddDomain(domainAlias)
-
-	if err != nil {
-		// Remove the domain alias from the nginx config file if adding domain alias to hosts file fails
-		c.config.NginxRemoveDomainAlias(projectName, domainAlias)
-
-		return common.NewErrMsg(fmt.Sprintln("Error trying to add domain to hosts file", err))
 	}
 
 	err = c.dbQueries.CreateDomainAlias(c.dbContext, sqlc.CreateDomainAliasParams{
@@ -85,15 +74,6 @@ func (c *Core) RemoveDomainAlias(projectName string, domainAlias string) common.
 
 	if err != nil {
 		return common.NewErrMsg(fmt.Sprintln("Error trying to remove domain alias from nginx config file", err))
-	}
-
-	err = c.config.RemoveDomain(domainAlias)
-
-	if err != nil {
-		// Readd the domain alias from the nginx config file if removing the domain alias from hosts file fails
-		c.config.NginxRemoveDomainAlias(projectName, domainAlias)
-
-		return common.NewErrMsg(fmt.Sprintln("Error trying to add domain to hosts file", err))
 	}
 
 	for i, alias := range project.DomainAliases {

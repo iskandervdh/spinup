@@ -103,10 +103,8 @@ func (c *Core) ProjectExists(name string) (bool, Project) {
 	return true, c.projects[index]
 }
 
-// Add a project with the given name, domain, port and command names.
-func (c *Core) AddProject(name string, domain string, port int64, commandNames []string) common.Msg {
-	c.RequireSudo()
-
+// Add a project with the given name, port and command names.
+func (c *Core) AddProject(name string, port int64, commandNames []string) common.Msg {
 	// Check if commands exist
 	commandIDs := make([]int64, 0, len(commandNames))
 
@@ -120,15 +118,10 @@ func (c *Core) AddProject(name string, domain string, port int64, commandNames [
 		commandIDs = append(commandIDs, command.ID)
 	}
 
-	// Check if project already exists or if domain or port is already in use
+	// Check if project already exists or the port is already in use
 	for _, project := range c.projects {
 		if project.Name == name {
 			return common.NewErrMsg("Project '" + name + "' already exists")
-		}
-
-		if project.Domain == domain {
-			return common.NewErrMsg("Project with domain '" + domain + "' already exists: " + project.Name)
-
 		}
 
 		if project.Port == port {
@@ -136,25 +129,15 @@ func (c *Core) AddProject(name string, domain string, port int64, commandNames [
 		}
 	}
 
-	err := c.config.AddNginxConfig(name, domain, port)
+	err := c.config.AddNginxConfig(name, port)
 
 	if err != nil {
 		return common.NewErrMsg(fmt.Sprintln("Error trying to create nginx config file", err))
 	}
 
-	err = c.config.AddDomain(domain)
-
-	if err != nil {
-		// Remove nginx config file if adding domain to hosts file fails
-		c.config.RemoveNginxConfig(name)
-
-		return common.NewErrMsg(fmt.Sprintln("Error trying to add domain to hosts file", err))
-	}
-
 	project, err := c.dbQueries.CreateProject(c.dbContext, sqlc.CreateProjectParams{
-		Name:   name,
-		Domain: domain,
-		Port:   int64(port),
+		Name: name,
+		Port: int64(port),
 	})
 
 	if err != nil {
@@ -177,9 +160,7 @@ func (c *Core) AddProject(name string, domain string, port int64, commandNames [
 
 // Remove the project with the given name.
 func (c *Core) RemoveProject(name string) common.Msg {
-	c.RequireSudo()
-
-	exists, project := c.ProjectExists(name)
+	exists, _ := c.ProjectExists(name)
 
 	if !exists {
 		return common.NewErrMsg("Project '" + name + "' does not exist, nothing to remove")
@@ -191,24 +172,13 @@ func (c *Core) RemoveProject(name string) common.Msg {
 		return common.NewErrMsg("Could not remove nginx config file: " + err.Error())
 	}
 
-	err = c.config.RemoveDomain(project.Domain)
-
-	if err != nil {
-		// Remove nginx config file if adding domain to hosts file fails
-		c.config.RemoveNginxConfig(name)
-
-		return common.NewErrMsg("Error trying to remove domain from hosts file: " + err.Error())
-	}
-
 	c.dbQueries.DeleteProject(c.dbContext, name)
 
 	return common.NewSuccessMsg(fmt.Sprintf("Removed project '%s'", name))
 }
 
-// Update the project with the given name to the given domain, port and command names.
-func (c *Core) UpdateProject(name string, domain string, port int64, commandNames []string) common.Msg {
-	c.RequireSudo()
-
+// Update the project with the given name to the given port and command names.
+func (c *Core) UpdateProject(name string, port int64, commandNames []string) common.Msg {
 	exists, project := c.ProjectExists(name)
 
 	if !exists {
@@ -224,14 +194,10 @@ func (c *Core) UpdateProject(name string, domain string, port int64, commandName
 		}
 	}
 
-	// Check if domain or port is already in use
+	// Check if port is already in use by another project
 	for _, project := range c.projects {
 		if project.Name == name {
 			continue
-		}
-
-		if project.Domain == domain {
-			return common.NewErrMsg("Project with domain '%s' already exists: %s", domain, project.Name)
 		}
 
 		if project.Port == port {
@@ -239,32 +205,22 @@ func (c *Core) UpdateProject(name string, domain string, port int64, commandName
 		}
 	}
 
-	err := c.config.UpdateNginxConfig(name, domain, port)
+	err := c.config.UpdateNginxConfig(name, port)
 
 	if err != nil {
 		return common.NewErrMsg("Error trying to update nginx config file: %s", err)
 	}
 
-	err = c.config.UpdateHost(project.Domain, domain)
-
-	if err != nil {
-		// Undo editing of nginx config file if adding new domain to hosts file fails
-		c.config.UpdateNginxConfig(name, project.Domain, project.Port)
-
-		return common.NewErrMsg("Error trying to update domain in hosts file: %s", err)
-	}
-
 	c.dbQueries.UpdateProject(c.dbContext, sqlc.UpdateProjectParams{
-		Name:   name,
-		Domain: domain,
-		Port:   port,
+		Name: name,
+		Port: port,
 		Dir: sql.NullString{
 			String: project.Dir.String,
 			Valid:  project.Dir.Valid,
 		},
 	})
 
-	return common.NewSuccessMsg("Updated project '%s' with domain '%s', port %d and commands %s", name, domain, port, commandNames)
+	return common.NewSuccessMsg("Updated project '%s' with domain '%s', port %d and commands %s", name, port, commandNames)
 }
 
 // Rename the project with the given old name to the given new name.

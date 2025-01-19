@@ -23,7 +23,7 @@ func TestAddNginxConfig(t *testing.T) {
 		t.Errorf("Expected no error, got %s", err)
 	}
 
-	err = c.AddNginxConfig("test", "test.local", 8080)
+	err = c.AddNginxConfig("test", 8080)
 
 	if err != nil {
 		t.Errorf("Expected no error, got %s", err)
@@ -39,13 +39,13 @@ func TestAddNginxConfigExists(t *testing.T) {
 		t.Errorf("Expected no error, got %s", err)
 	}
 
-	err = c.AddNginxConfig("test", "test.local", 8080)
+	err = c.AddNginxConfig("test", 8080)
 
 	if err != nil {
 		t.Errorf("Expected no error, got %s", err)
 	}
 
-	err = c.AddNginxConfig("test", "test.local", 8080)
+	err = c.AddNginxConfig("test", 8080)
 
 	if err == nil {
 		t.Errorf("Expected error, got nil")
@@ -61,7 +61,7 @@ func TestRemoveNginxConfig(t *testing.T) {
 		t.Errorf("Expected no error, got %s", err)
 	}
 
-	err = c.AddNginxConfig("test", "test.local", 8080)
+	err = c.AddNginxConfig("test", 8080)
 
 	if err != nil {
 		t.Errorf("Expected no error, got %s", err)

@@ -37,13 +37,6 @@ func (c *Core) Init() common.Msg {
 		return common.NewErrMsg("Error creating config directory: %v", err)
 	}
 
-	c.RequireSudo()
-	err = c.config.InitHosts()
-
-	if err != nil {
-		return common.NewErrMsg("Error initializing hosts file: %v", err)
-	}
-
 	err = c.config.InitNginx()
 
 	if err != nil {

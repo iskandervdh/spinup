@@ -11,3 +11,7 @@ func IsWindows() bool {
 func IsMacOS() bool {
 	return runtime.GOOS == "darwin"
 }
+
+func GetDomain(projectName string) string {
+	return projectName + "." + TLD
+}

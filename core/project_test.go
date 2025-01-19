@@ -3,11 +3,7 @@ package core
 import (
 	"fmt"
 	"os"
-	"strings"
 	"testing"
-
-	"github.com/iskandervdh/spinup/common"
-	"github.com/iskandervdh/spinup/config"
 )
 
 func TestGetProjectNamesEmpty(t *testing.T) {
@@ -28,7 +24,7 @@ func TestAddProject(t *testing.T) {
 	c.FetchCommands()
 	c.FetchProjects()
 
-	c.AddProject("test", "test.local", 1234, []string{})
+	c.AddProject("test", 1234, []string{})
 
 	// "Refetch" the projects from the config file
 	c.FetchProjects()
@@ -51,46 +47,6 @@ func TestAddProject(t *testing.T) {
 		t.Error("Expected nginx config file to exist, got", err)
 		return
 	}
-
-	// Check if hosts file was updated
-	hostsFilePath := c.GetConfig().GetHostsFile()
-
-	hostsFile, err := os.Open(hostsFilePath)
-
-	if err != nil {
-		t.Error("Expected to open hosts file, got", err)
-		return
-	}
-
-	defer hostsFile.Close()
-
-	fileInfo, err := os.Stat(hostsFilePath)
-
-	if err != nil {
-		t.Error("Expected to stat hosts file, got", err)
-		return
-	}
-
-	buf := make([]byte, fileInfo.Size())
-
-	_, err = hostsFile.Read(buf)
-
-	if err != nil {
-		t.Error("Expected to read hosts file, got", err)
-		return
-	}
-
-	hostsContent := string(buf)
-	expected := "\n\n" + config.HostsBeginMarker + "\n127.0.0.1\ttest.local" + config.HostsEndMarker
-
-	if common.IsWindows() {
-		hostsContent = strings.ReplaceAll(hostsContent, "\u0000", "")
-	}
-
-	if hostsContent != expected {
-		t.Error("Expected hosts file to contain", expected, "got", hostsContent)
-		return
-	}
 }
 
 func TestAddProjectWithCommands(t *testing.T) {
@@ -103,7 +59,7 @@ func TestAddProjectWithCommands(t *testing.T) {
 	c.AddCommand("ls", "ls")
 	c.AddCommand("pwd", "pwd")
 
-	c.AddProject("test", "test.local", 1234, []string{"ls", "pwd"})
+	c.AddProject("test", 1234, []string{"ls", "pwd"})
 
 	// "Refetch" the projects from the config file
 	c.FetchProjects()
@@ -145,7 +101,7 @@ func TestRemoveCommandFromProject(t *testing.T) {
 	c.AddCommand("ls", "ls")
 	c.AddCommand("pwd", "pwd")
 
-	c.AddProject("test", "test.local", 1234, []string{"ls", "pwd"})
+	c.AddProject("test", 1234, []string{"ls", "pwd"})
 
 	// "Refetch" the projects from the config file
 	c.FetchProjects()
@@ -174,7 +130,7 @@ func TestRemoveProject(t *testing.T) {
 	c.FetchCommands()
 	c.FetchProjects()
 
-	c.AddProject("test", "test.local", 1234, []string{})
+	c.AddProject("test", 1234, []string{})
 
 	// "Refetch" the projects from the config file
 	c.FetchProjects()
@@ -198,17 +154,6 @@ func TestRemoveProject(t *testing.T) {
 		t.Error("Expected nginx config file to not exist, got", err)
 		return
 	}
-
-	// Check if hosts file was updated
-	hostsFilePath := c.GetConfig().GetHostsFile()
-	hostsFile, err := os.Open(hostsFilePath)
-
-	if err != nil {
-		t.Error("Expected to open hosts file, got", err)
-		return
-	}
-
-	defer hostsFile.Close()
 }
 
 func TestEditProject(t *testing.T) {
@@ -218,12 +163,12 @@ func TestEditProject(t *testing.T) {
 	c.FetchCommands()
 	c.FetchProjects()
 
-	c.AddProject("test", "test.local", 1234, []string{})
+	c.AddProject("test", 1234, []string{})
 
 	// "Refetch" the projects from the config file
 	c.FetchProjects()
 
-	c.UpdateProject("test", "example.local", 1235, []string{})
+	c.UpdateProject("test", 1235, []string{})
 
 	// "Refetch" the projects from the config file
 	c.FetchProjects()
@@ -242,46 +187,6 @@ func TestEditProject(t *testing.T) {
 		t.Error("Expected nginx config file to exist, got", err)
 		return
 	}
-
-	// Check if hosts file was updated
-	hostsFilePath := c.GetConfig().GetHostsFile()
-
-	hostsFile, err := os.Open(hostsFilePath)
-
-	if err != nil {
-		t.Error("Expected to open hosts file, got", err)
-		return
-	}
-
-	defer hostsFile.Close()
-
-	fileInfo, err := os.Stat(hostsFilePath)
-
-	if err != nil {
-		t.Error("Expected to stat hosts file, got", err)
-		return
-	}
-
-	buf := make([]byte, fileInfo.Size())
-
-	_, err = hostsFile.Read(buf)
-
-	if err != nil {
-		t.Error("Expected to read hosts file, got", err)
-		return
-	}
-
-	hostsContent := string(buf)
-	expected := "\n\n" + config.HostsBeginMarker + "\n127.0.0.1\texample.local" + config.HostsEndMarker
-
-	if common.IsWindows() {
-		hostsContent = strings.ReplaceAll(hostsContent, "\u0000", "")
-	}
-
-	if hostsContent != expected {
-		t.Error("Expected hosts file to contain", expected, "got", hostsContent)
-		return
-	}
 }
 
 func TestRenameProject(t *testing.T) {
@@ -291,7 +196,7 @@ func TestRenameProject(t *testing.T) {
 	c.FetchCommands()
 	c.FetchProjects()
 
-	c.AddProject("test", "test.local", 1234, []string{})
+	c.AddProject("test", 1234, []string{})
 
 	// "Refetch" the projects from the config file
 	c.FetchProjects()
@@ -320,42 +225,6 @@ func TestRenameProject(t *testing.T) {
 
 	if _, err := os.Stat(nginxFilePath); os.IsNotExist(err) {
 		t.Error("Expected nginx config file to exist, got", err)
-		return
-	}
-
-	// Check if hosts file was updated
-	hostsFilePath := c.GetConfig().GetHostsFile()
-
-	hostsFile, err := os.Open(hostsFilePath)
-
-	if err != nil {
-		t.Error("Expected to open hosts file, got", err)
-		return
-	}
-
-	defer hostsFile.Close()
-
-	fileInfo, err := os.Stat(hostsFilePath)
-
-	if err != nil {
-		t.Error("Expected to stat hosts file, got", err)
-		return
-	}
-
-	buf := make([]byte, fileInfo.Size())
-
-	_, err = hostsFile.Read(buf)
-
-	if err != nil {
-		t.Error("Expected to read hosts file, got", err)
-		return
-	}
-
-	hostsContent := string(buf)
-	expected := "\n\n" + config.HostsBeginMarker + "\n127.0.0.1\ttest.local" + config.HostsEndMarker
-
-	if hostsContent != expected {
-		t.Error("Expected hosts file to contain", expected, "got", hostsContent)
 		return
 	}
 }

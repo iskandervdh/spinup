@@ -12,7 +12,7 @@ func TestRun(t *testing.T) {
 
 	c.AddCommand("ls", "ls")
 
-	c.AddProject("test", "test.local", 1234, []string{"ls"})
+	c.AddProject("test", 1234, []string{"ls"})
 
 	// "Refetch" the projects from the config file
 	c.FetchProjects()

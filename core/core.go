@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"slices"
 
 	_ "github.com/golang-migrate/migrate/v4/source/file"
@@ -37,8 +36,8 @@ type Core struct {
 	projects Projects
 }
 
-func (c *Core) connectToDB(config *config.Config) (*sql.DB, error) {
-	databasePath := config.GetDatabasePath()
+func (c *Core) connectToDB() (*sql.DB, error) {
+	databasePath := c.config.GetDatabasePath()
 
 	_, err := os.Stat(databasePath)
 
@@ -88,7 +87,7 @@ func New(options ...func(*Core)) *Core {
 		option(c)
 	}
 
-	db, err := c.connectToDB(c.config)
+	db, err := c.connectToDB()
 
 	if err != nil {
 		fmt.Println("Error connecting to database:", err)
@@ -131,24 +130,6 @@ func (c *Core) SetErr(err io.Writer) {
 // Get the config of the Core instance.
 func (c *Core) GetConfig() *config.Config {
 	return c.config
-}
-
-// RequireSudo checks if the user has sudo permissions.
-// This is needed to update some system files.
-//
-// It returns an error if the user does not have sudo permissions.
-func (c *Core) RequireSudo() error {
-	if c.config.IsTesting() || common.IsWindows() {
-		return nil
-	}
-
-	err := exec.Command("sudo", "-v").Run()
-
-	if err != nil {
-		return fmt.Errorf("this command requires sudo")
-	}
-
-	return nil
 }
 
 // Get all the names of the commands.

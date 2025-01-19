@@ -50,16 +50,6 @@ func TestNewTesting(t *testing.T) {
 	}
 }
 
-func TestWithSudoTesting(t *testing.T) {
-	c := TestingConfig("config_test")
-
-	cmd := c.withSudo("ls")
-
-	if cmd.Args[0] != "ls" {
-		t.Errorf("Expected ls, got %s", cmd.Args[0])
-	}
-}
-
 func TestGetters(t *testing.T) {
 	c := TestingConfig("config_getters")
 
@@ -69,14 +59,6 @@ func TestGetters(t *testing.T) {
 
 	if c.GetNginxConfigDir() == "" {
 		t.Error("Expected nginx config dir, got empty string")
-	}
-
-	if c.GetHostsFile() == "" {
-		t.Error("Expected hosts file, got empty string")
-	}
-
-	if c.GetHostsBackupDir() == "" {
-		t.Error("Expected hosts backup dir, got empty string")
 	}
 
 	if !c.IsTesting() {

@@ -1,5 +1,5 @@
 -- name: GetProject :one
-SELECT id, name, domain, port, dir
+SELECT id, name, port, dir
 FROM projects
 WHERE name = ? LIMIT 1;
 
@@ -25,9 +25,9 @@ WHERE project_id = ?;
 
 -- name: CreateProject :one
 INSERT INTO projects (
-  name, domain, port
+  name, port
 ) VALUES (
-  ?, ?, ?
+  ?, ?
 )
 RETURNING *;
 
@@ -57,7 +57,7 @@ WHERE project_id = ? AND command_id = ?;
 
 -- name: UpdateProject :exec
 UPDATE projects
-SET domain = ?, port = ?, dir = ?
+SET port = ?, dir = ?
 WHERE name = ?;
 
 -- name: RenameProject :exec

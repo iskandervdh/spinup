@@ -1,0 +1,3 @@
+# Allow sudo users to reload nginx without having to enter a password.
+%sudo ALL=(ALL) NOPASSWD: /usr/bin/systemctl reload nginx
+%sudo ALL=(ALL) NOPASSWD: /usr/bin/systemctl reload nginx.service

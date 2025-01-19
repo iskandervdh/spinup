@@ -21,11 +21,10 @@ type DomainAlias struct {
 }
 
 type Project struct {
-	ID     int64
-	Name   string
-	Domain string
-	Port   int64
-	Dir    sql.NullString
+	ID   int64
+	Name string
+	Port int64
+	Dir  sql.NullString
 }
 
 type ProjectCommand struct {

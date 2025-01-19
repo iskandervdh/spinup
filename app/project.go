@@ -33,7 +33,7 @@ func (a *App) GetProjects() []core.Project {
 	return projects
 }
 
-func (a *App) AddProject(name string, domain string, port int64, commandNames []string) error {
+func (a *App) AddProject(name string, port int64, commandNames []string) error {
 	err := a.core.FetchCommands()
 
 	if err != nil {
@@ -46,7 +46,7 @@ func (a *App) AddProject(name string, domain string, port int64, commandNames []
 		return fmt.Errorf("error getting projects config: %s", err)
 	}
 
-	msg := a.core.AddProject(name, domain, port, commandNames)
+	msg := a.core.AddProject(name, port, commandNames)
 
 	if _, ok := msg.(*common.ErrMsg); ok {
 		fmt.Println(msg.GetText())
@@ -56,7 +56,7 @@ func (a *App) AddProject(name string, domain string, port int64, commandNames []
 	return nil
 }
 
-func (a *App) UpdateProject(name string, domain string, port int64, commandNames []string) error {
+func (a *App) UpdateProject(name string, port int64, commandNames []string) error {
 	err := a.core.FetchCommands()
 
 	if err != nil {
@@ -69,7 +69,7 @@ func (a *App) UpdateProject(name string, domain string, port int64, commandNames
 		return fmt.Errorf("error getting projects config: %s", err)
 	}
 
-	msg := a.core.UpdateProject(name, domain, port, commandNames)
+	msg := a.core.UpdateProject(name, port, commandNames)
 
 	if _, ok := msg.(*common.ErrMsg); ok {
 		fmt.Println(msg.GetText())

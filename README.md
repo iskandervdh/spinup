@@ -72,7 +72,7 @@ Commands are templates, so we can use variables that are then defined in the pro
 spinup command add example "npm run dev -- --port {{port}}"
 ```
 
-`port` and `domain` are reserved variables that are used to define the port and domain of the project. These are required to be when adding a project.
+`port` and `domain` are reserved variables that are used to define the port and domain (based on the name) of the project. These are required to be when adding a project.
 
 More information on variables can be found in the [Variables](#variables) section.
 
@@ -83,7 +83,7 @@ More information on variables can be found in the [Variables](#variables) sectio
 To add a project you can use the following command:
 
 ```bash
-spinup project add <name> <domain> <port> [commands...]
+spinup project add <name> <port> [commands...]
 ```
 
 This will create a configuration for the project in the sqlite database for spinup located in your `.config/spinup` folder.
@@ -91,7 +91,7 @@ This will create a configuration for the project in the sqlite database for spin
 Example:
 
 ```bash
-spinup project add example example.local 8001 example1 example2
+spinup project add example 8001 example1 example2
 ```
 
 #### Removing a project

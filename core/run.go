@@ -23,7 +23,7 @@ type runningCommand struct {
 func (c *Core) commandTemplate(command string, project Project) string {
 	// Replace placeholders in command with project values
 	command = strings.ReplaceAll(command, "{{port}}", fmt.Sprintf("%d", project.Port))
-	command = strings.ReplaceAll(command, "{{domain}}", project.Domain)
+	command = strings.ReplaceAll(command, "{{domain}}", common.GetDomain(project.Name))
 
 	for _, variable := range project.Variables {
 		command = strings.ReplaceAll(command, fmt.Sprintf("{{%s}}", variable.Name), variable.Value)

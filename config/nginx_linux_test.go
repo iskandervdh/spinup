@@ -16,7 +16,7 @@ func TestAddNginxConfigPermissionError(t *testing.T) {
 
 	os.Chmod(c.nginxConfigDir, 0444)
 
-	err = c.AddNginxConfig("test", "test.local", 8080)
+	err = c.AddNginxConfig("test", 8080)
 
 	if err == nil {
 		t.Errorf("Expected error, got nil")

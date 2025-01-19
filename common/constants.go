@@ -6,5 +6,7 @@ import (
 
 const ProgramName = "spinup"
 
+const TLD = "test"
+
 //go:embed .version
 var Version string

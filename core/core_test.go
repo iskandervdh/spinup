@@ -3,7 +3,6 @@ package core
 import (
 	"os"
 	"path"
-	"strings"
 	"testing"
 
 	"github.com/iskandervdh/spinup/common"
@@ -73,59 +72,5 @@ func TestInit(t *testing.T) {
 
 	if _, err := os.Stat(configDir); os.IsNotExist(err) {
 		t.Error("Expected ConfigDir to exist, got", err)
-	}
-}
-
-func TestHostsConfigInit(t *testing.T) {
-	c := TestingCore("hosts_config_init")
-
-	hostsFilePath := c.GetConfig().GetHostsFile()
-
-	if _, err := os.Stat(hostsFilePath); os.IsNotExist(err) {
-		t.Error("Expected hosts file to exist, got", err)
-		return
-	}
-
-	hostsFile, err := os.Open(hostsFilePath)
-
-	if err != nil {
-		t.Error("Expected to open hosts file, got", err)
-		return
-	}
-
-	defer hostsFile.Close()
-
-	// Expect hosts file to contain start and end comments
-	expected := "\n\n" + config.HostsBeginMarker + config.HostsEndMarker
-
-	buf := make([]byte, len(expected))
-
-	_, err = hostsFile.Read(buf)
-
-	if err != nil {
-		t.Error("Expected to read hosts file, got", err)
-		return
-	}
-
-	hostsContent := string(buf)
-
-	if common.IsWindows() {
-		hostsContent = strings.ReplaceAll(hostsContent, "\u0000", "")
-	}
-
-	if hostsContent != expected {
-		t.Error("Expected hosts file to contain", expected, "got", hostsContent)
-		return
-	}
-}
-
-func TestHostsBackupDirInit(t *testing.T) {
-	c := TestingCore("hosts_backup_dir_init")
-
-	hostsBackupDir := c.GetConfig().GetHostsBackupDir()
-
-	if _, err := os.Stat(hostsBackupDir); os.IsNotExist(err) {
-		t.Error("Expected hosts backup dir to exist, got", err)
-		return
 	}
 }
