@@ -9,14 +9,14 @@ for os_version in "" "-ubuntu24.04"; do
 
     # Copy the necessary files to the .deb package directory
     cp build/bin/spinup-${SPINUP_VERSION}${os_version} deb/spinup-${SPINUP_VERSION}${os_version}/usr/share/spinup/bin/spinup
-    cp build/DEBIAN/* deb/spinup-${SPINUP_VERSION}${os_version}/DEBIAN
-    cp -r build/unix/usr deb/spinup-${SPINUP_VERSION}${os_version}
+    cp packaging/DEBIAN/* deb/spinup-${SPINUP_VERSION}${os_version}/DEBIAN
+    cp -r packaging/unix/usr deb/spinup-${SPINUP_VERSION}${os_version}
 
     # Update the control file with the current version number
     echo -e "\nVersion: $SPINUP_VERSION" >> deb/spinup-${SPINUP_VERSION}${os_version}/DEBIAN/control
 
     # Add the dependencies for the .deb package
-    if [ "$os_version" -eq "" ]; then
+    if [ "$os_version" = "" ]; then
         echo "Depends: dnsmasq, libgtk-3-0, libwebkit2gtk-4.0-dev, nginx" >> deb/spinup-${SPINUP_VERSION}${os_version}/DEBIAN/control
     else
         echo "Depends: dnsmasq, libgtk-3-0, libwebkit2gtk-4.1-dev, nginx" >> deb/spinup-${SPINUP_VERSION}${os_version}/DEBIAN/control
