@@ -2,7 +2,7 @@
 
 SOURCE="./images/icon-large.png"
 SIZES=(1024 512 256 128 64 32 16)
-SHARE_DIR="./build/unix/usr/share"
+SHARE_DIR="./packaging/unix/usr/share"
 PIXMAPS_DIR="$SHARE_DIR/pixmaps"
 
 mkdir -p $SHARE_DIR/icons/hicolor
