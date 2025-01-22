@@ -133,8 +133,8 @@ jobs:
         with:
           key: ${{ runner.os }}-icons-${{ hashFiles('images/icon-large.png') }}
           path: |
-            build/unix/usr/share/icons
-            build/unix/usr/share/pixmaps
+            packaging/unix/usr/share/icons
+            packaging/unix/usr/share/pixmaps
       - name: Generate icons
         # if: (runner.os == 'Linux' || runner.os == 'macOS') && steps.cache-icons.outputs.cache-hit != 'true'
         if: runner.os == 'Linux' && steps.cache-icons.outputs.cache-hit != 'true'
