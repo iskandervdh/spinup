@@ -13,13 +13,13 @@ if ! command -v brew &>/dev/null; then
 fi
 
 # Check if dnsmasq is installed
-if ! brew list dnsmasq &>/dev/null; then
+if ! brew ls --versions dnsmasq &>/dev/null; then
     echo "Dnsmasq is not installed" >&2
     exit 1
 fi
 
 # Check if nginx is installed
-if ! brew list nginx &>/dev/null; then
+if ! brew ls --versions nginx &>/dev/null; then
     echo "Nginx is not installed" >&2
     exit 1
 fi
