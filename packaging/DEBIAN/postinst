@@ -53,6 +53,7 @@ SPINUP_NGINX_DIR="/usr/share/spinup/config/nginx"
 
 # Create the user's spinup nginx directory if it doesn't exist
 mkdir -p $USER_SPINUP_NGINX_DIR
+chown -R $SUDO_USER:$SUDO_USER $USER_HOME/.config/spinup
 
 if [ ! -d $SPINUP_NGINX_DIR ]; then
     # Link the user's spinup nginx directory to the spinup config directory if it doesn't exist
