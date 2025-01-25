@@ -169,7 +169,7 @@ jobs:
         working-directory: ${{ env.WORKING_DIRECTORY }}
         run: |
           sudo apt-get install -y libgtk-3-0 libwebkit2gtk-4.1-dev nginx dnsmasq
-          sudo dpkg -i ./spinup-${{ env.SPINUP_VERSION }}-ubuntu24.04.deb
+          sudo dpkg -i ./deb/spinup-${{ env.SPINUP_VERSION }}-ubuntu24.04.deb
           spinup --version
         shell: bash
 
@@ -178,7 +178,6 @@ jobs:
         if: runner.os == 'macOS'
         working-directory: ${{ env.WORKING_DIRECTORY }}
         run: |
-          brew install nginx dnsmasq
           unzip -q -o ./spinup-${{ env.SPINUP_VERSION }}-macos.zip -d /tmp/spinup
           cd /tmp/spinup/
           sudo bash ./install.sh
