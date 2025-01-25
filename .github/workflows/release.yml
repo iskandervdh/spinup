@@ -182,6 +182,7 @@ jobs:
           unzip -q -o ./spinup-${{ env.SPINUP_VERSION }}-macos.zip -d /tmp/spinup
           cd /tmp/spinup/
           sudo bash ./install.sh
+          spinup --version
         shell: bash
 
       # Upload build assets
