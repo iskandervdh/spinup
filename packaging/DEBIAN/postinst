@@ -39,9 +39,6 @@ fi
 if [ ! -f /etc/dnsmasq.d/spinup.conf ]; then
     # Link the dnsmasq configuration file for spinup to the dnsmasq.d directory if it doesn't exist
     ln -s /usr/share/spinup/config/dnsmasq.conf /etc/dnsmasq.d/spinup.conf
-
-    # Restart the dnsmasq service
-    systemctl restart dnsmasq
 fi
 
 #############
