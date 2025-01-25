@@ -45,6 +45,9 @@ SPINUP_SHARE_DIR="/usr/local/share/spinup"
 ### General setup ###
 #####################
 
+# Copy over the /usr/local/share/spinup directory to the correct location
+cp -r ./usr/local/share/spinup /usr/local/share
+
 # Remove the old symlink if it exists and create a new one
 rm -f /usr/local/bin/spinup
 ln -s $SPINUP_SHARE_DIR/bin/spinup /usr/local/bin/spinup
@@ -111,10 +114,12 @@ if ! grep -q "^@includedir /etc/sudoers.d[[:space:]]*$" /etc/sudoers; then
     echo "@includedir /etc/sudoers.d" | visudo -c -f - &>/dev/null && echo "@includedir /etc/sudoers.d" | EDITOR='tee -a' visudo &>/dev/null
 fi
 
-# Move the spinup sudoers file to the sudoers.d directory
-mv $SPINUP_SHARE_DIR/config/sudoers /etc/sudoers.d/spinup
-chmod 440 /etc/sudoers.d/spinup
-chown root:wheel /etc/sudoers.d/spinup
+SUDOERS_FILE=/etc/sudoers.d/spinup
+
+# Move the spinup sudoers file to the /etc/sudoers.d directory
+mv .$SUDOERS_FILE $SUDOERS_FILE
+chmod 440 $SUDOERS_FILE
+chown root:wheel $SUDOERS_FILE
 
 # Set the correct permissions on the user's spinup .config directory
 chown -R $SUDO_USER:staff $USER_HOME/.config/spinup
