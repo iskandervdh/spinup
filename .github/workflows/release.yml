@@ -64,6 +64,12 @@ jobs:
           cache: 'pnpm'
           cache-dependency-path: './frontend/pnpm-lock.yaml'
 
+      # Get the version from the common/.version file and set it as an environment variable
+      - name: Set SPINUP_VERSION
+        id: get_version
+        run: echo "SPINUP_VERSION=$(cat ./common/.version | sed 's/^v//')" >> $GITHUB_ENV
+        shell: bash
+
       # install Wails
       - name: Install Wails
         run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
@@ -87,18 +93,16 @@ jobs:
         if: runner.os == 'Linux'
         working-directory: ${{ env.WORKING_DIRECTORY }}
         run: |
-          SPINUP_VERSION=$(cat ./common/.version | sed 's/^v//')
-          sed -i.bak "s/{{version}}/${SPINUP_VERSION}/g" wails.json && rm wails.json.bak
+          sed -i.bak "s/{{version}}/${{ env.SPINUP_VERSION }}/g" wails.json && rm wails.json.bak
 
-          wails build --platform ${{ matrix.build.platform }} -webview2 ${{ env.WEBVIEW2 }} -o ${{ matrix.build.name }}-${SPINUP_VERSION} -tags webkit2_40
-          wails build --platform ${{ matrix.build.platform }} -webview2 ${{ env.WEBVIEW2 }} -o ${{ matrix.build.name }}-${SPINUP_VERSION}-ubuntu24.04 -tags webkit2_41
+          wails build --platform ${{ matrix.build.platform }} -webview2 ${{ env.WEBVIEW2 }} -o ${{ matrix.build.name }}-${{ env.SPINUP_VERSION }} -tags webkit2_40
+          wails build --platform ${{ matrix.build.platform }} -webview2 ${{ env.WEBVIEW2 }} -o ${{ matrix.build.name }}-${{ env.SPINUP_VERSION }}-ubuntu24.04 -tags webkit2_41
         shell: bash
       - name: Build macOs App
         if: runner.os == 'macOS'
         working-directory: ${{ env.WORKING_DIRECTORY }}
         run: |
-          SPINUP_VERSION=$(cat ./common/.version | sed 's/^v//')
-          sed -i.bak "s/{{version}}/${SPINUP_VERSION}/g" wails.json && rm wails.json.bak
+          sed -i.bak "s/{{version}}/${{ env.SPINUP_VERSION }}/g" wails.json && rm wails.json.bak
 
           wails build --platform ${{ matrix.build.platform }} -webview2 ${{ env.WEBVIEW2 }} -o ${{ matrix.build.name }}
         shell: bash
@@ -106,10 +110,9 @@ jobs:
         if: runner.os == 'Windows'
         working-directory: ${{ env.WORKING_DIRECTORY }}
         run: |
-          SPINUP_VERSION=$(cat ./common/.version | sed 's/^v//')
-          sed -i "s/{{version}}/${SPINUP_VERSION}/g" wails.json
+          sed -i "s/{{version}}/${{ env.SPINUP_VERSION }}/g" wails.json
 
-          wails build --platform ${{ matrix.build.platform }} -webview2 ${{ env.WEBVIEW2 }} -nsis -o ${{ matrix.build.name }}-${SPINUP_VERSION}
+          wails build --platform ${{ matrix.build.platform }} -webview2 ${{ env.WEBVIEW2 }} -nsis -o ${{ matrix.build.name }}-${{ env.SPINUP_VERSION }}
         shell: bash
 
       # Add permissions to the binary
@@ -133,8 +136,8 @@ jobs:
         with:
           key: ${{ runner.os }}-icons-${{ hashFiles('images/icon-large.png') }}
           path: |
-            build/unix/usr/share/icons
-            build/unix/usr/share/pixmaps
+            packaging/unix/usr/share/icons
+            packaging/unix/usr/share/pixmaps
       - name: Generate icons
         # if: (runner.os == 'Linux' || runner.os == 'macOS') && steps.cache-icons.outputs.cache-hit != 'true'
         if: runner.os == 'Linux' && steps.cache-icons.outputs.cache-hit != 'true'
@@ -159,6 +162,28 @@ jobs:
         if: runner.os == 'Linux'
         working-directory: ${{ env.WORKING_DIRECTORY }}
         run: bash ./scripts/release/package-rpm.sh
+
+      # Check if Ubuntu deb installs correctly
+      - name: Check if Ubuntu deb installs correctly
+        if: runner.os == 'Linux'
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: |
+          sudo apt-get install -y libgtk-3-0 libwebkit2gtk-4.1-dev nginx dnsmasq
+          sudo dpkg -i ./deb/spinup-${{ env.SPINUP_VERSION }}-ubuntu24.04.deb
+          spinup --version
+        shell: bash
+
+      # Check if macOS zip installs correctly
+      - name: Check if macOS zip installs correctly
+        if: runner.os == 'macOS'
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: |
+          brew install nginx dnsmasq
+          unzip -q -o ./spinup-${{ env.SPINUP_VERSION }}-macos.zip -d /tmp/spinup
+          cd /tmp/spinup/
+          sudo bash ./install.sh
+          spinup --version
+        shell: bash
 
       # Upload build assets
       - uses: actions/upload-artifact@v4

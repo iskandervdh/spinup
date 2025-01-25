@@ -15,10 +15,14 @@ Quickly spin up your multi command projects.
 
 To install the required packages on a debian based system you can use the following command:
 ```bash
-sudo apt install nginx dnsmasq
+sudo apt install libgtk-3-0 libwebkit2gtk-4.0-dev nginx dnsmasq
 ```
 
-Download a `.deb` package from the releases. There is a separate version for Ubuntu 24.04 since it uses a different version of the `libwebkit2gtk` package.
+> **Note**
+>
+> For Ubuntu 24.04 and up, you should install `libwebkit2gtk-4.1-dev` instead of `libwebkit2gtk-4.0-dev`.
+
+Download the `.deb` package from the releases. There is a separate version for Ubuntu 24.04 due to the different `libwebkit2gtk` package version being used.
 
 To install the package run the following command where `{{version}}` is the version of the package:
 ```bash
@@ -59,19 +63,9 @@ Download the `spinup-{{version}}-macos.zip` archive from the releases and unzip 
 unzip spinup-{{version}}-macos.zip
 ```
 
-Then move the `usr/share/spinup` folder to `/usr/share/spinup`:
+Run the installation script:
 ```bash
-sudo mv -R ./spinup-{{version}}-macos/usr/share/spinup /usr/share
-```
-
-The same for the sudoers file:
-```bash
-sudo mv -R ./spinup-{{version}}-macos/etc/sudoers.d/spinup /etc/sudoers.d/spinup
-```
-
-To complete the installation run the post install script:
-```bash
-sudo ./spinup-{{version}}-macos/postinstall.sh
+sudo ./spinup-{{version}}-macos/install.sh
 ```
 
 This will create the required directories and files.
