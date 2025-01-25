@@ -178,6 +178,7 @@ jobs:
         if: runner.os == 'macOS'
         working-directory: ${{ env.WORKING_DIRECTORY }}
         run: |
+          brew install nginx dnsmasq
           unzip -q -o ./spinup-${{ env.SPINUP_VERSION }}-macos.zip -d /tmp/spinup
           cd /tmp/spinup/
           sudo bash ./install.sh

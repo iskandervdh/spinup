@@ -6,14 +6,6 @@ if [ "$(id -u)" -ne 0 ]; then
     exit 1
 fi
 
-# Check if brew is installed
-if ! command -v brew &>/dev/null; then
-    echo "Homebrew is not installed" >&2
-    exit 1
-fi
-
-brew install nginx dnsmasq
-
 # Check if the SUDO_USER environment variable is set
 if [ -z "$SUDO_USER" ]; then
     echo "The SUDO_USER environment variable is not set" >&2
