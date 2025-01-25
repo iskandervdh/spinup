@@ -59,19 +59,9 @@ Download the `spinup-{{version}}-macos.zip` archive from the releases and unzip 
 unzip spinup-{{version}}-macos.zip
 ```
 
-Then move the `usr/share/spinup` folder to `/usr/share/spinup`:
+Run the installation script:
 ```bash
-sudo mv -R ./spinup-{{version}}-macos/usr/share/spinup /usr/share
-```
-
-The same for the sudoers file:
-```bash
-sudo mv -R ./spinup-{{version}}-macos/etc/sudoers.d/spinup /etc/sudoers.d/spinup
-```
-
-To complete the installation run the post install script:
-```bash
-sudo ./spinup-{{version}}-macos/postinstall.sh
+sudo ./spinup-{{version}}-macos/install.sh
 ```
 
 This will create the required directories and files.

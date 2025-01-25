@@ -17,9 +17,9 @@ for os_version in "" "-ubuntu24.04"; do
 
     # Add the dependencies for the .deb package
     if [ "$os_version" = "" ]; then
-        echo "Depends: dnsmasq, libgtk-3-0, libwebkit2gtk-4.0-dev, nginx" >> deb/spinup-${SPINUP_VERSION}${os_version}/DEBIAN/control
+        echo "Depends: libgtk-3-0, libwebkit2gtk-4.0-dev, nginx, dnsmasq" >> deb/spinup-${SPINUP_VERSION}${os_version}/DEBIAN/control
     else
-        echo "Depends: dnsmasq, libgtk-3-0, libwebkit2gtk-4.1-dev, nginx" >> deb/spinup-${SPINUP_VERSION}${os_version}/DEBIAN/control
+        echo "Depends: libgtk-3-0, libwebkit2gtk-4.1-dev, nginx, dnsmasq" >> deb/spinup-${SPINUP_VERSION}${os_version}/DEBIAN/control
     fi
 
     # Set the permissions for the .deb package files
