@@ -7,8 +7,10 @@ import { EventsOn } from 'wjs/runtime/runtime';
 import { Button } from '~/components/button';
 import { cn } from '~/utils/helpers';
 
+const LOG_SIZE_LIMIT = 100000;
+
 export function LogsPopover() {
-  const ansiToHtml = useMemo(() => new AnsiToHtml(), []);
+  const ansiToHtml = useMemo(() => new AnsiToHtml({ stream: true }), []);
 
   const { currentProject, setCurrentProject } = useProjectsStore();
   const [ansiLogs, setAnsiLogs] = useState('');
@@ -33,37 +35,48 @@ export function LogsPopover() {
 
     FollowProjectLogs(currentProject);
 
-    const stopListeningForLogs = EventsOn('log', (newLogs: string) => {
-      setAnsiLogs((prevLogs) => {
-        const logs = prevLogs + newLogs;
+    const logBuffer: string[] = [];
+    let bufferTimeout: NodeJS.Timeout | null = null;
 
-        // Limit logs to 100k characters to prevent browser from freezing
-        if (logs.length > 100000) {
-          return logs.slice(logs.length - 100000);
+    const flushBuffer = () => {
+      setAnsiLogs((prevLogs) => {
+        const logs = prevLogs + logBuffer.join('');
+        logBuffer.length = 0;
+
+        // Limit logs to LOG_SIZE_LIMIT characters to prevent browser from freezing
+        if (logs.length > LOG_SIZE_LIMIT) {
+          return logs.slice(-LOG_SIZE_LIMIT);
         }
 
         return logs;
       });
+
+      bufferTimeout = null;
+    };
+
+    const stopListeningForLogs = EventsOn('log', (newLogs: string) => {
+      logBuffer.push(newLogs);
+
+      if (!bufferTimeout) {
+        bufferTimeout = setTimeout(flushBuffer, 100);
+      }
     });
 
     const scrollListener = (e: Event) => {
       const target = e.target as HTMLElement;
 
-      if (target.scrollTop + target.clientHeight < target.scrollHeight) {
-        setFollowLogs(false);
-      } else {
-        setFollowLogs(true);
-      }
+      setFollowLogs(target.scrollTop + target.clientHeight >= target.scrollHeight);
     };
 
-    logsRef.current?.addEventListener('scroll', scrollListener);
+    const currentLogsRef = logsRef.current;
+    currentLogsRef?.addEventListener('scroll', scrollListener);
 
     return () => {
       StopFollowingProjectLogs(currentProject);
 
       setAnsiLogs('');
       stopListeningForLogs();
-      logsRef.current?.removeEventListener('scroll', scrollListener);
+      currentLogsRef?.removeEventListener('scroll', scrollListener);
     };
   }, [currentProject]);
 

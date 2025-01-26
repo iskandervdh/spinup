@@ -3,6 +3,7 @@ package app
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"os"
 	"time"
 
@@ -37,16 +38,28 @@ func (a *App) FollowProjectLogs(projectName string) error {
 	reader := bufio.NewReader(logFile)
 	runningProject.readingLogs = true
 
+	logChannel := make(chan string, 100)
+	defer close(logChannel)
+
+	go func() {
+		for logLine := range logChannel {
+			runtime.EventsEmit(a.ctx, "log", logLine)
+		}
+	}()
+
 	for runningProject.readingLogs {
 		line, err := reader.ReadString('\n')
 
 		if err != nil {
-			// If EOF is reached, sleep and retry
-			time.Sleep(500 * time.Millisecond)
-			continue
+			if err == io.EOF {
+				time.Sleep(100 * time.Millisecond) // Reduce sleep time for faster response
+				continue
+			}
+
+			return err // Return error if it's not EOF
 		}
 
-		runtime.EventsEmit(a.ctx, "log", line)
+		logChannel <- line
 	}
 
 	return nil
