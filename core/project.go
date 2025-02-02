@@ -103,6 +103,22 @@ func (c *Core) ProjectExists(name string) (bool, Project) {
 	return true, c.projects[index]
 }
 
+func (c *Core) GetProjectById(id int64) (bool, Project) {
+	if c.projects == nil {
+		return false, Project{}
+	}
+
+	index := slices.IndexFunc(c.projects, func(project Project) bool {
+		return project.ID == id
+	})
+
+	if index == -1 {
+		return false, Project{}
+	}
+
+	return true, c.projects[index]
+}
+
 // Add a project with the given name, port and command names.
 func (c *Core) AddProject(name string, port int64, commandNames []string) common.Msg {
 	// Check if commands exist
@@ -177,6 +193,85 @@ func (c *Core) RemoveProject(name string) common.Msg {
 	return common.NewSuccessMsg(fmt.Sprintf("Removed project '%s'", name))
 }
 
+func (c *Core) RemoveProjectById(projectID int64) common.Msg {
+	exists, project := c.GetProjectById(projectID)
+
+	if !exists {
+		return common.NewErrMsg("Project with id %d does not exist, nothing to remove", projectID)
+	}
+
+	err := c.config.RemoveNginxConfig(project.Name)
+
+	if err != nil {
+		return common.NewErrMsg("Could not remove nginx config file: %s", err)
+	}
+
+	err = c.dbQueries.DeleteProjectById(c.dbContext, projectID)
+
+	if err != nil {
+		return common.NewErrMsg("Error removing project from database: %s", err)
+	}
+
+	return common.NewSuccessMsg("Removed project '%s'", project.Name)
+}
+
+func (c *Core) updateProjectCommands(projectID int64, commandNames []string) error {
+	currentProjectCommands, err := c.dbQueries.GetProjectCommands(c.dbContext, projectID)
+
+	if err != nil {
+		return fmt.Errorf("error getting project commands: %s", err)
+	}
+
+	// Remove commands that are not in the new list
+	for _, projectCommand := range currentProjectCommands {
+		if !slices.Contains(commandNames, projectCommand.Name) {
+			err := c.dbQueries.DeleteCommandsProjects(c.dbContext, sqlc.DeleteCommandsProjectsParams{
+				CommandID: projectCommand.ID,
+				ProjectID: projectID,
+			})
+
+			if err != nil {
+				return fmt.Errorf("error removing command from project: %s", err)
+			}
+		}
+	}
+
+	existingCommandNames := make([]string, len(currentProjectCommands))
+
+	for i, projectCommand := range currentProjectCommands {
+		existingCommandNames[i] = projectCommand.Name
+	}
+
+	commands := make([]Command, 0, len(commandNames))
+
+	for _, commandName := range commandNames {
+		if slices.Contains(existingCommandNames, commandName) {
+			continue
+		}
+
+		exists, command := c.CommandExists(commandName)
+
+		if !exists {
+			return fmt.Errorf("command '%s' does not exist", commandName)
+		}
+
+		commands = append(commands, command)
+	}
+
+	for _, command := range commands {
+		err := c.dbQueries.CreateProjectCommand(c.dbContext, sqlc.CreateProjectCommandParams{
+			ProjectID: projectID,
+			CommandID: command.ID,
+		})
+
+		if err != nil {
+			return fmt.Errorf("error adding command to project in database: %s", err)
+		}
+	}
+
+	return nil
+}
+
 // Update the project with the given name to the given port and command names.
 func (c *Core) UpdateProject(name string, port int64, commandNames []string) common.Msg {
 	exists, project := c.ProjectExists(name)
@@ -211,7 +306,7 @@ func (c *Core) UpdateProject(name string, port int64, commandNames []string) com
 		return common.NewErrMsg("Error trying to update nginx config file: %s", err)
 	}
 
-	c.dbQueries.UpdateProject(c.dbContext, sqlc.UpdateProjectParams{
+	err = c.dbQueries.UpdateProject(c.dbContext, sqlc.UpdateProjectParams{
 		Name: name,
 		Port: port,
 		Dir: sql.NullString{
@@ -219,6 +314,72 @@ func (c *Core) UpdateProject(name string, port int64, commandNames []string) com
 			Valid:  project.Dir.Valid,
 		},
 	})
+
+	if err != nil {
+		return common.NewErrMsg("Error updating project in database: %s", err)
+	}
+
+	err = c.updateProjectCommands(project.ID, commandNames)
+
+	if err != nil {
+		return common.NewErrMsg("Error updating project commands: %s", err)
+	}
+
+	return common.NewSuccessMsg("Updated project '%s' with domain '%s', port %d and commands %s", name, port, commandNames)
+}
+
+func (c *Core) UpdateProjectByID(projectID int64, name string, port int64, commandNames []string) common.Msg {
+	exists, project := c.GetProjectById(projectID)
+
+	if !exists {
+		return common.NewErrMsg("Project with id %d does not exist", projectID)
+	}
+
+	// Check if commands exist
+	for _, commandName := range commandNames {
+		exists, _ := c.CommandExists(commandName)
+
+		if !exists {
+			return common.NewErrMsg("Command '%s' does not exist", commandName)
+		}
+	}
+
+	// Check if port is already in use by another project
+	for _, project := range c.projects {
+		if project.ID == projectID {
+			continue
+		}
+
+		if project.Port == port {
+			return common.NewErrMsg("Project with port %d already exists: %s", port, project.Name)
+		}
+	}
+
+	err := c.config.RenameNginxConfig(project.Name, name)
+
+	if err != nil {
+		return common.NewErrMsg("Error trying to update nginx config file: %s", err)
+	}
+
+	err = c.dbQueries.UpdateProjectById(c.dbContext, sqlc.UpdateProjectByIdParams{
+		ID:   projectID,
+		Name: name,
+		Port: port,
+		Dir: sql.NullString{
+			String: project.Dir.String,
+			Valid:  project.Dir.Valid,
+		},
+	})
+
+	if err != nil {
+		return common.NewErrMsg("Error updating project in database: %s", err)
+	}
+
+	err = c.updateProjectCommands(projectID, commandNames)
+
+	if err != nil {
+		return common.NewErrMsg("Error updating project commands: %s", err)
+	}
 
 	return common.NewSuccessMsg("Updated project '%s' with domain '%s', port %d and commands %s", name, port, commandNames)
 }

@@ -3,6 +3,7 @@ package app
 import (
 	"fmt"
 	"os"
+	"sort"
 
 	"github.com/iskandervdh/spinup/common"
 	"github.com/iskandervdh/spinup/core"
@@ -30,10 +31,15 @@ func (a *App) GetProjects() []core.Project {
 		return nil
 	}
 
+	// Sort projects by name
+	sort.Slice(projects, func(i, j int) bool {
+		return projects[i].Name < projects[j].Name
+	})
+
 	return projects
 }
 
-func (a *App) AddProject(name string, port int64, commandNames []string) error {
+func (a *App) AddProject(name string, port int64, commandNames []string, projectDir string) error {
 	err := a.core.FetchCommands()
 
 	if err != nil {
@@ -53,10 +59,19 @@ func (a *App) AddProject(name string, port int64, commandNames []string) error {
 		return fmt.Errorf("%s", msg.GetText())
 	}
 
+	if projectDir != "" {
+		msg = a.core.SetProjectDir(name, &projectDir)
+
+		if _, ok := msg.(*common.ErrMsg); ok {
+			fmt.Println(msg.GetText())
+			return fmt.Errorf("%s", msg.GetText())
+		}
+	}
+
 	return nil
 }
 
-func (a *App) UpdateProject(name string, port int64, commandNames []string) error {
+func (a *App) UpdateProject(id int64, name string, port int64, commandNames []string, projectDir string) error {
 	err := a.core.FetchCommands()
 
 	if err != nil {
@@ -69,17 +84,26 @@ func (a *App) UpdateProject(name string, port int64, commandNames []string) erro
 		return fmt.Errorf("error getting projects config: %s", err)
 	}
 
-	msg := a.core.UpdateProject(name, port, commandNames)
+	msg := a.core.UpdateProjectByID(id, name, port, commandNames)
 
 	if _, ok := msg.(*common.ErrMsg); ok {
 		fmt.Println(msg.GetText())
 		return fmt.Errorf("%s", msg.GetText())
 	}
 
+	if projectDir != "" {
+		msg = a.core.SetProjectDir(name, &projectDir)
+
+		if _, ok := msg.(*common.ErrMsg); ok {
+			fmt.Println(msg.GetText())
+			return fmt.Errorf("%s", msg.GetText())
+		}
+	}
+
 	return nil
 }
 
-func (a *App) RemoveProject(name string) error {
+func (a *App) RemoveProject(id int64) error {
 	err := a.core.FetchCommands()
 
 	if err != nil {
@@ -92,7 +116,7 @@ func (a *App) RemoveProject(name string) error {
 		return fmt.Errorf("error getting projects config: %s", err)
 	}
 
-	msg := a.core.RemoveProject(name)
+	msg := a.core.RemoveProjectById(id)
 
 	if _, ok := msg.(*common.ErrMsg); ok {
 		fmt.Println(msg.GetText())
@@ -102,7 +126,7 @@ func (a *App) RemoveProject(name string) error {
 	return nil
 }
 
-func (a *App) SelectProjectDirectory(projectName string, defaultDir string) error {
+func (a *App) UpdateProjectDirectory(projectName string, defaultDir string) error {
 	if defaultDir == "" {
 		d, err := os.UserHomeDir()
 
@@ -135,4 +159,32 @@ func (a *App) SelectProjectDirectory(projectName string, defaultDir string) erro
 	}
 
 	return nil
+}
+
+func (a *App) SelectProjectDirectory(projectName string, defaultDir string) (string, error) {
+	if defaultDir == "" {
+		d, err := os.UserHomeDir()
+
+		if err != nil {
+			defaultDir = ""
+		} else {
+			defaultDir = d
+		}
+	}
+
+	dir, err := runtime.OpenDirectoryDialog(a.ctx, runtime.OpenDialogOptions{
+		Title:            "Select a directory for project " + projectName,
+		DefaultDirectory: defaultDir,
+	})
+
+	if err != nil {
+		fmt.Println("Error selecting directory:", err)
+		return "", err
+	}
+
+	if dir == "" {
+		return "", fmt.Errorf("no directory selected")
+	}
+
+	return dir, nil
 }

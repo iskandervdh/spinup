@@ -12,13 +12,13 @@ export function CommandInfo({ command }: { command: sqlc.Command }) {
   const { removeCommand, setEditingCommand } = useCommandsStore();
 
   const edit = useCallback(() => {
-    setEditingCommand(command.Name);
+    setEditingCommand(command.ID);
     navigate({ to: '/command-form' });
   }, [command.Name, setEditingCommand]);
 
   const remove = useCallback(async () => {
     if (confirm(`Are you sure you want to remove command "${command.Name}"?`)) {
-      await removeCommand(command.Name);
+      await removeCommand(command.ID);
 
       toast.success(<b>Removed command "{command.Name}"</b>);
     }

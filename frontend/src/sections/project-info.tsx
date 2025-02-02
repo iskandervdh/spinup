@@ -22,7 +22,7 @@ export function ProjectInfo({ project }: { project: core.Project }) {
     runningProjects,
     runProject,
     stopProject,
-    selectProjectDir,
+    updateProjectDir,
     removeProject,
     setCurrentProject,
     setEditingProject,
@@ -37,12 +37,12 @@ export function ProjectInfo({ project }: { project: core.Project }) {
   const domainAliases = useMemo(() => project.DomainAliases?.map((da) => da.Value).join(', '), [project.DomainAliases]);
 
   const canRunProject = useMemo(
-    () => project.Dir.Valid && project.Commands.length > 0,
+    () => project.Dir.Valid && project.Commands !== null && project.Commands.length > 0,
     [project.Dir, project.Commands]
   );
   const cannotRunProjectReason = useMemo(() => {
     if (!project.Dir.Valid) return 'Project directory is not set';
-    if (project.Commands.length === 0) return 'No commands set for this project';
+    if (project.Commands === null || project.Commands.length === 0) return 'No commands set for this project';
     return '';
   }, [project.Dir, project.Commands]);
 
@@ -54,8 +54,8 @@ export function ProjectInfo({ project }: { project: core.Project }) {
 
   const openProjectDir = useCallback(() => project.Dir.Valid && BrowserOpenURL(project.Dir.String), [project.Dir]);
 
-  const openSelectProjectDir = useCallback(
-    () => selectProjectDir(project.Name, project.Dir.String),
+  const openUpdateProjectDir = useCallback(
+    () => updateProjectDir(project.Name, project.Dir.String),
     [project.Name, project.Dir.String]
   );
 
@@ -76,13 +76,13 @@ export function ProjectInfo({ project }: { project: core.Project }) {
   }, [project.Name, isRunning]);
 
   const edit = useCallback(() => {
-    setEditingProject(project.Name);
+    setEditingProject(project.ID);
     navigate({ to: '/project-form' });
   }, [project.Name, setEditingProject]);
 
   const remove = useCallback(async () => {
     if (confirm(`Are you sure you want to remove project "${project.Name}"?`)) {
-      await removeProject(project.Name);
+      await removeProject(project.ID);
 
       toast.success(<b>Removed project "{project.Name}"</b>);
     }
@@ -112,18 +112,19 @@ export function ProjectInfo({ project }: { project: core.Project }) {
         <div className="flex items-center gap-2">
           <h3 className="pr-2 text-xl font-bold text-primary">{project.Name}</h3>
 
-          <Button onClick={edit} size="xs" title="Edit project">
-            <PencilSquareIcon width={16} height={16} className="text-current" />
-          </Button>
-
           {isRunning ? (
             <Button onClick={showLogs} size="icon" variant="info" title="Show logs">
               <DocumentTextIcon width={16} height={16} className="text-current" />
             </Button>
           ) : (
-            <Button onClick={remove} size="icon" variant="error" title="Remove project">
-              <TrashIcon width={16} height={16} className="text-current" />
-            </Button>
+            <>
+              <Button onClick={edit} size="xs" title="Edit project">
+                <PencilSquareIcon width={16} height={16} className="text-current" />
+              </Button>
+              <Button onClick={remove} size="icon" variant="error" title="Remove project">
+                <TrashIcon width={16} height={16} className="text-current" />
+              </Button>
+            </>
           )}
         </div>
       </div>
@@ -158,14 +159,10 @@ export function ProjectInfo({ project }: { project: core.Project }) {
             <Button onClick={openProjectDir} size="xs" title="Open project directory">
               <FolderIcon width={16} height={16} className="text-current" />
             </Button>
-
-            <Button onClick={openSelectProjectDir} size="xs" title="Change project directory">
-              <PencilSquareIcon width={16} height={16} className="text-current" />
-            </Button>
           </div>
         ) : (
           <div className="w-full py-2 min-w-32 max-w-64">
-            <Button onClick={openSelectProjectDir} size="xs" title="Select project directory">
+            <Button onClick={openUpdateProjectDir} size="xs" title="Select project directory">
               Select directory
             </Button>
           </div>

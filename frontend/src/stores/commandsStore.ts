@@ -6,11 +6,11 @@ interface CommandsState {
   commands: Commands | null;
   setCommands: (commands: Commands) => void;
 
-  editingCommand: string | null;
-  setEditingCommand: (commandName: string | null) => void;
+  editingCommand: number | null;
+  setEditingCommand: (commandName: number | null) => void;
 
   commandFormSubmit: (commandName: string, command: string) => Promise<void>;
-  removeCommand: (commandName: string) => Promise<void>;
+  removeCommand: (commandID: number) => Promise<void>;
 }
 
 export const useCommandsStore = create<CommandsState>((set, get) => ({
@@ -21,8 +21,10 @@ export const useCommandsStore = create<CommandsState>((set, get) => ({
   setEditingCommand: (commandName) => set(() => ({ editingCommand: commandName })),
 
   commandFormSubmit: async (commandName, command) => {
-    if (get().editingCommand === commandName) {
-      await UpdateCommand(commandName, command);
+    const commandID = get().editingCommand;
+
+    if (commandID !== null) {
+      await UpdateCommand(commandID, commandName, command);
       set(() => ({ editingCommand: null }));
     } else {
       await AddCommand(commandName, command);
@@ -31,8 +33,8 @@ export const useCommandsStore = create<CommandsState>((set, get) => ({
     const commands = await GetCommands();
     set(() => ({ commands }));
   },
-  removeCommand: async (commandName) => {
-    await RemoveCommand(commandName);
+  removeCommand: async (commandID) => {
+    await RemoveCommand(commandID);
 
     const commands = await GetCommands();
     set(() => ({ commands }));
