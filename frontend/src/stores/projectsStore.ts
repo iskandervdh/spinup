@@ -3,26 +3,33 @@ import { Projects } from '~/types';
 import {
   GetProjects,
   RunProject,
-  SelectProjectDirectory,
+  UpdateProjectDirectory,
   StopProject,
   AddProject,
   RemoveProject,
   UpdateProject,
+  SelectProjectDirectory,
 } from 'wjs/go/app/App';
 
 interface ProjectsState {
   projects: Projects | null;
   setProjects: (projects: Projects) => void;
 
-  editingProject: string | null;
-  setEditingProject: (projectName: string | null) => void;
+  editingProject: number | null;
+  setEditingProject: (projectName: number | null) => void;
 
   runningProjects: string[];
   runProject: (projectName: string) => Promise<void>;
   stopProject: (projectName: string) => Promise<void>;
-  selectProjectDir: (projectName: string, defaultDir: string | undefined) => Promise<void>;
-  projectFormSubmit: (projectName: string, port: number, commandNames: string[]) => Promise<void>;
-  removeProject: (projectName: string) => Promise<void>;
+  updateProjectDir: (projectName: string, defaultDir: string | undefined) => Promise<void>;
+  selectProjectDir: (projectName: string, defaultDir: string | null) => Promise<string>;
+  projectFormSubmit: (
+    projectName: string,
+    port: number,
+    commandNames: string[],
+    projectDir: string | null
+  ) => Promise<void>;
+  removeProject: (projectID: number) => Promise<void>;
 
   currentProject: string | null;
   setCurrentProject: (projectName: string | null) => void;
@@ -46,25 +53,34 @@ export const useProjectsStore = create<ProjectsState>((set, get) => ({
 
     await StopProject(projectName);
   },
-  async selectProjectDir(projectName, defaultDir) {
-    await SelectProjectDirectory(projectName, defaultDir ?? '');
+  async updateProjectDir(projectName, defaultDir) {
+    await UpdateProjectDirectory(projectName, defaultDir ?? '');
 
     const projects = await GetProjects();
     set(() => ({ projects }));
   },
-  async projectFormSubmit(projectName, port, commandNames) {
-    if (get().editingProject === projectName) {
-      await UpdateProject(projectName, port, commandNames);
+  async selectProjectDir(projectName, defaultDir) {
+    return await SelectProjectDirectory(projectName, defaultDir ?? '');
+  },
+  async projectFormSubmit(projectName, port, commandNames, projectDir) {
+    if (projectName.includes(' ')) {
+      throw new Error('Project name can not include a space');
+    }
+
+    const projectID = get().editingProject;
+
+    if (projectID !== null) {
+      await UpdateProject(projectID, projectName, port, commandNames, projectDir ?? '');
       set(() => ({ editingProject: null }));
     } else {
-      await AddProject(projectName, port, commandNames);
+      await AddProject(projectName, port, commandNames, projectDir ?? '');
     }
 
     const projects = await GetProjects();
     set(() => ({ projects }));
   },
-  async removeProject(projectName) {
-    await RemoveProject(projectName);
+  async removeProject(projectID) {
+    await RemoveProject(projectID);
 
     const projects = await GetProjects();
     set(() => ({ projects }));

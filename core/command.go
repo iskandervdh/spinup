@@ -91,6 +91,20 @@ func (c *Core) RemoveCommand(name string) common.Msg {
 	return common.NewSuccessMsg("Removed command '%s'", name)
 }
 
+func (c *Core) RemoveCommandById(id int64) common.Msg {
+	if c.commands == nil {
+		return common.NewErrMsg("No commands found")
+	}
+
+	err := c.dbQueries.DeleteCommandById(c.dbContext, id)
+
+	if err != nil {
+		return common.NewErrMsg("Error deleting command: %s", err)
+	}
+
+	return common.NewSuccessMsg("Removed command")
+}
+
 // Update the command with the given name to the given command string.
 func (c *Core) UpdateCommand(name string, command string) common.Msg {
 	if c.commands == nil {
@@ -98,6 +112,20 @@ func (c *Core) UpdateCommand(name string, command string) common.Msg {
 	}
 
 	err := c.dbQueries.UpdateCommand(c.dbContext, sqlc.UpdateCommandParams{
+		Name:    name,
+		Command: command,
+	})
+
+	if err != nil {
+		return common.NewErrMsg("Error updating command: %s", err)
+	}
+
+	return common.NewSuccessMsg("Updated command '%s': %s", name, command)
+}
+
+func (c *Core) UpdateCommandById(id int64, name string, command string) common.Msg {
+	err := c.dbQueries.UpdateCommandById(c.dbContext, sqlc.UpdateCommandByIdParams{
+		ID:      id,
 		Name:    name,
 		Command: command,
 	})

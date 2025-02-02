@@ -8,6 +8,7 @@ import { Button } from '~/components/button';
 import { SelectMultiple } from '~/components/select-multiple';
 import toast from 'react-hot-toast';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
+import { PencilSquareIcon } from '@heroicons/react/20/solid';
 
 export const Route = createFileRoute('/project-form')({
   component: ProjectFormPage,
@@ -17,15 +18,17 @@ export function ProjectFormPage() {
   const navigate = useNavigate();
 
   const { commands, setCommands } = useCommandsStore();
-  const { projects, projectFormSubmit, editingProject } = useProjectsStore();
+  const { projects, projectFormSubmit, editingProject, selectProjectDir } = useProjectsStore();
 
   const [name, setName] = useState('');
   const [port, setPort] = useState(3000);
   const [commandNames, setCommandNames] = useState<string[]>([]);
+  const [projectDir, setProjectDir] = useState<string | null>(null);
 
   const pageTitle = useMemo(
-    () => (editingProject ? `Edit Project "${editingProject}"` : 'Add Project'),
-    [editingProject]
+    () =>
+      editingProject ? `Edit Project "${projects?.find((p) => p.ID === editingProject)?.Name || ''}"` : 'Add Project',
+    [projects, editingProject]
   );
 
   const submitText = useMemo(() => (editingProject ? 'Save Project' : 'Add Project'), [editingProject]);
@@ -35,21 +38,21 @@ export function ProjectFormPage() {
       e.preventDefault();
 
       await toast
-        .promise(projectFormSubmit(name, port, commandNames), {
+        .promise(projectFormSubmit(name, port, commandNames, projectDir), {
           loading: editingProject ? 'Saving project...' : 'Creating project...',
           success: editingProject ? <b>Project saved</b> : <b>Project created</b>,
-          error: (err: any) =>
+          error: (err: Error) =>
             editingProject ? (
               <b>
                 Failed to save project:
                 <br />
-                {err}
+                {err.message}
               </b>
             ) : (
               <b>
                 Failed to create project:
                 <br />
-                {err}
+                {err.message}
               </b>
             ),
         })
@@ -57,8 +60,12 @@ export function ProjectFormPage() {
           navigate({ to: '/projects' });
         });
     },
-    [name, port, commandNames, editingProject, projectFormSubmit]
+    [name, port, commandNames, projectDir, editingProject, projectFormSubmit]
   );
+
+  const openSelectProjectDir = useCallback(() => {
+    selectProjectDir(name, projectDir).then(setProjectDir);
+  }, [name, projectDir]);
 
   useEffect(() => {
     GetCommands().then(setCommands);
@@ -66,12 +73,15 @@ export function ProjectFormPage() {
 
   useEffect(() => {
     if (editingProject) {
-      const project = projects?.find((p) => p.Name === editingProject);
+      const project = projects?.find((p) => p.ID === editingProject);
 
       if (project) {
-        setName(editingProject);
+        setName(project.Name);
         setPort(project.Port);
-        setCommandNames(project.Commands.map((c) => c.Name));
+        setCommandNames(
+          project.Commands !== null ? project.Commands.map((c) => c.Name).sort((a, b) => a.localeCompare(b)) : []
+        );
+        setProjectDir(project.Dir.Valid ? project.Dir.String : null);
       }
     }
   }, [editingProject, setName, setPort, setCommandNames]);
@@ -115,6 +125,18 @@ export function ProjectFormPage() {
             value={commandNames}
             onChanged={setCommandNames}
           />
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <label className="w-min">Directory</label>
+
+          <div className="flex items-center gap-4">
+            <div className="text-sm">{projectDir ?? 'Not set'}</div>
+
+            <Button type="button" onClick={openSelectProjectDir} size="xs" title="Change project directory">
+              <PencilSquareIcon width={16} height={16} className="text-current" />
+            </Button>
+          </div>
         </div>
 
         <Button type="submit" className="mt-2">

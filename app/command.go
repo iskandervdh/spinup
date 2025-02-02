@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/iskandervdh/spinup/common"
 	"github.com/iskandervdh/spinup/core"
@@ -24,6 +25,11 @@ func (a *App) GetCommands() []core.Command {
 		return nil
 	}
 
+	// Sort commands by name
+	sort.Slice(commands, func(i, j int) bool {
+		return commands[i].Name < commands[j].Name
+	})
+
 	return commands
 }
 
@@ -44,14 +50,14 @@ func (a *App) AddCommand(name string, command string) error {
 	return nil
 }
 
-func (a *App) UpdateCommand(name string, command string) error {
+func (a *App) UpdateCommand(id int64, name string, command string) error {
 	err := a.core.FetchCommands()
 
 	if err != nil {
 		return fmt.Errorf("error getting commands config: %s", err)
 	}
 
-	msg := a.core.UpdateCommand(name, command)
+	msg := a.core.UpdateCommandById(id, name, command)
 
 	if _, ok := msg.(*common.ErrMsg); ok {
 		fmt.Println(msg.GetText())
@@ -61,14 +67,14 @@ func (a *App) UpdateCommand(name string, command string) error {
 	return nil
 }
 
-func (a *App) RemoveCommand(name string) error {
+func (a *App) RemoveCommand(id int64) error {
 	err := a.core.FetchCommands()
 
 	if err != nil {
 		return fmt.Errorf("error getting commands config: %s", err)
 	}
 
-	msg := a.core.RemoveCommand(name)
+	msg := a.core.RemoveCommandById(id)
 
 	if _, ok := msg.(*common.ErrMsg); ok {
 		fmt.Println(msg.GetText())

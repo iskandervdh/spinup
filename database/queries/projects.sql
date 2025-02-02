@@ -60,6 +60,11 @@ UPDATE projects
 SET port = ?, dir = ?
 WHERE name = ?;
 
+-- name: UpdateProjectById :exec
+UPDATE projects
+SET name = ?, port = ?, dir = ?
+WHERE id = ?;
+
 -- name: RenameProject :exec
 UPDATE projects
 SET name = ?
@@ -68,3 +73,7 @@ WHERE name = ?;
 -- name: DeleteProject :exec
 DELETE FROM projects
 WHERE name = ?;
+
+-- name: DeleteProjectById :exec
+DELETE FROM projects
+WHERE id = ?;

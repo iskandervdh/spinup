@@ -19,6 +19,11 @@ UPDATE commands
 SET command = ?
 WHERE name = ?;
 
+-- name: UpdateCommandById :exec
+UPDATE commands
+SET name = ?, command = ?
+WHERE id = ?;
+
 -- name: RenameCommand :exec
 UPDATE commands
 SET name = ?
@@ -27,3 +32,7 @@ WHERE name = ?;
 -- name: DeleteCommand :exec
 DELETE FROM commands
 WHERE name = ?;
+
+-- name: DeleteCommandById :exec
+DELETE FROM commands
+WHERE id = ?;

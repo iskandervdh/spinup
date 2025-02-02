@@ -13,13 +13,14 @@ export const Route = createFileRoute('/command-form')({
 function CommandForm() {
   const navigate = useNavigate();
 
-  const { commands, commandFormSubmit, editingCommand, setEditingCommand } = useCommandsStore();
+  const { commands, commandFormSubmit, editingCommand } = useCommandsStore();
 
   const [name, setName] = useState('');
   const [command, setCommand] = useState('');
 
   const pageTitle = useMemo(
-    () => (editingCommand ? `Edit Command "${editingCommand}"` : 'Add Command'),
+    () =>
+      editingCommand ? `Edit Command "${commands?.find((c) => c.ID === editingCommand)?.Name || ''}"` : 'Add Command',
     [editingCommand]
   );
 
@@ -57,10 +58,10 @@ function CommandForm() {
 
   useEffect(() => {
     if (editingCommand) {
-      const command = commands?.find((c) => c.Name === editingCommand);
+      const command = commands?.find((c) => c.ID === editingCommand);
 
       if (command) {
-        setName(editingCommand);
+        setName(command.Name);
         setCommand(command.Command);
       }
     }

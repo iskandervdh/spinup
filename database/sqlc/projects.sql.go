@@ -91,6 +91,16 @@ func (q *Queries) DeleteProject(ctx context.Context, name string) error {
 	return err
 }
 
+const deleteProjectById = `-- name: DeleteProjectById :exec
+DELETE FROM projects
+WHERE id = ?
+`
+
+func (q *Queries) DeleteProjectById(ctx context.Context, id int64) error {
+	_, err := q.db.ExecContext(ctx, deleteProjectById, id)
+	return err
+}
+
 const getProject = `-- name: GetProject :one
 SELECT id, name, port, dir
 FROM projects
@@ -281,5 +291,28 @@ type UpdateProjectParams struct {
 
 func (q *Queries) UpdateProject(ctx context.Context, arg UpdateProjectParams) error {
 	_, err := q.db.ExecContext(ctx, updateProject, arg.Port, arg.Dir, arg.Name)
+	return err
+}
+
+const updateProjectById = `-- name: UpdateProjectById :exec
+UPDATE projects
+SET name = ?, port = ?, dir = ?
+WHERE id = ?
+`
+
+type UpdateProjectByIdParams struct {
+	Name string
+	Port int64
+	Dir  sql.NullString
+	ID   int64
+}
+
+func (q *Queries) UpdateProjectById(ctx context.Context, arg UpdateProjectByIdParams) error {
+	_, err := q.db.ExecContext(ctx, updateProjectById,
+		arg.Name,
+		arg.Port,
+		arg.Dir,
+		arg.ID,
+	)
 	return err
 }

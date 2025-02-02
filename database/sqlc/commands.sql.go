@@ -37,6 +37,16 @@ func (q *Queries) DeleteCommand(ctx context.Context, name string) error {
 	return err
 }
 
+const deleteCommandById = `-- name: DeleteCommandById :exec
+DELETE FROM commands
+WHERE id = ?
+`
+
+func (q *Queries) DeleteCommandById(ctx context.Context, id int64) error {
+	_, err := q.db.ExecContext(ctx, deleteCommandById, id)
+	return err
+}
+
 const getCommand = `-- name: GetCommand :one
 SELECT id, name, command
 FROM commands
@@ -107,5 +117,22 @@ type UpdateCommandParams struct {
 
 func (q *Queries) UpdateCommand(ctx context.Context, arg UpdateCommandParams) error {
 	_, err := q.db.ExecContext(ctx, updateCommand, arg.Command, arg.Name)
+	return err
+}
+
+const updateCommandById = `-- name: UpdateCommandById :exec
+UPDATE commands
+SET name = ?, command = ?
+WHERE id = ?
+`
+
+type UpdateCommandByIdParams struct {
+	Name    string
+	Command string
+	ID      int64
+}
+
+func (q *Queries) UpdateCommandById(ctx context.Context, arg UpdateCommandByIdParams) error {
+	_, err := q.db.ExecContext(ctx, updateCommandById, arg.Name, arg.Command, arg.ID)
 	return err
 }
