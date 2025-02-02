@@ -22,7 +22,7 @@ export function LogsPopover() {
 
   const scrollToBottom = useCallback(() => {
     setTimeout(() => {
-      logsRef.current?.scrollTo(0, logsRef.current.scrollHeight);
+      logsRef.current?.scrollTo({ top: logsRef.current.scrollHeight });
     }, 10);
   }, [logsRef]);
 
@@ -35,13 +35,9 @@ export function LogsPopover() {
 
     FollowProjectLogs(currentProject);
 
-    const logBuffer: string[] = [];
-    let bufferTimeout: NodeJS.Timeout | null = null;
-
-    const flushBuffer = () => {
+    const stopListeningForLogs = EventsOn('log', (newLogs: string) => {
       setAnsiLogs((prevLogs) => {
-        const logs = prevLogs + logBuffer.join('');
-        logBuffer.length = 0;
+        const logs = prevLogs + newLogs;
 
         // Limit logs to LOG_SIZE_LIMIT characters to prevent browser from freezing
         if (logs.length > LOG_SIZE_LIMIT) {
@@ -50,16 +46,6 @@ export function LogsPopover() {
 
         return logs;
       });
-
-      bufferTimeout = null;
-    };
-
-    const stopListeningForLogs = EventsOn('log', (newLogs: string) => {
-      logBuffer.push(newLogs);
-
-      if (!bufferTimeout) {
-        bufferTimeout = setTimeout(flushBuffer, 100);
-      }
     });
 
     const scrollListener = (e: Event) => {
@@ -84,7 +70,7 @@ export function LogsPopover() {
     if (followLogs) {
       scrollToBottom();
     }
-  }, [followLogs, scrollToBottom, logsRef.current?.scrollHeight]);
+  }, [followLogs, scrollToBottom, logsRef.current?.scrollHeight, ansiLogs]);
 
   if (!currentProject) return null;
 
