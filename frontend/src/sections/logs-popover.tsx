@@ -54,8 +54,15 @@ export function LogsPopover() {
       setFollowLogs(target.scrollTop + target.clientHeight >= target.scrollHeight);
     };
 
+    const closeOnEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        close();
+      }
+    };
+
     const currentLogsRef = logsRef.current;
     currentLogsRef?.addEventListener('scroll', scrollListener);
+    window.addEventListener('keydown', closeOnEscape);
 
     return () => {
       StopFollowingProjectLogs(currentProject);
@@ -63,6 +70,7 @@ export function LogsPopover() {
       setAnsiLogs('');
       stopListeningForLogs();
       currentLogsRef?.removeEventListener('scroll', scrollListener);
+      window?.removeEventListener('keydown', closeOnEscape);
     };
   }, [currentProject]);
 

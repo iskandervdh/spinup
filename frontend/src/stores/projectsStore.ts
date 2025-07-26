@@ -44,12 +44,16 @@ export const useProjectsStore = create<ProjectsState>((set, get) => ({
 
   runningProjects: [],
   async runProject(projectName) {
-    set((state) => ({ runningProjects: [...state.runningProjects, projectName] }));
+    set((state) => ({
+      runningProjects: [...state.runningProjects, projectName],
+    }));
 
     await RunProject(projectName);
   },
   async stopProject(projectName) {
-    set((state) => ({ runningProjects: state.runningProjects.filter((p) => p !== projectName) }));
+    set((state) => ({
+      runningProjects: state.runningProjects.filter((p) => p !== projectName),
+    }));
 
     await StopProject(projectName);
   },

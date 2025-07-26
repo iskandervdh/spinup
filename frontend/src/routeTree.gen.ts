@@ -8,104 +8,44 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-// Import Routes
+import { Route as rootRouteImport } from './routes/__root'
+import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as ProjectsRouteImport } from './routes/projects'
+import { Route as ProjectFormRouteImport } from './routes/project-form'
+import { Route as CommandsRouteImport } from './routes/commands'
+import { Route as CommandFormRouteImport } from './routes/command-form'
+import { Route as IndexRouteImport } from './routes/index'
 
-import { Route as rootRoute } from './routes/__root'
-import { Route as SettingsImport } from './routes/settings'
-import { Route as ProjectsImport } from './routes/projects'
-import { Route as ProjectFormImport } from './routes/project-form'
-import { Route as CommandsImport } from './routes/commands'
-import { Route as CommandFormImport } from './routes/command-form'
-import { Route as IndexImport } from './routes/index'
-
-// Create/Update Routes
-
-const SettingsRoute = SettingsImport.update({
+const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const ProjectsRoute = ProjectsImport.update({
+const ProjectsRoute = ProjectsRouteImport.update({
   id: '/projects',
   path: '/projects',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const ProjectFormRoute = ProjectFormImport.update({
+const ProjectFormRoute = ProjectFormRouteImport.update({
   id: '/project-form',
   path: '/project-form',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const CommandsRoute = CommandsImport.update({
+const CommandsRoute = CommandsRouteImport.update({
   id: '/commands',
   path: '/commands',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const CommandFormRoute = CommandFormImport.update({
+const CommandFormRoute = CommandFormRouteImport.update({
   id: '/command-form',
   path: '/command-form',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const IndexRoute = IndexImport.update({
+const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-// Populate the FileRoutesByPath interface
-
-declare module '@tanstack/react-router' {
-  interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexImport
-      parentRoute: typeof rootRoute
-    }
-    '/command-form': {
-      id: '/command-form'
-      path: '/command-form'
-      fullPath: '/command-form'
-      preLoaderRoute: typeof CommandFormImport
-      parentRoute: typeof rootRoute
-    }
-    '/commands': {
-      id: '/commands'
-      path: '/commands'
-      fullPath: '/commands'
-      preLoaderRoute: typeof CommandsImport
-      parentRoute: typeof rootRoute
-    }
-    '/project-form': {
-      id: '/project-form'
-      path: '/project-form'
-      fullPath: '/project-form'
-      preLoaderRoute: typeof ProjectFormImport
-      parentRoute: typeof rootRoute
-    }
-    '/projects': {
-      id: '/projects'
-      path: '/projects'
-      fullPath: '/projects'
-      preLoaderRoute: typeof ProjectsImport
-      parentRoute: typeof rootRoute
-    }
-    '/settings': {
-      id: '/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof SettingsImport
-      parentRoute: typeof rootRoute
-    }
-  }
-}
-
-// Create and export the route tree
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -115,7 +55,6 @@ export interface FileRoutesByFullPath {
   '/projects': typeof ProjectsRoute
   '/settings': typeof SettingsRoute
 }
-
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/command-form': typeof CommandFormRoute
@@ -124,9 +63,8 @@ export interface FileRoutesByTo {
   '/projects': typeof ProjectsRoute
   '/settings': typeof SettingsRoute
 }
-
 export interface FileRoutesById {
-  __root__: typeof rootRoute
+  __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/command-form': typeof CommandFormRoute
   '/commands': typeof CommandsRoute
@@ -134,7 +72,6 @@ export interface FileRoutesById {
   '/projects': typeof ProjectsRoute
   '/settings': typeof SettingsRoute
 }
-
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
@@ -162,7 +99,6 @@ export interface FileRouteTypes {
     | '/settings'
   fileRoutesById: FileRoutesById
 }
-
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CommandFormRoute: typeof CommandFormRoute
@@ -170,6 +106,53 @@ export interface RootRouteChildren {
   ProjectFormRoute: typeof ProjectFormRoute
   ProjectsRoute: typeof ProjectsRoute
   SettingsRoute: typeof SettingsRoute
+}
+
+declare module '@tanstack/react-router' {
+  interface FileRoutesByPath {
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/projects': {
+      id: '/projects'
+      path: '/projects'
+      fullPath: '/projects'
+      preLoaderRoute: typeof ProjectsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/project-form': {
+      id: '/project-form'
+      path: '/project-form'
+      fullPath: '/project-form'
+      preLoaderRoute: typeof ProjectFormRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/commands': {
+      id: '/commands'
+      path: '/commands'
+      fullPath: '/commands'
+      preLoaderRoute: typeof CommandsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/command-form': {
+      id: '/command-form'
+      path: '/command-form'
+      fullPath: '/command-form'
+      preLoaderRoute: typeof CommandFormRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+  }
 }
 
 const rootRouteChildren: RootRouteChildren = {
@@ -180,43 +163,6 @@ const rootRouteChildren: RootRouteChildren = {
   ProjectsRoute: ProjectsRoute,
   SettingsRoute: SettingsRoute,
 }
-
-export const routeTree = rootRoute
+export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-/* ROUTE_MANIFEST_START
-{
-  "routes": {
-    "__root__": {
-      "filePath": "__root.tsx",
-      "children": [
-        "/",
-        "/command-form",
-        "/commands",
-        "/project-form",
-        "/projects",
-        "/settings"
-      ]
-    },
-    "/": {
-      "filePath": "index.tsx"
-    },
-    "/command-form": {
-      "filePath": "command-form.tsx"
-    },
-    "/commands": {
-      "filePath": "commands.tsx"
-    },
-    "/project-form": {
-      "filePath": "project-form.tsx"
-    },
-    "/projects": {
-      "filePath": "projects.tsx"
-    },
-    "/settings": {
-      "filePath": "settings.tsx"
-    }
-  }
-}
-ROUTE_MANIFEST_END */
