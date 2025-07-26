@@ -14,28 +14,29 @@ Quickly spin up your multi command projects.
 ### Debian based systems
 
 To install the required packages on a debian based system you can use the following command:
+
 ```bash
 sudo apt install libgtk-3-0 libwebkit2gtk-4.0-dev nginx dnsmasq
 ```
 
-> **Note**
->
+> [!NOTE]
 > For Ubuntu 24.04 and up, you should install `libwebkit2gtk-4.1-dev` instead of `libwebkit2gtk-4.0-dev`.
 
 Download the `.deb` package from the releases. There is a separate version for Ubuntu 24.04 due to the different `libwebkit2gtk` package version being used.
 
 To install the package run the following command where `{{version}}` is the version of the package:
+
 ```bash
 sudo dpkg -i spinup-{{version}}.deb
 ```
 
 ### RPM based systems
 
-> **Warning**
->
+> [!WARNING]
 > This has not been tested
 
 To install the required packages on a rpm based system you can use the following command:
+
 ```bash
 sudo dnf install nginx dnsmasq
 ```
@@ -43,27 +44,30 @@ sudo dnf install nginx dnsmasq
 Download the `.rpm` package from the releases.
 
 To install the package run the following command where `{{version}}` is the version of the package:
+
 ```bash
 sudo rpm -i spinup-{{version}}.rpm
 ```
 
 ### MacOS
 
-> **Warning**
->
+> [!WARNING]
 > This has not been tested
 
 Install the required packages:
+
 ```bash
 brew install nginx dnsmasq
 ```
 
 Download the `spinup-{{version}}-macos.zip` archive from the releases and unzip the archive:
+
 ```bash
 unzip spinup-{{version}}-macos.zip
 ```
 
 Run the installation script:
+
 ```bash
 sudo ./spinup-{{version}}-macos/install.sh
 ```
