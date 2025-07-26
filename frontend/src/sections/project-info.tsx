@@ -13,17 +13,19 @@ import toast from 'react-hot-toast';
 import { core } from 'wjs/go/models';
 import { BrowserOpenURL } from 'wjs/runtime/runtime';
 import { Button } from '~/components/button';
+import { useShowCommandIcons } from '~/hooks/settings';
 import { useProjectsStore } from '~/stores/projectsStore';
 import { useSettingsStore } from '~/stores/settingsStore';
+import { type CommandInfo, getCommandIcon } from '~/utils/command';
 import { cn } from '~/utils/helpers';
 import { SettingKey } from '~/utils/settings';
 
-export function ProjectInfoHeader({ project, isRunning }: { project: core.Project; isRunning: boolean }) {
+function ProjectInfoHeader({ project, isRunning }: { project: core.Project; isRunning: boolean }) {
   const navigate = useNavigate();
 
   const { runProject, stopProject, removeProject, setCurrentProject, setEditingProject } = useProjectsStore();
 
-  const projectViewLayout = useSettingsStore((state) => state.getSetting(SettingKey.ProjectViewLayout) || 'grid');
+  const projectViewLayout = useSettingsStore((state) => state.getSetting(SettingKey.ProjectViewLayout));
 
   const canRunProject = useMemo(
     () => project.Dir.Valid && project.Commands !== null && project.Commands.length > 0,
@@ -154,10 +156,34 @@ export function ProjectInfoHeader({ project, isRunning }: { project: core.Projec
   );
 }
 
+function CommandInfo({ commandInfo }: { commandInfo: CommandInfo }) {
+  const showCommandIcons = useShowCommandIcons();
+  const projectViewLayout = useSettingsStore((state) => state.getSetting(SettingKey.ProjectViewLayout));
+
+  if (!showCommandIcons) {
+    return (
+      <span
+        className={cn({ 'text-xs': projectViewLayout === 'grid', 'text-sm': projectViewLayout === 'list' })}
+        key={commandInfo.title}
+        title={commandInfo.title}
+      >
+        {commandInfo.name}
+      </span>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-1" key={commandInfo.title} title={commandInfo.title}>
+      <img src={commandInfo.icon} width={24} height={24} alt={commandInfo.title} title={commandInfo.title} />
+      <span className="text-xs">{commandInfo.name}</span>
+    </div>
+  );
+}
+
 export function ProjectInfo({ project }: { project: core.Project }) {
   const { runningProjects, updateProjectDir } = useProjectsStore();
 
-  const projectViewLayout = useSettingsStore((state) => state.getSetting(SettingKey.ProjectViewLayout) || 'grid');
+  const projectViewLayout = useSettingsStore((state) => state.getSetting(SettingKey.ProjectViewLayout));
 
   const isRunning = useMemo(() => runningProjects.includes(project.Name), [runningProjects]);
   const commands = useMemo(() => project.Commands?.map((c) => c.Name).join(', '), [project.Commands]);
@@ -168,6 +194,16 @@ export function ProjectInfo({ project }: { project: core.Project }) {
   const domainAliases = useMemo(() => project.DomainAliases?.map((da) => da.Value).join(', '), [project.DomainAliases]);
 
   const projectDomain = useMemo(() => `${project.Name}.test`, [project.Name]);
+
+  const commandInfos = useMemo<CommandInfo[]>(() => {
+    return (
+      project.Commands?.map((c) => ({
+        title: `${c.Name}: ${c.Command}`,
+        name: c.Name,
+        icon: getCommandIcon(c.Command),
+      })) || []
+    );
+  }, [project.Commands]);
 
   const openProjectInBrowser = useCallback(() => {
     BrowserOpenURL(`http://${projectDomain}`);
@@ -182,7 +218,7 @@ export function ProjectInfo({ project }: { project: core.Project }) {
 
   if (projectViewLayout === 'grid') {
     return (
-      <div className="flex-1 p-2 border rounded-lg border-primary/80 min-w-72">
+      <div className="flex-1 px-3 py-2 border rounded-lg border-primary/80 min-w-72">
         <ProjectInfoHeader project={project} isRunning={isRunning} />
 
         <div className="grid items-center max-w-6xl grid-cols-1 gap-x-4">
@@ -195,7 +231,10 @@ export function ProjectInfo({ project }: { project: core.Project }) {
               <span>{projectDomain}</span>
             )}{' '}
             {project.DomainAliases ? (
-              <span className="px-2 py-1 text-sm rounded-lg select-none bg-black/10">
+              <span
+                className="px-2 py-1 text-sm rounded-lg select-none bg-black/10 cursor-help"
+                title={project.DomainAliases.map((da) => da.Value).join(', ')}
+              >
                 +{project.DomainAliases.length}
               </span>
             ) : (
@@ -207,12 +246,13 @@ export function ProjectInfo({ project }: { project: core.Project }) {
             Port: <span className="text-sm">{project.Port}</span>
           </div>
 
-          <div className="flex items-center justify-between gap-2">
-            <div>
-              Commands:{' '}
-              <span className="text-sm">
-                {commands !== undefined && commands !== '' ? commands : <span className="text-sm text-error">-</span>}
-              </span>
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex flex-wrap items-center gap-2">
+              {commandInfos.length > 0 ? (
+                commandInfos.map((commandInfo) => <CommandInfo commandInfo={commandInfo} />)
+              ) : (
+                <span className="text-sm font-bold text-error">No commands</span>
+              )}
             </div>
 
             {project.Dir.Valid ? (
@@ -254,8 +294,12 @@ export function ProjectInfo({ project }: { project: core.Project }) {
         <div className="text-sm">{project.Port}</div>
 
         <div>Commands</div>
-        {commands !== undefined && commands !== '' ? (
-          <div className="text-sm">{commands}</div>
+        {commandInfos.length > 0 ? (
+          <div className="flex items-center gap-2 py-1">
+            {commandInfos.map((commandInfo) => (
+              <CommandInfo key={commandInfo.title} commandInfo={commandInfo} />
+            ))}
+          </div>
         ) : (
           <div className="text-sm text-error">-</div>
         )}

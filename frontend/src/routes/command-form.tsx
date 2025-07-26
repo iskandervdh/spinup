@@ -5,6 +5,8 @@ import { useCommandsStore } from '~/stores/commandsStore';
 import { Button } from '~/components/button';
 import toast from 'react-hot-toast';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
+import { getCommandIcon } from '~/utils/command';
+import { useShowCommandIcons } from '~/hooks/settings';
 
 export const Route = createFileRoute('/command-form')({
   component: CommandForm,
@@ -14,6 +16,8 @@ function CommandForm() {
   const navigate = useNavigate();
 
   const { commands, commandFormSubmit, editingCommand } = useCommandsStore();
+
+  const showCommandIcons = useShowCommandIcons();
 
   const [name, setName] = useState('');
   const [command, setCommand] = useState('');
@@ -25,6 +29,10 @@ function CommandForm() {
   );
 
   const submitText = useMemo(() => (editingCommand ? 'Save Command' : 'Add Command'), [editingCommand]);
+
+  const commandIcon = useMemo(() => {
+    return <img src={getCommandIcon(command)} alt="Command icon" title="Command icon" width={32} height={32} />;
+  }, [command]);
 
   const submit = useCallback(
     async (e: React.FormEvent<HTMLFormElement>) => {
@@ -68,7 +76,7 @@ function CommandForm() {
   }, [editingCommand, setName, setCommand]);
 
   return (
-    <form onSubmit={submit} className="flex flex-col w-full max-w-2xl">
+    <form id="command-form" onSubmit={submit} className="flex flex-col w-full max-w-6xl mx-auto">
       <div className="flex items-center pb-4 h-14">
         <PageTitle>{pageTitle}</PageTitle>
       </div>
@@ -94,6 +102,8 @@ function CommandForm() {
             onChange={(e) => setCommand(e.target.value)}
           />
         </div>
+
+        {showCommandIcons && <div className="flex items-center gap-2">Icon: {commandIcon}</div>}
 
         <Button type="submit" className="mt-2">
           {submitText}

@@ -26,7 +26,7 @@ export function Projects() {
 
   const { setSetting } = useSettingsStore();
 
-  const projectViewLayout = useSettingsStore((state) => state.getSetting(SettingKey.ProjectViewLayout) || 'grid');
+  const projectViewLayout = useSettingsStore((state) => state.getSetting(SettingKey.ProjectViewLayout));
 
   const fetchProjects = useCallback(() => {
     GetProjects().then((projects) => setProjects(projects || []));
@@ -37,7 +37,7 @@ export function Projects() {
   }, []);
 
   return (
-    <div id="projects" className="max-w-6xl">
+    <div id="projects" className="max-w-6xl mx-auto">
       <LogsPopover />
 
       <div className="flex items-center gap-4 pb-4">
