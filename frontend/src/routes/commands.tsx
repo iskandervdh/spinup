@@ -23,7 +23,7 @@ function Commands() {
   }, []);
 
   return (
-    <div id="commands">
+    <div id="commands" className="max-w-6xl mx-auto">
       <div className="flex items-center gap-4 pb-4">
         <PageTitle>Commands</PageTitle>
 

@@ -9,6 +9,8 @@ import { SelectMultiple } from '~/components/select-multiple';
 import toast from 'react-hot-toast';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { PencilSquareIcon } from '@heroicons/react/20/solid';
+import { getCommandIcon } from '~/utils/command';
+import { useShowCommandIcons } from '~/hooks/settings';
 
 export const Route = createFileRoute('/project-form')({
   component: ProjectFormPage,
@@ -19,6 +21,8 @@ export function ProjectFormPage() {
 
   const { commands, setCommands } = useCommandsStore();
   const { projects, projectFormSubmit, editingProject, selectProjectDir } = useProjectsStore();
+
+  const showCommandIcons = useShowCommandIcons();
 
   const [name, setName] = useState('');
   const [port, setPort] = useState(3000);
@@ -87,7 +91,7 @@ export function ProjectFormPage() {
   }, [editingProject, setName, setPort, setCommandNames]);
 
   return (
-    <form onSubmit={submit} className="flex flex-col w-full max-w-2xl">
+    <form id="project-form" onSubmit={submit} className="flex flex-col w-full max-w-6xl mx-auto">
       <div className="flex items-center pb-4 h-14">
         <PageTitle>{pageTitle}</PageTitle>
       </div>
@@ -121,7 +125,15 @@ export function ProjectFormPage() {
           <SelectMultiple
             id="commands"
             name="commands"
-            options={commands ? commands.map((c) => c.Name) : []}
+            options={
+              commands
+                ? commands.map((c) => ({
+                    label: `${c.Name}: ${c.Command}`,
+                    value: c.Name,
+                    icon: showCommandIcons ? getCommandIcon(c.Command) : null,
+                  }))
+                : []
+            }
             value={commandNames}
             onChanged={setCommandNames}
           />

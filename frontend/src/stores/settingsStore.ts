@@ -1,14 +1,12 @@
 import { create } from 'zustand';
 import { GetSettings, SetSetting } from 'wjs/go/app/App';
-import { SettingKey, SettingValues } from '~/utils/settings';
-
-export type Settings = Record<SettingKey, SettingValues[SettingKey]>;
+import { SETTING_DEFAULTS, SettingKey, Settings, SettingValues } from '~/utils/settings';
 
 interface SettingsState {
   settings: Settings | null;
   fetchSettings: () => Promise<void>;
   setSetting: <T extends SettingKey>(settingKey: T, value: SettingValues[T]) => Promise<void>;
-  getSetting: <T extends SettingKey>(settingKey: T) => SettingValues[T] | null;
+  getSetting: <T extends SettingKey>(settingKey: T) => SettingValues[T];
 }
 
 export const useSettingsStore = create<SettingsState>((set, get) => ({
@@ -27,6 +25,8 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   getSetting: (settingKey) => {
     const settings = get().settings;
 
-    return settings ? settings[settingKey] || null : null;
+    const setting = settings ? settings[settingKey] || null : null;
+
+    return setting || SETTING_DEFAULTS[settingKey];
   },
 }));
