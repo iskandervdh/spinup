@@ -7,8 +7,10 @@ import (
 	"path"
 )
 
+const settingsFileName = "settings.json"
+
 func (c *Config) writeSettings(settings map[string]interface{}) error {
-	settingFilePath := path.Join(c.configDir, "settings.json")
+	settingFilePath := path.Join(c.configDir, settingsFileName)
 
 	data, err := json.MarshalIndent(settings, "", "  ")
 
@@ -26,10 +28,22 @@ func (c *Config) writeSettings(settings map[string]interface{}) error {
 }
 
 func (c *Config) GetSettings() (map[string]interface{}, error) {
-	settingFilePath := path.Join(c.configDir, "settings.json")
+	settingFilePath := path.Join(c.configDir, settingsFileName)
 	settings := make(map[string]interface{})
 
 	data, err := os.ReadFile(settingFilePath)
+
+	if os.IsNotExist(err) {
+		// If the settings file does not exist we should create it.
+		err = c.writeSettings(settings)
+
+		if err != nil {
+			return nil, fmt.Errorf("could not create settings file: %w", err)
+		}
+
+		// Initialize settings data with an empty JSON object
+		data = []byte("{}")
+	}
 
 	if err != nil {
 		return nil, fmt.Errorf("could not read settings file: %w", err)
