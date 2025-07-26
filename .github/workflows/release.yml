@@ -3,32 +3,32 @@ name: Build release
 on:
   push:
     tags:
-      - '*'
+      - "*"
 
 permissions:
   contents: write
   discussions: write
 
 env:
-  NODE_OPTIONS: '--max-old-space-size=4096'
+  NODE_OPTIONS: "--max-old-space-size=4096"
 
-  BUILD: 'true'
-  WORKING_DIRECTORY: '.'
-  WEBVIEW2: 'browser'
+  BUILD: "true"
+  WORKING_DIRECTORY: "."
+  WEBVIEW2: "browser"
 
 jobs:
   build:
     strategy:
-    # Failure in one platform build won't impact the others
+      # Failure in one platform build won't impact the others
       fail-fast: false
       matrix:
         build:
-          - name: 'spinup'
-            platform:  'linux/amd64'
-            os: 'ubuntu-22.04'
-          - name: 'spinup'
-            platform:  'darwin/universal'
-            os: 'macos-latest'
+          - name: "spinup"
+            platform: "linux/amd64"
+            os: "ubuntu-22.04"
+          - name: "spinup"
+            platform: "darwin/universal"
+            os: "macos-latest"
           # - name: 'Spinup'
           #   platform:  'windows/amd64'
           #   os: 'windows-latest'
@@ -45,7 +45,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           check-latest: true
-          go-version: '1.23'
+          go-version: "1.23"
       - run: go version
         shell: bash
 
@@ -61,8 +61,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: 'pnpm'
-          cache-dependency-path: './frontend/pnpm-lock.yaml'
+          cache: "pnpm"
+          cache-dependency-path: "./frontend/pnpm-lock.yaml"
 
       # Get the version from the common/.version file and set it as an environment variable
       - name: Set SPINUP_VERSION
@@ -199,6 +199,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
+          generate_release_notes: true
           files: |
             */bin/*.exe
             */spinup-*.deb
