@@ -15,28 +15,28 @@ interface CommandsState {
 
 export const useCommandsStore = create<CommandsState>((set, get) => ({
   commands: null,
-  setCommands: (projects) => set(() => ({ commands: projects })),
+  setCommands: (commands) => set({ commands }),
 
   editingCommand: null,
-  setEditingCommand: (commandName) => set(() => ({ editingCommand: commandName })),
+  setEditingCommand: (commandName) => set({ editingCommand: commandName }),
 
   commandFormSubmit: async (commandName, command) => {
     const commandID = get().editingCommand;
 
     if (commandID !== null) {
       await UpdateCommand(commandID, commandName, command);
-      set(() => ({ editingCommand: null }));
+      set({ editingCommand: null });
     } else {
       await AddCommand(commandName, command);
     }
 
     const commands = await GetCommands();
-    set(() => ({ commands }));
+    set({ commands });
   },
   removeCommand: async (commandID) => {
     await RemoveCommand(commandID);
 
     const commands = await GetCommands();
-    set(() => ({ commands }));
+    set({ commands });
   },
 }));

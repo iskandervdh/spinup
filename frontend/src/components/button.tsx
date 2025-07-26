@@ -20,7 +20,8 @@ const buttonVariants = cva(
           'text-error border-error focus:outline-error hover:text-white bg-background hover:bg-error hover:border-error',
         // outline: 'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
         // secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
-        // ghost: 'hover:bg-accent hover:text-accent-foreground',
+        ghost:
+          'hover:bg-accent hover:text-accent-foreground border-transparent focus:outline-offset-2 focus-visible:outline focus:outline-1 focus:outline-primary',
         // link: 'text-primary underline-offset-4 hover:underline',
       },
       size: {
@@ -30,6 +31,7 @@ const buttonVariants = cva(
         lg: 'px-8 h-11',
         'icon-lg': 'w-10 h-10',
         icon: 'w-8 h-8',
+        square: 'w-9 h-9',
       },
     },
     defaultVariants: {
