@@ -48,7 +48,7 @@ export function Navbar() {
         <img src={icon} id="logo" alt="logo" className="cursor-pointer w-14 h-14" draggable={false} />
       </Link>
 
-      <ul className="hidden gap-8 md:flex">
+      <ul className="hidden gap-4 overflow-x-auto md:flex">
         {Object.entries(NAV_PAGES).map(([page, route]) => (
           <NavbarItem key={page} page={page as keyof typeof NAV_PAGES} route={route} />
         ))}
