@@ -15,21 +15,21 @@ Quickly spin up your multi command projects.
 %setup -q
 
 %install
-mkdir -p %{buildroot}/usr/share/spinup/bin
-cp %{_builddir}/%{name}-%{version}/%{name} %{buildroot}/usr/share/spinup/bin
-cp %{_builddir}/%{name}-%{version}/postinst %{buildroot}/usr/share/spinup/bin/postinst
+mkdir -p %{buildroot}/etc/spinup/bin
+cp %{_builddir}/%{name}-%{version}/%{name} %{buildroot}/etc/spinup/bin
+cp %{_builddir}/%{name}-%{version}/postinst %{buildroot}/etc/spinup/bin/postinst
 cp -r %{_builddir}/%{name}-%{version}/etc %{buildroot}
 cp -r %{_builddir}/%{name}-%{version}/usr %{buildroot}
 
 %post
-sh /usr/share/spinup/bin/postinst
+sh /etc/spinup/bin/postinst
 
 %clean
 rm -rf %{buildroot}
 
 %files
-/usr/share/spinup/bin/%{name}
-/usr/share/spinup/bin/postinst
+/etc/spinup/bin/%{name}
+/etc/spinup/bin/postinst
 /etc/sudoers.d/spinup
 /usr/share/applications/spinup-app.desktop
 /usr/share/spinup/config/dnsmasq.conf

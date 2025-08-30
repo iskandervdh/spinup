@@ -5,10 +5,10 @@ SPINUP_VERSION=$(cat ./common/.version | sed 's/^v//')
 for os_version in "" "-ubuntu24.04"; do
     # Create the directory structure for the .deb package
     mkdir -p deb/spinup-${SPINUP_VERSION}${os_version}/DEBIAN
-    mkdir -p deb/spinup-${SPINUP_VERSION}${os_version}/usr/share/spinup/bin
+    mkdir -p deb/spinup-${SPINUP_VERSION}${os_version}/etc/spinup/bin
 
     # Copy the necessary files to the .deb package directory
-    cp build/bin/spinup-${SPINUP_VERSION}${os_version} deb/spinup-${SPINUP_VERSION}${os_version}/usr/share/spinup/bin/spinup
+    cp build/bin/spinup-${SPINUP_VERSION}${os_version} deb/spinup-${SPINUP_VERSION}${os_version}/etc/spinup/bin/spinup
     cp packaging/DEBIAN/* deb/spinup-${SPINUP_VERSION}${os_version}/DEBIAN
     cp -r packaging/unix/usr deb/spinup-${SPINUP_VERSION}${os_version}
 

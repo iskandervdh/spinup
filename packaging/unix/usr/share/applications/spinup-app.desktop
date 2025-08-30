@@ -2,7 +2,7 @@
 Name=Spinup
 Comment=Quickly spin up your multi command projects.
 GenericName=Development Environment
-Exec=/usr/share/spinup/bin/spinup
+Exec=/usr/bin/spinup
 Icon=spinup
 Type=Application
 StartupNotify=false
