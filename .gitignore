@@ -1,2 +1,7 @@
 .vscode/
 .coverage.html
+
+# Packaging
+packaging/unix/usr/share/icons/
+packaging/unix/usr/share/pixmaps/
+deb/
