@@ -11,6 +11,7 @@ for os_version in "" "-ubuntu24.04"; do
     cp build/bin/spinup-${SPINUP_VERSION}${os_version} deb/spinup-${SPINUP_VERSION}${os_version}/etc/spinup/bin/spinup
     cp packaging/DEBIAN/* deb/spinup-${SPINUP_VERSION}${os_version}/DEBIAN
     cp -r packaging/unix/usr deb/spinup-${SPINUP_VERSION}${os_version}
+    cp -r packaging/unix/etc deb/spinup-${SPINUP_VERSION}${os_version}
 
     # Update the control file with the current version number
     echo -e "\nVersion: $SPINUP_VERSION" >> deb/spinup-${SPINUP_VERSION}${os_version}/DEBIAN/control

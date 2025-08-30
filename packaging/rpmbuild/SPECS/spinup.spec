@@ -30,9 +30,9 @@ rm -rf %{buildroot}
 %files
 /etc/spinup/bin/%{name}
 /etc/spinup/bin/postinst
+/etc/spinup/config/dnsmasq.conf
 /etc/sudoers.d/spinup
 /usr/share/applications/spinup-app.desktop
-/usr/share/spinup/config/dnsmasq.conf
 /usr/share/icons/hicolor/1024x1024/apps/spinup.png
 /usr/share/icons/hicolor/128x128/apps/spinup.png
 /usr/share/icons/hicolor/128x128@2x/apps/spinup.png
