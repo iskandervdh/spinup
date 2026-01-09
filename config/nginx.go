@@ -200,7 +200,7 @@ func (c *Config) InitNginx() error {
 			"\n!!! Please add the following include directive to http section of your nginx.conf file located at %s like this:\n",
 			filepath.Join(c.nginxConfigDir, "..", "nginx.conf"),
 		)
-		fmt.Printf("\nhttp {\n\t...\n\n\t%s\n}\n", "include /usr/share/spinup/config/nginx/*.conf;")
+		fmt.Printf("\nhttp {\n\t...\n\n\t%s\n}\n", "include /etc/spinup/config/nginx/**/*.conf;")
 	}
 
 	return nil
