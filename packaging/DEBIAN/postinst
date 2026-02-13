@@ -20,14 +20,17 @@ fi
 #####################
 
 # Create the spinup directory if it doesn't exist
-mkdir -p /usr/share/spinup
+mkdir -p /etc/spinup
+
+# Create the config directory if it doesn't exist
+mkdir -p /etc/spinup/config
 
 # Remove the old symlink if it exists and create a new one
 rm -f /usr/bin/spinup
-ln -s /usr/share/spinup/bin/spinup /usr/bin/spinup
+ln -s /etc/spinup/bin/spinup /usr/bin/spinup
 
 # Set the correct permissions on the spinup directory
-chown -R root:root /usr/share/spinup
+chown -R root:root /etc/spinup
 
 ###############
 ### Dnsmasq ###
@@ -39,7 +42,7 @@ mkdir -p /etc/dnsmasq.d
 # Check if the spinup.conf already exists in the dnsmasq.d directory
 if [ ! -f /etc/dnsmasq.d/spinup.conf ]; then
     # Link the dnsmasq configuration file for spinup to the dnsmasq.d directory if it doesn't exist
-    ln -s /usr/share/spinup/config/dnsmasq.conf /etc/dnsmasq.d/spinup.conf
+    ln -s /etc/spinup/config/dnsmasq.conf /etc/dnsmasq.d/spinup.conf
 fi
 
 #############
@@ -47,7 +50,7 @@ fi
 #############
 
 USER_SPINUP_NGINX_DIR="$USER_HOME/.config/spinup/nginx"
-SPINUP_NGINX_DIR="/usr/share/spinup/config/nginx"
+SPINUP_NGINX_DIR="/etc/spinup/config/nginx"
 
 # Create the user's spinup nginx directory if it doesn't exist
 mkdir -p $USER_SPINUP_NGINX_DIR

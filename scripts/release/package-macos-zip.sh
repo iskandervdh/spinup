@@ -17,7 +17,7 @@ mkdir -p "$MAC_OS_DIR$SPINUP_SHARE_DIR"
 
 # Copy the contents of the build/unix directory to the MacOS directory
 cp -r "./packaging/unix/etc/." $MAC_OS_DIR/etc
-cp -r "./packaging/unix/usr/share/spinup/." $MAC_OS_DIR$SPINUP_SHARE_DIR
+cp -r "./packaging/unix/etc/spinup/." $MAC_OS_DIR$SPINUP_SHARE_DIR
 
 # Copy the binary file to the MacOS directory
 mkdir -p "$MAC_OS_DIR$SPINUP_SHARE_DIR/bin"
