@@ -10,7 +10,7 @@ fi
 rm -f /usr/bin/spinup
 
 # Remove the spinup directory
-rm -rf /usr/share/spinup
+rm -rf /etc/spinup
 
 # Remove the link to the dnsmasq configuration file
 rm -f /etc/dnsmasq.d/spinup.conf
@@ -19,7 +19,7 @@ rm -f /etc/dnsmasq.d/spinup.conf
 systemctl restart dnsmasq
 
 # Remove include directive in the nginx configuration file
-sed -i '/include \/usr\/share\/spinup\/config\/nginx\/\*.conf;/d' /etc/nginx/nginx.conf
+sed -i '/include \/etc\/spinup\/config\/nginx\/\*.conf;/d' /etc/nginx/nginx.conf
 
 # Restart the nginx service
 systemctl restart nginx
