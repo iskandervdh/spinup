@@ -72,7 +72,7 @@ function ProjectInfoHeader({ project, isRunning }: { project: core.Project; isRu
         {canRunProject ? (
           <button
             className={cn(
-              'p-2 rounded-lg hover:bg-black/10 focus:outline-offset-2 focus-visible:outline focus:outline-1',
+              'p-2 rounded-lg hover:bg-black/10 focus:outline-offset-2 focus-visible:outline-solid focus:outline-1',
               isRunning ? 'focus:outline-error' : 'focus:outline-success'
             )}
             onClick={startOrStopProject}
@@ -276,7 +276,7 @@ export function ProjectInfo({ project }: { project: core.Project }) {
     <div>
       <ProjectInfoHeader project={project} isRunning={isRunning} />
 
-      <div className="grid items-center max-w-6xl grid-cols-[16rem,auto] gap-x-4">
+      <div className="grid items-center max-w-6xl grid-cols-[16rem_auto] gap-x-4">
         <div>Domain</div>
 
         {isRunning ? (

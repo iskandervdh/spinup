@@ -53,7 +53,7 @@ function Settings() {
         <div className="flex flex-col gap-2">
           <h2 className="text-xl font-bold text-primary">Info</h2>
 
-          <div className="grid max-w-6xl grid-cols-[16rem,auto]">
+          <div className="grid max-w-6xl grid-cols-[16rem_auto]">
             <div>Spinup version</div>
             <div>{spinupVersion}</div>
           </div>

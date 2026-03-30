@@ -26,7 +26,7 @@ export function SelectMultiple({ options, value, onChanged, className, ...props 
             onChange={(e) =>
               onChanged((prev) => (e.target.checked ? [...prev, option.value] : prev.filter((n) => n !== option.value)))
             }
-            className="flex-shrink-0"
+            className="shrink-0"
           />
           <label htmlFor={`${props.id}-${option.value}`} className="flex items-center gap-2 cursor-pointer">
             {option.icon && <img src={option.icon} width={20} height={20} />}

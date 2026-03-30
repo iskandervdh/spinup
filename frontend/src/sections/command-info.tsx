@@ -48,7 +48,7 @@ export function CommandInfo({ command }: { command: sqlc.Command }) {
         </Button>
       </div>
 
-      <div className="grid grid-cols-[16rem,auto]">
+      <div className="grid grid-cols-[16rem_auto]">
         <div>Command</div>
         <div className="text-sm">{command.Command}</div>
       </div>
