@@ -40,10 +40,10 @@ export function Navbar() {
   };
 
   return (
-    <div className="flex items-center h-20 gap-8 px-4 border-b shadow-sm select-none shadow-primary-dark/50 min-h-20 border-primary/80 overflow-clip">
+    <div className="flex items-center h-20 gap-8 px-4 border-b shadow-xs select-none shadow-primary-dark/50 min-h-20 border-primary/80 overflow-clip">
       <Link
         to="/"
-        className="rounded-lg focus:outline-offset-2 focus-visible:outline focus:outline-1 focus:outline-primary"
+        className="rounded-lg focus:outline-offset-2 focus-visible:outline-solid focus:outline-1 focus:outline-primary"
       >
         <img src={icon} id="logo" alt="logo" className="cursor-pointer w-14 h-14" draggable={false} />
       </Link>
