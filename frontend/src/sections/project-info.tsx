@@ -10,6 +10,7 @@ import {
 import { useNavigate } from '@tanstack/react-router';
 import { useCallback, useMemo } from 'react';
 import toast from 'react-hot-toast';
+import { OpenFolder } from 'wjs/go/app/App';
 import { core } from 'wjs/go/models';
 import { BrowserOpenURL } from 'wjs/runtime/runtime';
 import { Button } from '~/components/button';
@@ -209,7 +210,7 @@ export function ProjectInfo({ project }: { project: core.Project }) {
     BrowserOpenURL(`http://${projectDomain}`);
   }, [projectDomain]);
 
-  const openProjectDir = useCallback(() => project.Dir.Valid && BrowserOpenURL(project.Dir.String), [project.Dir]);
+  const openProjectDir = useCallback(() => project.Dir.Valid && OpenFolder(project.Dir.String), [project.Dir]);
 
   const openUpdateProjectDir = useCallback(
     () => updateProjectDir(project.Name, project.Dir.String),
