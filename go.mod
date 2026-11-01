@@ -8,7 +8,7 @@ require (
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/golang-migrate/migrate/v4 v4.18.3
 	github.com/mattn/go-sqlite3 v1.14.29
-	github.com/wailsapp/wails/v2 v2.12.0
+	github.com/wailsapp/wails/v2 v2.13.0
 )
 
 require (
